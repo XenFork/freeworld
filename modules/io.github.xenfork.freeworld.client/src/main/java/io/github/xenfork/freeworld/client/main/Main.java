@@ -18,19 +18,21 @@
  * USA
  */
 
-pluginManagement {
-    repositories {
-        mavenCentral()
-        gradlePluginPortal()
-        // you can add mirror repositories by:
-        // maven { url = uri("THE URL") }
+package io.github.xenfork.freeworld.client.main;
+
+/**
+ * The main class
+ *
+ * @author squid233
+ * @since 0.1.0
+ */
+public final class Main {
+    /**
+     * the main method
+     *
+     * @param args arguments
+     */
+    public static void main(String[] args) {
+        System.out.println("Hello world");
     }
-}
-
-val projName: String by settings
-rootProject.name = projName
-
-listOf("core", "client").forEach {
-    include(it)
-    project(":$it").projectDir = file("modules/io.github.xenfork.freeworld.$it")
 }

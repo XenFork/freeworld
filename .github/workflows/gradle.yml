@@ -14,9 +14,9 @@ jobs:
     strategy:
       matrix:
         java: [
-          21
+          22-ea
         ]
-        os: [ ubuntu-latest, windows-latest ]
+        os: [ ubuntu-latest, windows-latest, macos-latest ]
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
@@ -25,6 +25,7 @@ jobs:
         with:
           java-version: |
             ${{ matrix.java }}
+            21
           distribution: 'temurin'
       - name: Grant execute permission for gradlew
         if: ${{ runner.os != 'Windows' }}
@@ -34,16 +35,16 @@ jobs:
         with:
           arguments: build --no-daemon
       - name: Upload build reports
-        if: ${{ runner.os == 'Linux' && matrix.java == '21' && failure() }}
+        if: ${{ runner.os == 'Linux' && matrix.java == '22-ea' && failure() }}
         uses: actions/upload-artifact@v4
         with:
           name: build-reports
           path: |
-            build/reports/
+            modules/**/build/reports/
       - name: Capture build artifacts
-        if: ${{ runner.os == 'Linux' && matrix.java == '21' }}
+        if: ${{ runner.os == 'Linux' && matrix.java == '22-ea' }}
         uses: actions/upload-artifact@v4
         with:
           name: Artifacts
           path: |
-            build/libs/
+            modules/**/build/libs/
