@@ -25,9 +25,12 @@
  * @since 0.1.0
  */
 module io.github.xenfork.freeworld.client {
+    exports io.github.xenfork.freeworld.client;
     exports io.github.xenfork.freeworld.client.main;
+    exports io.github.xenfork.freeworld.client.render;
+    exports io.github.xenfork.freeworld.client.render.gl;
 
-    requires io.github.xenfork.freeworld.core;
+    requires transitive io.github.xenfork.freeworld.core;
     requires io.github.overrun.marshal;
     requires overrungl.glfw;
     requires overrungl.opengl;

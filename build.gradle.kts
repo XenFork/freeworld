@@ -1,21 +1,11 @@
 /*
- * freeworld
+ * freeworld - 3D sandbox game
  * Copyright (C) 2024  XenFork Union
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 2.1 of the License, or (at your option) any later version.
- *
- * This library is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- * Lesser General Public License for more details.
- *
- * You should have received a copy of the GNU Lesser General Public
- * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301
- * USA
  */
 
 plugins {
@@ -92,10 +82,11 @@ val projVersion: String by rootProject
 val coreVersion: String by rootProject
 val clientVersion: String by rootProject
 
-val overrunglVersion: String by rootProject
-val jomlVersion: String by rootProject
 val annotationsVersion: String by rootProject
-val slf4jVersion: String by rootProject
+val gsonVersion: String by rootProject
+val jomlVersion: String by rootProject
+val logbackVersion: String by rootProject
+val overrunglVersion: String by rootProject
 
 class GameModule(
     val artifactId: String,
@@ -145,7 +136,8 @@ subprojects {
         implementation("io.github.over-run:overrungl")
         implementation("io.github.over-run:overrungl-joml")
         implementation("org.joml:joml:$jomlVersion")
-        implementation("org.slf4j:slf4j-jdk14:$slf4jVersion")
+        implementation("ch.qos.logback:logback-classic:$logbackVersion")
+        implementation("com.google.code.gson:gson:$gsonVersion")
     }
 }
 

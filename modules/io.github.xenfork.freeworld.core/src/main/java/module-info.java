@@ -25,4 +25,14 @@
  * @since 0.1.0
  */
 module io.github.xenfork.freeworld.core {
+    exports io.github.xenfork.freeworld.core;
+    exports io.github.xenfork.freeworld.util;
+
+    requires ch.qos.logback.core;
+    requires ch.qos.logback.classic;
+    requires org.slf4j;
+    requires static org.jetbrains.annotations;
+
+    provides ch.qos.logback.classic.spi.Configurator
+        with io.github.xenfork.freeworld.util.LogbackConfigurator;
 }

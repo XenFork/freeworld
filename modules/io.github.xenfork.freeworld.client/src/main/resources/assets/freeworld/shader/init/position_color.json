@@ -1,0 +1,8 @@
+{
+  "vertex": "freeworld:init/position_color.vert",
+  "fragment": "freeworld:init/position_color.frag",
+  "input": {
+    "Position": 0,
+    "Color": 1
+  }
+}

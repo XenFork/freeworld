@@ -1,39 +1,28 @@
 /*
- * freeworld
+ * freeworld - 3D sandbox game
  * Copyright (C) 2024  XenFork Union
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 2.1 of the License, or (at your option) any later version.
- *
- * This library is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- * Lesser General Public License for more details.
- *
- * You should have received a copy of the GNU Lesser General Public
- * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301
- * USA
  */
 
 package io.github.xenfork.freeworld.client;
 
+import io.github.xenfork.freeworld.client.render.RenderThread;
+import io.github.xenfork.freeworld.util.Logging;
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import overrun.marshal.Unmarshal;
 import overrungl.glfw.GLFW;
 import overrungl.glfw.GLFWCallbacks;
 import overrungl.glfw.GLFWErrorCallback;
 import overrungl.glfw.GLFWVidMode;
-import overrungl.opengl.GL;
-import overrungl.opengl.GL10C;
-import overrungl.opengl.GLLoader;
 import overrungl.util.value.Pair;
 
 import java.lang.foreign.MemorySegment;
-import java.util.Objects;
+import java.time.Duration;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * Client logic
@@ -42,7 +31,8 @@ import java.util.Objects;
  * @since 0.1.0
  */
 public final class Freeworld implements AutoCloseable {
-    private static final Logger logger = LoggerFactory.getLogger(Freeworld.class);
+    private static final Logger logger = Logging.caller();
+    private final AtomicBoolean windowOpen = new AtomicBoolean();
     private final GLFW glfw;
     private MemorySegment window;
 
@@ -51,10 +41,14 @@ public final class Freeworld implements AutoCloseable {
     }
 
     public void start() {
+        logger.info("Starting client");
+
         GLFWErrorCallback.createLog(logger::error).set();
+
         if (!glfw.init()) {
             throw new IllegalStateException("Failed to initialize GLFW");
         }
+
         glfw.defaultWindowHints();
         glfw.windowHint(GLFW.OPENGL_PROFILE, GLFW.OPENGL_CORE_PROFILE);
         glfw.windowHint(GLFW.OPENGL_FORWARD_COMPAT, true);
@@ -65,6 +59,7 @@ public final class Freeworld implements AutoCloseable {
         if (Unmarshal.isNullPointer(window)) {
             throw new IllegalStateException("Failed to create GLFW window");
         }
+        windowOpen.setPlain(true);
 
         // center window
         final GLFWVidMode.Value videoMode = glfw.getVideoMode(glfw.getPrimaryMonitor());
@@ -75,29 +70,30 @@ public final class Freeworld implements AutoCloseable {
                 (videoMode.height() - size.y()) / 2);
         }
 
-        glfw.makeContextCurrent(window);
-        final GL gl = Objects.requireNonNull(GLLoader.load(GLLoader.loadFlags(glfw::getProcAddress)), "Failed to load OpenGL context");
-        initGL(gl);
+        final RenderThread renderThread = new RenderThread(this, "Render Thread");
+        renderThread.setUncaughtExceptionHandler((t, e) -> {
+            logger.error("Exception thrown in {}", t, e);
+            glfw.setWindowShouldClose(window, true);
+            windowOpen.setOpaque(false);
+        });
+        renderThread.start();
 
         glfw.showWindow(window);
 
-        run(gl);
-    }
+        run();
 
-    public void initGL(GL gl) {
-        gl.clearColor(0.4f, 0.6f, 0.9f, 1.0f);
-    }
-
-    public void run(GL gl) {
-        while (!glfw.windowShouldClose(window)) {
-            glfw.pollEvents();
-            render(gl);
+        try {
+            renderThread.join(Duration.ofSeconds(10));
+        } catch (InterruptedException e) {
+            logger.error("Render thread interrupted", e);
         }
     }
 
-    public void render(GL gl) {
-        gl.clear(GL10C.COLOR_BUFFER_BIT | GL10C.DEPTH_BUFFER_BIT);
-        glfw.swapBuffers(window);
+    public void run() {
+        while (!glfw.windowShouldClose(window)) {
+            glfw.pollEvents();
+        }
+        windowOpen.setOpaque(false);
     }
 
     @Override
@@ -108,5 +104,17 @@ public final class Freeworld implements AutoCloseable {
         }
         glfw.terminate();
         glfw.setErrorCallback(null);
+    }
+
+    public boolean windowOpen() {
+        return windowOpen.getOpaque();
+    }
+
+    public GLFW glfw() {
+        return glfw;
+    }
+
+    public MemorySegment window() {
+        return window;
     }
 }
