@@ -41,6 +41,7 @@ val overrunglNatives = Pair(
 }
 
 dependencies {
+    api(project(":freeworld"))
     implementation("io.github.over-run:overrungl-glfw")
     runtimeOnly("io.github.over-run:overrungl-glfw::$overrunglNatives")
     implementation("io.github.over-run:overrungl-opengl")

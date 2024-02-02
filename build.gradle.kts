@@ -95,9 +95,9 @@ val clientVersion: String by rootProject
 val overrunglVersion: String by rootProject
 val jomlVersion: String by rootProject
 val annotationsVersion: String by rootProject
+val slf4jVersion: String by rootProject
 
 class GameModule(
-    val moduleName: String,
     val artifactId: String,
     val version: String,
     val mavenName: String,
@@ -105,11 +105,11 @@ class GameModule(
 )
 
 val moduleCore = GameModule(
-    "core", "freeworld", coreVersion, "Core",
+    "freeworld", coreVersion, "Core",
     "freeworld core library"
 )
 val moduleClient = GameModule(
-    "client", "freeworld-client", clientVersion, "Client",
+    "freeworld-client", clientVersion, "Client",
     "freeworld client library"
 )
 
@@ -130,7 +130,7 @@ allprojects {
         maven { url = uri("https://s01.oss.sonatype.org/content/repositories/snapshots") }
 
         //maven { url = uri("https://oss.oss.sonatype.org/content/repositories/releases") }
-        //maven { url = uri("https://s01.oss.sonatype.org/content/repositories/releases") }
+        maven { url = uri("https://s01.oss.sonatype.org/content/repositories/releases") }
     }
 }
 
@@ -145,14 +145,12 @@ subprojects {
         implementation("io.github.over-run:overrungl")
         implementation("io.github.over-run:overrungl-joml")
         implementation("org.joml:joml:$jomlVersion")
-        // TODO: Remove this
-        implementation("io.github.over-run:marshal:0.1.0-alpha.15-jdk22")
-        implementation("io.github.over-run:platform:1.0.0")
+        implementation("org.slf4j:slf4j-jdk14:$slf4jVersion")
     }
 }
 
 gameModules.forEach {
-    project(":${it.moduleName}") {
+    project(":${it.artifactId}") {
         version = it.version
 
         tasks.withType<JavaCompile> {
@@ -181,7 +179,7 @@ gameModules.forEach {
             options {
                 encoding = "UTF-8"
                 locale = "en_US"
-                windowTitle = "freeworld ${it.moduleName} ${it.version} Javadoc"
+                windowTitle = "${it.artifactId} ${it.version} Javadoc"
                 if (this is StandardJavadocDocletOptions) {
                     charSet = "UTF-8"
                     isAuthor = true
@@ -293,7 +291,9 @@ if (hasPublication.toBoolean() && publicationRepo != null) {
                 artifactId = gameModule.artifactId
                 version = gameModule.version
                 description = gameModule.description
-                from(components["java"])
+                project(":${gameModule.artifactId}") {
+                    from(components["java"])
+                }
                 pom {
                     setupPom(gameModule.artifactId, gameModule.description, "jar")
                 }

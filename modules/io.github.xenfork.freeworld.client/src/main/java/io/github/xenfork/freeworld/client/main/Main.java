@@ -20,6 +20,8 @@
 
 package io.github.xenfork.freeworld.client.main;
 
+import io.github.xenfork.freeworld.client.Freeworld;
+
 /**
  * The main class
  *
@@ -33,6 +35,8 @@ public final class Main {
      * @param args arguments
      */
     public static void main(String[] args) {
-        System.out.println("Hello world");
+        try (Freeworld game = new Freeworld()) {
+            game.start();
+        }
     }
 }

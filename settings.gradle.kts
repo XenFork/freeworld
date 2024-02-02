@@ -30,7 +30,7 @@ pluginManagement {
 val projName: String by settings
 rootProject.name = projName
 
-listOf("core", "client").forEach {
-    include(it)
-    project(":$it").projectDir = file("modules/io.github.xenfork.freeworld.$it")
+mapOf("freeworld" to "core", "freeworld-client" to "client").forEach { (name, path) ->
+    include(name)
+    project(":$name").projectDir = file("modules/io.github.xenfork.freeworld.$path")
 }

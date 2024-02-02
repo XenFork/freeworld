@@ -19,9 +19,19 @@
  */
 
 /**
+ * freeworld client
+ *
  * @author squid233
  * @since 0.1.0
  */
 module io.github.xenfork.freeworld.client {
     exports io.github.xenfork.freeworld.client.main;
+
+    requires io.github.xenfork.freeworld.core;
+    requires io.github.overrun.marshal;
+    requires overrungl.glfw;
+    requires overrungl.opengl;
+    requires overrungl.stb;
+    requires org.slf4j;
+    requires static org.jetbrains.annotations;
 }
