@@ -15,11 +15,11 @@ import io.github.xenfork.freeworld.client.render.gl.GLDrawMode;
 import io.github.xenfork.freeworld.client.render.gl.GLProgram;
 import io.github.xenfork.freeworld.core.Identifier;
 import io.github.xenfork.freeworld.util.Logging;
+import org.joml.Matrix4f;
 import org.slf4j.Logger;
 import overrungl.opengl.GL;
 import overrungl.opengl.GL10C;
 import overrungl.opengl.GLFlags;
-import overrungl.opengl.ext.GLExtension;
 
 /**
  * The game renderer.
@@ -30,22 +30,21 @@ import overrungl.opengl.ext.GLExtension;
 public final class GameRenderer implements AutoCloseable {
     private static final Logger logger = Logging.caller();
     /**
+     * The OpenGL flags, which is only available in render thread.
+     */
+    public static final ScopedValue<GLFlags> OpenGLFlags = ScopedValue.newInstance();
+    /**
      * The OpenGL context, which is only available in render thread.
      */
     public static final ScopedValue<GL> OpenGL = ScopedValue.newInstance();
-    /**
-     * The OpenGL extension context, which is only available in render thread.
-     */
-    public static final ScopedValue<GLExtension> OpenGLExt = ScopedValue.newInstance();
     private final Freeworld client;
-    private final GLFlags glFlags;
     private GLProgram positionColorProgram;
     private int framebufferWidth;
     private int framebufferHeight;
+    private final Matrix4f matrix = new Matrix4f();
 
-    public GameRenderer(Freeworld client, GLFlags glFlags) {
+    public GameRenderer(Freeworld client) {
         this.client = client;
-        this.glFlags = glFlags;
     }
 
     public void init() {
@@ -82,6 +81,9 @@ public final class GameRenderer implements AutoCloseable {
         gl.clear(GL10C.COLOR_BUFFER_BIT | GL10C.DEPTH_BUFFER_BIT);
 
         positionColorProgram.use();
+        matrix.rotationZ((float) Math.toRadians(Math.sin(System.nanoTime() * 1.0e-9d) * 90f));
+        positionColorProgram.getUniform(GLProgram.UNIFORM_MODEL_MATRIX).set(matrix);
+        positionColorProgram.uploadUniforms();
         final Tessellator t = Tessellator.getInstance();
         t.begin(GLDrawMode.TRIANGLES);
         t.index(0, 1, 2, 2, 3, 0);
@@ -102,10 +104,6 @@ public final class GameRenderer implements AutoCloseable {
         if (positionColorProgram != null) positionColorProgram.close();
 
         Tessellator.free();
-    }
-
-    public GLFlags glFlags() {
-        return glFlags;
     }
 
     public GLProgram positionColorProgram() {

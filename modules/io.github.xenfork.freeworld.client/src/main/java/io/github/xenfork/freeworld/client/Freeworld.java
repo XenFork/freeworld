@@ -31,6 +31,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * @since 0.1.0
  */
 public final class Freeworld implements AutoCloseable {
+    private static final Freeworld INSTANCE = new Freeworld();
     private static final Logger logger = Logging.caller();
     private final AtomicBoolean windowOpen = new AtomicBoolean();
     private final GLFW glfw;
@@ -39,7 +40,7 @@ public final class Freeworld implements AutoCloseable {
     private int framebufferHeight;
     private final AtomicBoolean framebufferResized = new AtomicBoolean();
 
-    public Freeworld() {
+    private Freeworld() {
         this.glfw = GLFW.INSTANCE;
     }
 
@@ -144,5 +145,9 @@ public final class Freeworld implements AutoCloseable {
 
     public AtomicBoolean framebufferResized() {
         return framebufferResized;
+    }
+
+    public static Freeworld getInstance() {
+        return INSTANCE;
     }
 }

@@ -32,7 +32,7 @@ import ch.qos.logback.core.spi.FilterReply;
 public final class LogbackConfigurator extends ContextAwareBase implements Configurator {
     private static final String DISABLE_ANSI = "freeworld.log.disableAnsi";
     private static final String PATTERN = "[%d{HH:mm:ss}] %-5level [%thread] \\(%logger{36}\\) %msg\\n";
-    private static final String PATTERN_ANSI = "%cyan([%d{HH:mm:ss}]) %highlight(%-5level) %cyan([%thread]) %green(\\(%logger{36}\\)) %highlight(%msg)\\n";
+    private static final String PATTERN_ANSI = "%cyan([%d{HH:mm:ss}]) %levelColor(%-5level) %cyan([%thread]) %green(\\(%logger{36}\\)) %levelColor(%msg)\\n";
 
     /**
      * Level filter that only accepts info or higher level
@@ -60,6 +60,7 @@ public final class LogbackConfigurator extends ContextAwareBase implements Confi
         } else {
             layout.setPattern(PATTERN_ANSI);
         }
+        layout.getInstanceConverterMap().put("levelColor", LevelColorConverter.class.getName());
         layout.start();
         final var encoder = new LayoutWrappingEncoder<ILoggingEvent>();
         encoder.setContext(context);

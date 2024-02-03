@@ -47,10 +47,10 @@ public final class RenderThread extends Thread {
         final GL gl = Objects.requireNonNull(GLLoader.load(glFlags), "Failed to load OpenGL context");
 
         ScopedValue
+            .where(GameRenderer.OpenGLFlags, glFlags)
             .where(GameRenderer.OpenGL, gl)
-            .where(GameRenderer.OpenGLExt, GLLoader.loadExtension(glFlags))
             .run(() -> {
-                try (GameRenderer gameRenderer = new GameRenderer(client, glFlags)) {
+                try (GameRenderer gameRenderer = new GameRenderer(client)) {
                     gameRenderer.init();
                     while (client.windowOpen().getOpaque()) {
                         gameRenderer.render();

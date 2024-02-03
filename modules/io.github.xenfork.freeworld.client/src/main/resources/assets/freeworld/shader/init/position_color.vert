@@ -5,7 +5,10 @@ in vec4 Color;
 
 out vec4 vertexColor;
 
+uniform mat4 ProjectionViewMatrix;
+uniform mat4 ModelMatrix;
+
 void main() {
-    gl_Position = vec4(Position, 1.0);
+    gl_Position = ProjectionViewMatrix * ModelMatrix * vec4(Position, 1.0);
     vertexColor = Color;
 }

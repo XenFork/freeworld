@@ -10,7 +10,10 @@
 
 package io.github.xenfork.freeworld.client.render.gl;
 
-import com.google.gson.*;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 import io.github.xenfork.freeworld.client.render.GameRenderer;
 import io.github.xenfork.freeworld.core.Identifier;
 import io.github.xenfork.freeworld.file.BuiltinFiles;
@@ -23,7 +26,9 @@ import overrungl.opengl.GL10C;
 import overrungl.opengl.GL20C;
 
 import java.io.BufferedReader;
-import java.io.IOException;
+import java.lang.foreign.Arena;
+import java.lang.foreign.MemorySegment;
+import java.lang.foreign.ValueLayout;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
@@ -37,65 +42,71 @@ import java.util.Objects;
 public final class GLProgram implements AutoCloseable {
     public static final int INPUT_POSITION = 0;
     public static final int INPUT_COLOR = 1;
+    public static final String UNIFORM_PROJECTION_VIEW_MATRIX = "ProjectionViewMatrix";
+    public static final String UNIFORM_MODEL_MATRIX = "ModelMatrix";
+    public static final String UNIFORM_COLOR_MODULATOR = "ColorModulator";
     private static final Logger logger = Logging.caller();
     private final int id;
     private final Identifier identifier;
+    private final Map<String, GLUniform> uniformMap;
+    private final Arena uniformArena;
 
-    private GLProgram(int id, Identifier identifier) {
+    private GLProgram(int id, Identifier identifier, Map<String, GLUniform> uniformMap, Arena uniformArena) {
         this.id = id;
         this.identifier = identifier;
+        this.uniformMap = uniformMap;
+        this.uniformArena = uniformArena;
     }
 
     @Nullable
     public static GLProgram load(@NotNull Identifier identifier) {
         Objects.requireNonNull(identifier);
 
-        final GL gl = GameRenderer.OpenGL.get();
-        final int id = gl.createProgram();
-        final boolean success = loadFromJson(id, identifier);
-        if (success) {
-            final GLProgram program = new GLProgram(id, identifier);
+        final GLProgram program = loadFromJson(identifier);
+        if (program != null) {
             logger.debug("Created {}", program);
             return program;
         }
-        gl.deleteProgram(id);
         return null;
     }
 
-    private static boolean loadFromJson(int id, Identifier identifier) {
+    private static GLProgram loadFromJson(Identifier identifier) {
         final String path = identifier.toResourcePath(Identifier.ROOT_ASSETS,
             Identifier.RES_SHADER,
             Identifier.EXT_JSON);
         final BufferedReader reader = BuiltinFiles.readTextAsReader(BuiltinFiles.load(path));
         if (reader == null) {
             logger.error("Failed to load GLProgram {} from file {}", identifier, path);
-            return false;
+            return null;
         }
 
         final Identifier vshId;
         final Identifier fshId;
         final Map<String, Integer> inputMap;
+        final boolean hasUniform;
+        final Map<String, GLUniformType> uniformTypeMap;
+        final Map<String, JsonArray> uniformValueMap;
 
         // JSON stuff
         try (reader) {
             final JsonElement jsonElement = JsonParser.parseReader(reader);
             if (!jsonElement.isJsonObject()) {
-                malformedJson(identifier, path, "not an JSON object");
-                return false;
+                malformedJson(identifier, path, "not a JSON object");
+                return null;
             }
             final JsonObject jsonObject = jsonElement.getAsJsonObject();
 
             // shaders
             vshId = getShaderId(identifier, path, jsonObject, "vertex");
-            if (vshId == null) return false;
+            if (vshId == null) return null;
             fshId = getShaderId(identifier, path, jsonObject, "fragment");
-            if (fshId == null) return false;
+            if (fshId == null) return null;
 
             // input
             final JsonElement inputElement = jsonObject.get("input");
             if (!inputElement.isJsonObject()) {
-                malformedJson(identifier, path, "input is not an JSON object");
-                return false;
+                malformedJson(identifier, path, "input is not a JSON object");
+                return null;
             }
             final JsonObject input = inputElement.getAsJsonObject();
             inputMap = HashMap.newHashMap(input.size());
@@ -105,13 +116,60 @@ public final class GLProgram implements AutoCloseable {
                 final JsonElement value = entry.getValue();
                 if (!value.isJsonPrimitive() || !value.getAsJsonPrimitive().isNumber()) {
                     malformedJson(identifier, path, STR."input.\{name} is not a number");
-                    return false;
+                    return null;
                 }
                 inputMap.put(name, value.getAsInt());
             }
-        } catch (IOException e) {
+
+            // uniform
+            if (jsonObject.has("uniform")) {
+                final JsonElement uniformElement = jsonObject.get("uniform");
+                if (!uniformElement.isJsonObject()) {
+                    malformedJson(identifier, path, "uniform is not a JSON object");
+                    return null;
+                }
+                final JsonObject uniform = uniformElement.getAsJsonObject();
+                uniformTypeMap = HashMap.newHashMap(uniform.size());
+                uniformValueMap = HashMap.newHashMap(uniform.size());
+                for (var entry : uniform.entrySet()) {
+                    final String name = entry.getKey();
+                    final JsonElement valueElement = entry.getValue();
+                    if (!valueElement.isJsonObject()) {
+                        malformedJson(identifier, path, STR."uniform.\{name} is not a JSON object");
+                        return null;
+                    }
+                    final JsonObject valueObject = valueElement.getAsJsonObject();
+                    final JsonElement typeElement = valueObject.get("type");
+                    if (!typeElement.isJsonPrimitive() || !typeElement.getAsJsonPrimitive().isString()) {
+                        malformedJson(identifier, path, STR."uniform.\{name}.type is not a string");
+                        return null;
+                    }
+                    final String type = typeElement.getAsString();
+                    final GLUniformType uniformType = GLUniformType.fromString(type);
+                    if (uniformType == null) {
+                        malformedJson(identifier, path, STR."uniform.\{name}.type is an invalid type: \{type}");
+                        return null;
+                    }
+                    uniformTypeMap.put(name, uniformType);
+                    if (valueObject.has("value")) {
+                        final JsonElement uniformValueElement = valueObject.get("value");
+                        if (!uniformValueElement.isJsonArray()) {
+                            malformedJson(identifier, path, STR."uniform.\{name}.value is not an array");
+                            return null;
+                        }
+                        final JsonArray valueArray = uniformValueElement.getAsJsonArray();
+                        uniformValueMap.put(name, valueArray);
+                    }
+                }
+                hasUniform = true;
+            } else {
+                hasUniform = false;
+                uniformTypeMap = Map.of();
+                uniformValueMap = Map.of();
+            }
+        } catch (Exception e) {
             logger.error("Failed to load GLProgram {} from file {}", identifier, path, e);
-            return false;
+            return null;
         }
 
         // OpenGL stuff
@@ -120,25 +178,26 @@ public final class GLProgram implements AutoCloseable {
         final String vshPath = vshId.toResourcePath(Identifier.ROOT_ASSETS, Identifier.RES_SHADER, null);
         final String vshSrc = BuiltinFiles.readText(BuiltinFiles.load(vshPath), vshPath);
         if (vshSrc == null) {
-            return false;
+            return null;
         }
         final int vsh = compileShader(GL.VERTEX_SHADER, "vertex", vshSrc);
         if (vsh == -1) {
-            return false;
+            return null;
         }
 
         final String fshPath = fshId.toResourcePath(Identifier.ROOT_ASSETS, Identifier.RES_SHADER, null);
         final String fshSrc = BuiltinFiles.readText(BuiltinFiles.load(fshPath), fshPath);
         if (fshSrc == null) {
             gl.deleteShader(vsh);
-            return false;
+            return null;
         }
         final int fsh = compileShader(GL.FRAGMENT_SHADER, "fragment", fshSrc);
         if (fsh == -1) {
             gl.deleteShader(fsh);
-            return false;
+            return null;
         }
 
+        final int id = gl.createProgram();
         inputMap.forEach((name, index) -> gl.bindAttribLocation(id, index, name));
         gl.attachShader(id, vsh);
         gl.attachShader(id, fsh);
@@ -146,7 +205,8 @@ public final class GLProgram implements AutoCloseable {
         try {
             if (gl.getProgramiv(id, GL20C.LINK_STATUS) == GL10C.FALSE) {
                 logger.error("Failed to link GLProgram {} ({}): {}", identifier, id, gl.getProgramInfoLog(id));
-                return false;
+                gl.deleteProgram(id);
+                return null;
             }
         } finally {
             gl.detachShader(id, vsh);
@@ -155,7 +215,51 @@ public final class GLProgram implements AutoCloseable {
             gl.deleteShader(fsh);
         }
 
-        return true;
+        final Map<String, GLUniform> uniformMap = hasUniform ? HashMap.newHashMap(uniformTypeMap.size()) : Map.of();
+        final Arena uniformArena = hasUniform ? Arena.ofConfined() : null;
+
+        final GLProgram program = new GLProgram(id, identifier, uniformMap, uniformArena);
+
+        if (hasUniform) {
+            try {
+                for (var entry : uniformTypeMap.entrySet()) {
+                    final String name = entry.getKey();
+                    final int location = gl.getUniformLocation(id, name);
+                    if (location == -1) {
+                        logger.warn("Unknown uniform {} in {}; ignoring.", name, program);
+                        continue;
+                    }
+                    final GLUniformType type = entry.getValue();
+                    final GLUniform uniform = new GLUniform(program, type, location, uniformArena);
+                    uniformMap.put(name, uniform);
+
+                    final JsonArray array = uniformValueMap.get(name);
+                    if (array != null) {
+                        final MemorySegment value = uniform.value;
+                        switch (type) {
+                            case VEC4 -> {
+                                for (int i = 0; i < 4; i++) {
+                                    value.setAtIndex(ValueLayout.JAVA_FLOAT, i, array.get(i).getAsFloat());
+                                }
+                            }
+                            case MAT4 -> {
+                                for (int i = 0; i < 16; i++) {
+                                    value.setAtIndex(ValueLayout.JAVA_FLOAT, i, array.get(i).getAsFloat());
+                                }
+                            }
+                        }
+                    }
+                }
+            } catch (Exception e) {
+                gl.deleteProgram(id);
+                if (uniformArena != null) {
+                    uniformArena.close();
+                }
+                throw new RuntimeException(e);
+            }
+        }
+
+        return program;
     }
 
     private static Identifier getShaderId(Identifier identifier, String path, JsonObject jsonObject, String name) {
@@ -195,10 +299,21 @@ public final class GLProgram implements AutoCloseable {
         gl.useProgram(id());
     }
 
+    public void uploadUniforms() {
+        uniformMap.values().forEach(GLUniform::upload);
+    }
+
+    public GLUniform getUniform(String name) {
+        return uniformMap.get(name);
+    }
+
     @Override
     public void close() {
         final GL gl = GameRenderer.OpenGL.get();
         gl.deleteProgram(id);
+        if (uniformArena != null) {
+            uniformArena.close();
+        }
     }
 
     @Override
