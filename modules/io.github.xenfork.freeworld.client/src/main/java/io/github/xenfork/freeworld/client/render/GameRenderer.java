@@ -11,6 +11,7 @@
 package io.github.xenfork.freeworld.client.render;
 
 import io.github.xenfork.freeworld.client.Freeworld;
+import io.github.xenfork.freeworld.client.render.gl.GLDrawMode;
 import io.github.xenfork.freeworld.client.render.gl.GLProgram;
 import io.github.xenfork.freeworld.core.Identifier;
 import io.github.xenfork.freeworld.util.Logging;
@@ -39,6 +40,8 @@ public final class GameRenderer implements AutoCloseable {
     private final Freeworld client;
     private final GLFlags glFlags;
     private GLProgram positionColorProgram;
+    private int framebufferWidth;
+    private int framebufferHeight;
 
     public GameRenderer(Freeworld client, GLFlags glFlags) {
         this.client = client;
@@ -69,7 +72,25 @@ public final class GameRenderer implements AutoCloseable {
 
     public void render() {
         final GL gl = OpenGL.get();
+        if (client.framebufferResized().getAcquire()) {
+            framebufferWidth = client.framebufferWidth();
+            framebufferHeight = client.framebufferHeight();
+            gl.viewport(0, 0, framebufferWidth, framebufferHeight);
+            client.framebufferResized().setOpaque(false);
+        }
+
         gl.clear(GL10C.COLOR_BUFFER_BIT | GL10C.DEPTH_BUFFER_BIT);
+
+        positionColorProgram.use();
+        final Tessellator t = Tessellator.getInstance();
+        t.begin(GLDrawMode.TRIANGLES);
+        t.index(0, 1, 2, 2, 3, 0);
+        t.position(-0.5f, 0.5f, 0f).color(1f, 0f, 0f).emit();
+        t.position(-0.5f, -0.5f, 0f).color(0f, 1f, 0f).emit();
+        t.position(0.5f, -0.5f, 0f).color(0f, 0f, 1f).emit();
+        t.position(0.5f, 0.5f, 0f).color(1f, 1f, 1f).emit();
+        t.end();
+        gl.useProgram(0);
 
         client.glfw().swapBuffers(client.window());
     }
@@ -77,10 +98,25 @@ public final class GameRenderer implements AutoCloseable {
     @Override
     public void close() {
         logger.info("Closing game renderer");
+
         if (positionColorProgram != null) positionColorProgram.close();
+
+        Tessellator.free();
     }
 
     public GLFlags glFlags() {
         return glFlags;
+    }
+
+    public GLProgram positionColorProgram() {
+        return positionColorProgram;
+    }
+
+    public int framebufferWidth() {
+        return framebufferWidth;
+    }
+
+    public int framebufferHeight() {
+        return framebufferHeight;
     }
 }

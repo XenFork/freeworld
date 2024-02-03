@@ -35,6 +35,9 @@ public final class Freeworld implements AutoCloseable {
     private final AtomicBoolean windowOpen = new AtomicBoolean();
     private final GLFW glfw;
     private MemorySegment window;
+    private int framebufferWidth;
+    private int framebufferHeight;
+    private final AtomicBoolean framebufferResized = new AtomicBoolean();
 
     public Freeworld() {
         this.glfw = GLFW.INSTANCE;
@@ -61,13 +64,24 @@ public final class Freeworld implements AutoCloseable {
         }
         windowOpen.setPlain(true);
 
+        glfw.setFramebufferSizeCallback(window, (_, width, height) -> {
+            framebufferWidth = width;
+            framebufferHeight = height;
+            framebufferResized.setRelease(true);
+        });
+
+        final Pair.OfInt framebufferSize = glfw.getFramebufferSize(window);
+        framebufferWidth = framebufferSize.x();
+        framebufferHeight = framebufferSize.y();
+        framebufferResized.setPlain(true);
+
         // center window
         final GLFWVidMode.Value videoMode = glfw.getVideoMode(glfw.getPrimaryMonitor());
         if (videoMode != null) {
-            final Pair.OfInt size = glfw.getWindowSize(window);
+            final Pair.OfInt windowSize = glfw.getWindowSize(window);
             glfw.setWindowPos(window,
-                (videoMode.width() - size.x()) / 2,
-                (videoMode.height() - size.y()) / 2);
+                (videoMode.width() - windowSize.x()) / 2,
+                (videoMode.height() - windowSize.y()) / 2);
         }
 
         final RenderThread renderThread = new RenderThread(this, "Render Thread");
@@ -108,8 +122,8 @@ public final class Freeworld implements AutoCloseable {
         glfw.setErrorCallback(null);
     }
 
-    public boolean windowOpen() {
-        return windowOpen.getOpaque();
+    public AtomicBoolean windowOpen() {
+        return windowOpen;
     }
 
     public GLFW glfw() {
@@ -118,5 +132,17 @@ public final class Freeworld implements AutoCloseable {
 
     public MemorySegment window() {
         return window;
+    }
+
+    public int framebufferWidth() {
+        return framebufferWidth;
+    }
+
+    public int framebufferHeight() {
+        return framebufferHeight;
+    }
+
+    public AtomicBoolean framebufferResized() {
+        return framebufferResized;
     }
 }

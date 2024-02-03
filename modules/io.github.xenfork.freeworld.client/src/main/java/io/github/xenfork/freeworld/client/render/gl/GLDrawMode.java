@@ -8,28 +8,30 @@
  * version 2.1 of the License, or (at your option) any later version.
  */
 
-package io.github.xenfork.freeworld.client.main;
+package io.github.xenfork.freeworld.client.render.gl;
 
-import io.github.xenfork.freeworld.client.Freeworld;
+import overrungl.opengl.GL;
 
 /**
- * The main class
- *
  * @author squid233
  * @since 0.1.0
  */
-public final class Main {
-    private Main() {
+public enum GLDrawMode {
+    TRIANGLES(GL.TRIANGLES, 3);
+
+    private final int value;
+    private final int count;
+
+    GLDrawMode(int value, int count) {
+        this.value = value;
+        this.count = count;
     }
 
-    /**
-     * the main method
-     *
-     * @param args arguments
-     */
-    public static void main(String[] args) {
-        try (Freeworld game = new Freeworld()) {
-            game.start();
-        }
+    public int value() {
+        return value;
+    }
+
+    public int count() {
+        return count;
     }
 }

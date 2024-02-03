@@ -52,7 +52,7 @@ public final class RenderThread extends Thread {
             .run(() -> {
                 try (GameRenderer gameRenderer = new GameRenderer(client, glFlags)) {
                     gameRenderer.init();
-                    while (client.windowOpen()) {
+                    while (client.windowOpen().getOpaque()) {
                         gameRenderer.render();
                     }
                 }

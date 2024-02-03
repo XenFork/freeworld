@@ -27,6 +27,9 @@ public final class BuiltinFiles {
     private static final Logger logger = Logging.caller();
     private static final StackWalker STACK_WALKER = StackWalker.getInstance(StackWalker.Option.RETAIN_CLASS_REFERENCE);
 
+    private BuiltinFiles() {
+    }
+
     @Nullable
     public static InputStream load(ClassLoader classLoader, String name) {
         return classLoader.getResourceAsStream(name);

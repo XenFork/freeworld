@@ -22,6 +22,9 @@ import org.slf4j.LoggerFactory;
 public final class Logging {
     private static final StackWalker STACK_WALKER = StackWalker.getInstance(StackWalker.Option.RETAIN_CLASS_REFERENCE);
 
+    private Logging() {
+    }
+
     /**
      * {@return a logger for the caller}
      */

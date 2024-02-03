@@ -38,9 +38,6 @@ public final class GLProgram implements AutoCloseable {
     public static final int INPUT_POSITION = 0;
     public static final int INPUT_COLOR = 1;
     private static final Logger logger = Logging.caller();
-    private static final Gson GSON = new GsonBuilder()
-        .disableJdkUnsafe()
-        .create();
     private final int id;
     private final Identifier identifier;
 
@@ -191,6 +188,11 @@ public final class GLProgram implements AutoCloseable {
             return -1;
         }
         return shader;
+    }
+
+    public void use() {
+        final GL gl = GameRenderer.OpenGL.get();
+        gl.useProgram(id());
     }
 
     @Override
