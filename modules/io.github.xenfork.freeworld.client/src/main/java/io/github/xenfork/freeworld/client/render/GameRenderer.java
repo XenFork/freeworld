@@ -55,7 +55,16 @@ public final class GameRenderer implements AutoCloseable {
     }
 
     private void initGLPrograms() {
-        positionColorProgram = GLProgram.load(Identifier.ofBuiltin("init/position_color"));
+        positionColorProgram = initBootstrapProgram("init/position_color");
+    }
+
+    private GLProgram initBootstrapProgram(String path) {
+        final Identifier identifier = Identifier.ofBuiltin(path);
+        final GLProgram program = GLProgram.load(identifier);
+        if (program == null) {
+            throw new IllegalStateException(STR."Failed to initialize bootstrap GLProgram \{identifier}");
+        }
+        return program;
     }
 
     public void render() {

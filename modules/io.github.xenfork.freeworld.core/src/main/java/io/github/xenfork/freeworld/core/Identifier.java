@@ -11,6 +11,7 @@
 package io.github.xenfork.freeworld.core;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
 import java.util.regex.Pattern;
@@ -24,17 +25,21 @@ import java.util.regex.Pattern;
  * @since 0.1.0
  */
 public record Identifier(String namespace, String path) {
+    public static final String DEFAULT_NAMESPACE = "freeworld";
+    public static final String ROOT_ASSETS = "assets";
+    public static final String RES_SHADER = "shader";
+    public static final String EXT_JSON = ".json";
     private static final Pattern NAMESPACE_RULE = Pattern.compile("^\\w+$");
     private static final Pattern PATH_RULE = Pattern.compile("^[\\w/.]*$");
-    public static final String DEFAULT_NAMESPACE = "freeworld";
     private static final Identifier EMPTY = new Identifier(DEFAULT_NAMESPACE, "");
 
     @NotNull
-    public static Identifier of(@NotNull String namespace, @NotNull String path) {
+    public static Identifier of(@NotNull String namespace, @NotNull String path) throws InvalidIdentifierException {
         return new Identifier(checkNamespace(namespace), checkPath(path));
     }
 
-    public static Identifier of(@NotNull String identifier) {
+    @NotNull
+    public static Identifier of(@NotNull String identifier) throws InvalidIdentifierException {
         Objects.requireNonNull(identifier);
         final String[] split = identifier.split(":", 2);
         return switch (split.length) {
@@ -44,13 +49,39 @@ public record Identifier(String namespace, String path) {
         };
     }
 
-    public static Identifier ofBuiltin(@NotNull String path) {
+    @NotNull
+    public static Identifier ofBuiltin(@NotNull String path) throws InvalidIdentifierException {
         return new Identifier(DEFAULT_NAMESPACE, checkPath(path));
+    }
+
+    @Nullable
+    public static Identifier ofSafe(@Nullable String identifier) {
+        return isValidIdentifier(identifier) ? of(identifier) : null;
+    }
+
+    public static boolean isValidNamespace(@Nullable String namespace) {
+        return namespace != null && NAMESPACE_RULE.matcher(namespace).matches();
+    }
+
+    public static boolean isValidPath(@Nullable String path) {
+        return path != null && PATH_RULE.matcher(path).matches();
+    }
+
+    public static boolean isValidIdentifier(@Nullable String identifier) {
+        if (identifier == null) {
+            return false;
+        }
+        final String[] split = identifier.split(":");
+        return switch (split.length) {
+            case 0 -> true;
+            case 1 -> isValidPath(split[0]);
+            default -> isValidNamespace(split[0]) && isValidPath(split[1]);
+        };
     }
 
     private static String checkNamespace(@NotNull String namespace) {
         Objects.requireNonNull(namespace);
-        if (NAMESPACE_RULE.matcher(namespace).matches()) {
+        if (isValidNamespace(namespace)) {
             return namespace;
         }
         throw new InvalidIdentifierException(STR."Invalid namespace: \{namespace}");
@@ -58,10 +89,14 @@ public record Identifier(String namespace, String path) {
 
     private static String checkPath(@NotNull String path) {
         Objects.requireNonNull(path);
-        if (PATH_RULE.matcher(path).matches()) {
+        if (isValidPath(path)) {
             return path;
         }
         throw new InvalidIdentifierException(STR."Invalid path: \{path}");
+    }
+
+    public String toResourcePath(@Nullable String root, @Nullable String type, @Nullable String suffix) {
+        return STR."\{root != null ? STR."\{root}/" : ""}\{namespace()}/\{type != null ? STR."\{type}/" : ""}\{path()}\{suffix != null ? suffix : ""}";
     }
 
     @Override

@@ -87,6 +87,8 @@ public final class Freeworld implements AutoCloseable {
         } catch (InterruptedException e) {
             logger.error("Render thread interrupted", e);
         }
+
+        logger.info("Closing client");
     }
 
     public void run() {

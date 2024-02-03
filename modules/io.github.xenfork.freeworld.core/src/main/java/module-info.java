@@ -26,11 +26,13 @@
  */
 module io.github.xenfork.freeworld.core {
     exports io.github.xenfork.freeworld.core;
+    exports io.github.xenfork.freeworld.file;
     exports io.github.xenfork.freeworld.util;
 
     requires ch.qos.logback.core;
     requires ch.qos.logback.classic;
-    requires org.slf4j;
+    requires transitive com.google.gson;
+    requires transitive org.slf4j;
     requires static org.jetbrains.annotations;
 
     provides ch.qos.logback.classic.spi.Configurator
