@@ -15,6 +15,9 @@ import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 
 import java.io.*;
+import java.lang.foreign.MemorySegment;
+import java.lang.foreign.SegmentAllocator;
+import java.lang.foreign.ValueLayout;
 import java.util.stream.Collectors;
 
 /**
@@ -38,6 +41,18 @@ public final class BuiltinFiles {
     @Nullable
     public static InputStream load(String name) {
         return load(STACK_WALKER.getCallerClass().getClassLoader(), name);
+    }
+
+    public static MemorySegment loadBinary(SegmentAllocator allocator, InputStream stream, String name) {
+        if (stream == null) {
+            return MemorySegment.NULL;
+        }
+        try (stream) {
+            return allocator.allocateFrom(ValueLayout.JAVA_BYTE, stream.readAllBytes());
+        } catch (IOException e) {
+            logger.error("Failed to load file {} from stream", name, e);
+            return MemorySegment.NULL;
+        }
     }
 
     @Nullable

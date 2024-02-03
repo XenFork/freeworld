@@ -19,6 +19,7 @@ import java.util.Locale;
  * @since 0.1.0
  */
 public enum GLUniformType {
+    INT(4),
     VEC4(4 * 4),
     MAT4(4 * 4 * 4);
 
@@ -31,6 +32,7 @@ public enum GLUniformType {
     public static GLUniformType fromString(String name) {
         if (name == null) return null;
         return switch (name.toLowerCase(Locale.ROOT)) {
+            case "int" -> INT;
             case "vec4" -> VEC4;
             case "mat4" -> MAT4;
             default -> null;

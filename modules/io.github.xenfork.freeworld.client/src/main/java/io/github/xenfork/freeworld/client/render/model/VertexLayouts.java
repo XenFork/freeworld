@@ -23,9 +23,15 @@ import java.lang.foreign.ValueLayout;
 public final class VertexLayouts {
     public static final String NAME_POSITION = "Position";
     public static final String NAME_COLOR = "Color";
+    public static final String NAME_UV = "UV";
     public static final StructLayout POSITION_COLOR = MemoryLayout.structLayout(
         MemoryLayout.sequenceLayout(3L, ValueLayout.JAVA_FLOAT).withName(NAME_POSITION),
         MemoryLayout.sequenceLayout(4L, ValueLayout.JAVA_BYTE).withName(NAME_COLOR)
+    );
+    public static final StructLayout POSITION_COLOR_TEX = MemoryLayout.structLayout(
+        MemoryLayout.sequenceLayout(3L, ValueLayout.JAVA_FLOAT).withName(NAME_POSITION),
+        MemoryLayout.sequenceLayout(4L, ValueLayout.JAVA_BYTE).withName(NAME_COLOR),
+        MemoryLayout.sequenceLayout(2L, ValueLayout.JAVA_FLOAT).withName(NAME_UV)
     );
 
     private VertexLayouts() {

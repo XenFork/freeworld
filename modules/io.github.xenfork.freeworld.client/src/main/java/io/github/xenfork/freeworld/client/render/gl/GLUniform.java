@@ -27,14 +27,14 @@ import java.lang.foreign.ValueLayout;
  * @since 0.1.0
  */
 public final class GLUniform {
-    private final GLProgram program;
+    private final int programId;
     private final GLUniformType type;
     private final int location;
     final MemorySegment value;
     private boolean dirty = true;
 
-    public GLUniform(GLProgram program, GLUniformType type, int location, Arena arena) {
-        this.program = program;
+    public GLUniform(int programId, GLUniformType type, int location, Arena arena) {
+        this.programId = programId;
         this.type = type;
         this.location = location;
         this.value = arena.allocate(type.byteSize());
@@ -42,6 +42,11 @@ public final class GLUniform {
 
     private void markDirty() {
         dirty = true;
+    }
+
+    public void set(int v) {
+        markDirty();
+        value.set(ValueLayout.JAVA_INT, 0L, v);
     }
 
     public void set(float x, float y, float z, float w) {
@@ -65,12 +70,14 @@ public final class GLUniform {
         final GL gl = GameRenderer.OpenGL.get();
         if (glFlags.GL_ARB_separate_shader_objects) {
             switch (type) {
-                case VEC4 -> gl.programUniform4fv(program.id(), location, 1, value);
-                case MAT4 -> gl.programUniformMatrix4fv(program.id(), location, 1, false, value);
+                case INT -> gl.programUniform1iv(programId, location, 1, value);
+                case VEC4 -> gl.programUniform4fv(programId, location, 1, value);
+                case MAT4 -> gl.programUniformMatrix4fv(programId, location, 1, false, value);
             }
         } else {
-            program.use();
+            gl.useProgram(programId);
             switch (type) {
+                case INT -> gl.uniform1iv(location, 1, value);
                 case VEC4 -> gl.uniform4fv(location, 1, value);
                 case MAT4 -> gl.uniformMatrix4fv(location, 1, false, value);
             }

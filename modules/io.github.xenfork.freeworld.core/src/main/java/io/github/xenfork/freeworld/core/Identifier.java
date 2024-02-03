@@ -28,6 +28,7 @@ public record Identifier(String namespace, String path) {
     public static final String DEFAULT_NAMESPACE = "freeworld";
     public static final String ROOT_ASSETS = "assets";
     public static final String RES_SHADER = "shader";
+    public static final String RES_TEXTURE = "texture";
     public static final String EXT_JSON = ".json";
     private static final Pattern NAMESPACE_RULE = Pattern.compile("^\\w+$");
     private static final Pattern PATH_RULE = Pattern.compile("^[\\w/.]*$");

@@ -42,6 +42,7 @@ import java.util.Objects;
 public final class GLProgram implements AutoCloseable {
     public static final int INPUT_POSITION = 0;
     public static final int INPUT_COLOR = 1;
+    public static final int INPUT_UV = 2;
     public static final String UNIFORM_PROJECTION_VIEW_MATRIX = "ProjectionViewMatrix";
     public static final String UNIFORM_MODEL_MATRIX = "ModelMatrix";
     public static final String UNIFORM_COLOR_MODULATOR = "ColorModulator";
@@ -230,13 +231,14 @@ public final class GLProgram implements AutoCloseable {
                         continue;
                     }
                     final GLUniformType type = entry.getValue();
-                    final GLUniform uniform = new GLUniform(program, type, location, uniformArena);
+                    final GLUniform uniform = new GLUniform(id, type, location, uniformArena);
                     uniformMap.put(name, uniform);
 
                     final JsonArray array = uniformValueMap.get(name);
                     if (array != null) {
                         final MemorySegment value = uniform.value;
                         switch (type) {
+                            case INT -> value.set(ValueLayout.JAVA_INT, 0L, array.get(0).getAsInt());
                             case VEC4 -> {
                                 for (int i = 0; i < 4; i++) {
                                     value.setAtIndex(ValueLayout.JAVA_FLOAT, i, array.get(i).getAsFloat());
