@@ -1,11 +1,6 @@
 {
   "vertex": "freeworld:init/position_color_tex.vert",
   "fragment": "freeworld:init/position_color_tex.frag",
-  "input": {
-    "Position": 0,
-    "Color": 1,
-    "UV": 2
-  },
   "uniform": {
     "ProjectionViewMatrix": {
       "type": "mat4",

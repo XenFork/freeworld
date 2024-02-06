@@ -24,7 +24,7 @@ import java.util.regex.Pattern;
  * @author squid233
  * @since 0.1.0
  */
-public record Identifier(String namespace, String path) {
+public record Identifier(@NotNull String namespace, @NotNull String path) {
     public static final String DEFAULT_NAMESPACE = "freeworld";
     public static final String ROOT_ASSETS = "assets";
     public static final String RES_SHADER = "shader";
@@ -34,9 +34,9 @@ public record Identifier(String namespace, String path) {
     private static final Pattern PATH_RULE = Pattern.compile("^[\\w/.]*$");
     private static final Identifier EMPTY = new Identifier(DEFAULT_NAMESPACE, "");
 
-    @NotNull
-    public static Identifier of(@NotNull String namespace, @NotNull String path) throws InvalidIdentifierException {
-        return new Identifier(checkNamespace(namespace), checkPath(path));
+    public Identifier(@NotNull String namespace, @NotNull String path) {
+        this.namespace = checkNamespace(namespace);
+        this.path = checkPath(path);
     }
 
     @NotNull
@@ -46,13 +46,13 @@ public record Identifier(String namespace, String path) {
         return switch (split.length) {
             case 0 -> EMPTY;
             case 1 -> ofBuiltin(split[0]);
-            default -> of(split[0], split[1]);
+            default -> new Identifier(split[0], split[1]);
         };
     }
 
     @NotNull
     public static Identifier ofBuiltin(@NotNull String path) throws InvalidIdentifierException {
-        return new Identifier(DEFAULT_NAMESPACE, checkPath(path));
+        return new Identifier(DEFAULT_NAMESPACE, path);
     }
 
     @Nullable

@@ -11,7 +11,7 @@
 package io.github.xenfork.freeworld.client.render;
 
 import io.github.xenfork.freeworld.client.render.gl.GLDrawMode;
-import io.github.xenfork.freeworld.client.render.gl.GLProgram;
+import io.github.xenfork.freeworld.client.render.model.VertexLayout;
 import io.github.xenfork.freeworld.client.render.model.VertexLayouts;
 import overrungl.opengl.GL;
 import overrungl.opengl.GL10C;
@@ -37,7 +37,8 @@ import static io.github.xenfork.freeworld.client.util.Conversions.colorToInt;
 public final class Tessellator {
     private static final int MAX_VERTEX_COUNT = 60000;
     private static final int MAX_INDEX_COUNT = 90000;
-    private static final StructLayout LAYOUT = VertexLayouts.POSITION_COLOR_TEX;
+    private static final VertexLayout VERTEX_LAYOUT = VertexLayouts.POSITION_COLOR_TEX;
+    private static final StructLayout LAYOUT = VERTEX_LAYOUT.layout();
     private static final VarHandle X = LAYOUT.arrayElementVarHandle(
         PathElement.groupElement(VertexLayouts.NAME_POSITION),
         PathElement.sequenceElement(0L)
@@ -195,12 +196,8 @@ public final class Tessellator {
         gl.bindBuffer(GL15C.ARRAY_BUFFER, vbo);
         if (firstFlush) {
             gl.bufferData(GL15C.ARRAY_BUFFER, buffer, GL15C.STREAM_DRAW);
-            gl.enableVertexAttribArray(GLProgram.INPUT_POSITION);
-            gl.enableVertexAttribArray(GLProgram.INPUT_COLOR);
-            gl.enableVertexAttribArray(GLProgram.INPUT_UV);
-            gl.vertexAttribPointer(GLProgram.INPUT_POSITION, 3, GL10C.FLOAT, false, Math.toIntExact(LAYOUT.byteSize()), MemorySegment.NULL);
-            gl.vertexAttribPointer(GLProgram.INPUT_COLOR, 4, GL10C.UNSIGNED_BYTE, true, Math.toIntExact(LAYOUT.byteSize()), MemorySegment.ofAddress(3 * 4));
-            gl.vertexAttribPointer(GLProgram.INPUT_UV, 2, GL10C.FLOAT, false, Math.toIntExact(LAYOUT.byteSize()), MemorySegment.ofAddress(3 * 4 + 4));
+            VERTEX_LAYOUT.enableAttribs();
+            VERTEX_LAYOUT.specifyAttribPointers();
         } else {
             gl.bufferSubData(GL15C.ARRAY_BUFFER, 0L, LAYOUT.scale(0L, vertexCount), buffer);
         }

@@ -10,9 +10,7 @@
 
 package io.github.xenfork.freeworld.client.render.model;
 
-import java.lang.foreign.MemoryLayout;
-import java.lang.foreign.StructLayout;
-import java.lang.foreign.ValueLayout;
+import java.util.Map;
 
 /**
  * Vertex layouts
@@ -24,15 +22,15 @@ public final class VertexLayouts {
     public static final String NAME_POSITION = "Position";
     public static final String NAME_COLOR = "Color";
     public static final String NAME_UV = "UV";
-    public static final StructLayout POSITION_COLOR = MemoryLayout.structLayout(
-        MemoryLayout.sequenceLayout(3L, ValueLayout.JAVA_FLOAT).withName(NAME_POSITION),
-        MemoryLayout.sequenceLayout(4L, ValueLayout.JAVA_BYTE).withName(NAME_COLOR)
-    );
-    public static final StructLayout POSITION_COLOR_TEX = MemoryLayout.structLayout(
-        MemoryLayout.sequenceLayout(3L, ValueLayout.JAVA_FLOAT).withName(NAME_POSITION),
-        MemoryLayout.sequenceLayout(4L, ValueLayout.JAVA_BYTE).withName(NAME_COLOR),
-        MemoryLayout.sequenceLayout(2L, ValueLayout.JAVA_FLOAT).withName(NAME_UV)
-    );
+    public static final VertexLayout POSITION_COLOR = new VertexLayout(Map.of(
+        NAME_POSITION, VertexFormat.POSITION,
+        NAME_COLOR, VertexFormat.COLOR
+    ));
+    public static final VertexLayout POSITION_COLOR_TEX = new VertexLayout(Map.of(
+        NAME_POSITION, VertexFormat.POSITION,
+        NAME_COLOR, VertexFormat.COLOR,
+        NAME_UV, VertexFormat.UV
+    ));
 
     private VertexLayouts() {
     }

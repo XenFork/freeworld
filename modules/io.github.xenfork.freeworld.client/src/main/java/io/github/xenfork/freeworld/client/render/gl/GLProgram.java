@@ -15,6 +15,7 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import io.github.xenfork.freeworld.client.render.GameRenderer;
+import io.github.xenfork.freeworld.client.render.model.VertexLayout;
 import io.github.xenfork.freeworld.core.Identifier;
 import io.github.xenfork.freeworld.file.BuiltinFiles;
 import io.github.xenfork.freeworld.util.Logging;
@@ -49,21 +50,24 @@ public final class GLProgram implements AutoCloseable {
     private static final Logger logger = Logging.caller();
     private final int id;
     private final Identifier identifier;
+    private final VertexLayout vertexLayout;
     private final Map<String, GLUniform> uniformMap;
     private final Arena uniformArena;
 
-    private GLProgram(int id, Identifier identifier, Map<String, GLUniform> uniformMap, Arena uniformArena) {
+    private GLProgram(int id, Identifier identifier, VertexLayout vertexLayout, Map<String, GLUniform> uniformMap, Arena uniformArena) {
         this.id = id;
         this.identifier = identifier;
+        this.vertexLayout = vertexLayout;
         this.uniformMap = uniformMap;
         this.uniformArena = uniformArena;
     }
 
     @Nullable
-    public static GLProgram load(@NotNull Identifier identifier) {
+    public static GLProgram load(@NotNull Identifier identifier, @NotNull VertexLayout vertexLayout) {
         Objects.requireNonNull(identifier);
+        Objects.requireNonNull(vertexLayout);
 
-        final GLProgram program = loadFromJson(identifier);
+        final GLProgram program = loadFromJson(identifier, vertexLayout);
         if (program != null) {
             logger.debug("Created {}", program);
             return program;
@@ -71,7 +75,7 @@ public final class GLProgram implements AutoCloseable {
         return null;
     }
 
-    private static GLProgram loadFromJson(Identifier identifier) {
+    private static GLProgram loadFromJson(Identifier identifier, VertexLayout vertexLayout) {
         final String path = identifier.toResourcePath(Identifier.ROOT_ASSETS,
             Identifier.RES_SHADER,
             Identifier.EXT_JSON);
@@ -83,7 +87,6 @@ public final class GLProgram implements AutoCloseable {
 
         final Identifier vshId;
         final Identifier fshId;
-        final Map<String, Integer> inputMap;
         final boolean hasUniform;
         final Map<String, GLUniformType> uniformTypeMap;
         final Map<String, JsonArray> uniformValueMap;
@@ -102,25 +105,6 @@ public final class GLProgram implements AutoCloseable {
             if (vshId == null) return null;
             fshId = getShaderId(identifier, path, jsonObject, "fragment");
             if (fshId == null) return null;
-
-            // input
-            final JsonElement inputElement = jsonObject.get("input");
-            if (!inputElement.isJsonObject()) {
-                malformedJson(identifier, path, "input is not a JSON object");
-                return null;
-            }
-            final JsonObject input = inputElement.getAsJsonObject();
-            inputMap = HashMap.newHashMap(input.size());
-
-            for (var entry : input.entrySet()) {
-                final String name = entry.getKey();
-                final JsonElement value = entry.getValue();
-                if (!value.isJsonPrimitive() || !value.getAsJsonPrimitive().isNumber()) {
-                    malformedJson(identifier, path, STR."input.\{name} is not a number");
-                    return null;
-                }
-                inputMap.put(name, value.getAsInt());
-            }
 
             // uniform
             if (jsonObject.has("uniform")) {
@@ -199,7 +183,7 @@ public final class GLProgram implements AutoCloseable {
         }
 
         final int id = gl.createProgram();
-        inputMap.forEach((name, index) -> gl.bindAttribLocation(id, index, name));
+        vertexLayout.bindLocations(id);
         gl.attachShader(id, vsh);
         gl.attachShader(id, fsh);
         gl.linkProgram(id);
@@ -219,7 +203,7 @@ public final class GLProgram implements AutoCloseable {
         final Map<String, GLUniform> uniformMap = hasUniform ? HashMap.newHashMap(uniformTypeMap.size()) : Map.of();
         final Arena uniformArena = hasUniform ? Arena.ofConfined() : null;
 
-        final GLProgram program = new GLProgram(id, identifier, uniformMap, uniformArena);
+        final GLProgram program = new GLProgram(id, identifier, vertexLayout, uniformMap, uniformArena);
 
         if (hasUniform) {
             try {
@@ -329,5 +313,9 @@ public final class GLProgram implements AutoCloseable {
 
     public Identifier identifier() {
         return identifier;
+    }
+
+    public VertexLayout vertexLayout() {
+        return vertexLayout;
     }
 }

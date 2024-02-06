@@ -13,6 +13,8 @@ package io.github.xenfork.freeworld.client.render;
 import io.github.xenfork.freeworld.client.Freeworld;
 import io.github.xenfork.freeworld.client.render.gl.GLDrawMode;
 import io.github.xenfork.freeworld.client.render.gl.GLProgram;
+import io.github.xenfork.freeworld.client.render.model.VertexLayout;
+import io.github.xenfork.freeworld.client.render.model.VertexLayouts;
 import io.github.xenfork.freeworld.client.texture.TextureAtlas;
 import io.github.xenfork.freeworld.client.texture.TextureRegion;
 import io.github.xenfork.freeworld.core.Identifier;
@@ -71,13 +73,13 @@ public final class GameRenderer implements AutoCloseable {
     }
 
     private void initGLPrograms() {
-        positionColorProgram = initBootstrapProgram("init/position_color");
-        positionColorTexProgram = initBootstrapProgram("init/position_color_tex");
+        positionColorProgram = initBootstrapProgram("init/position_color", VertexLayouts.POSITION_COLOR);
+        positionColorTexProgram = initBootstrapProgram("init/position_color_tex", VertexLayouts.POSITION_COLOR_TEX);
     }
 
-    private GLProgram initBootstrapProgram(String path) {
+    private GLProgram initBootstrapProgram(String path, VertexLayout layout) {
         final Identifier identifier = Identifier.ofBuiltin(path);
-        final GLProgram program = GLProgram.load(identifier);
+        final GLProgram program = GLProgram.load(identifier, layout);
         if (program == null) {
             throw new IllegalStateException(STR."Failed to initialize bootstrap GLProgram \{identifier}");
         }
