@@ -108,7 +108,7 @@ public final class Freeworld implements AutoCloseable {
 
     public void run() {
         while (!glfw.windowShouldClose(window)) {
-            glfw.pollEvents();
+            glfw.waitEvents();
         }
         windowOpen.setOpaque(false);
     }

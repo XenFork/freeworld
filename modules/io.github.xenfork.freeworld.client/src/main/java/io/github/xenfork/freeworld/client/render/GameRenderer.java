@@ -13,7 +13,8 @@ package io.github.xenfork.freeworld.client.render;
 import io.github.xenfork.freeworld.client.Freeworld;
 import io.github.xenfork.freeworld.client.render.gl.GLDrawMode;
 import io.github.xenfork.freeworld.client.render.gl.GLProgram;
-import io.github.xenfork.freeworld.client.texture.Texture;
+import io.github.xenfork.freeworld.client.texture.TextureAtlas;
+import io.github.xenfork.freeworld.client.texture.TextureRegion;
 import io.github.xenfork.freeworld.core.Identifier;
 import io.github.xenfork.freeworld.util.Logging;
 import org.joml.Matrix4f;
@@ -21,6 +22,8 @@ import org.slf4j.Logger;
 import overrungl.opengl.GL;
 import overrungl.opengl.GL10C;
 import overrungl.opengl.GLFlags;
+
+import java.util.List;
 
 /**
  * The game renderer.
@@ -45,7 +48,10 @@ public final class GameRenderer implements AutoCloseable {
     private int framebufferHeight;
     private final Matrix4f projectionView = new Matrix4f();
     private final Matrix4f matrix = new Matrix4f();
-    private Texture texture;
+    private static final Identifier TEX_DIRT = Identifier.ofBuiltin("texture/block/dirt.png");
+    private static final Identifier TEX_GRASS_BLOCK = Identifier.ofBuiltin("texture/block/grass_block.png");
+    private static final Identifier TEX_STONE = Identifier.ofBuiltin("texture/block/stone.png");
+    private TextureAtlas texture;
 
     public GameRenderer(Freeworld client) {
         this.client = client;
@@ -60,7 +66,8 @@ public final class GameRenderer implements AutoCloseable {
 
         gl.clearColor(0.4f, 0.6f, 0.9f, 1.0f);
 
-        texture = Texture.load(Identifier.ofBuiltin("block/grass_block.png"));
+        texture = TextureAtlas.load(List.of(TEX_DIRT, TEX_GRASS_BLOCK, TEX_STONE));
+        logger.info("Created {}x{}x{} block-atlas", texture.width(), texture.height(), texture.mipmapLevel());
     }
 
     private void initGLPrograms() {
@@ -102,20 +109,25 @@ public final class GameRenderer implements AutoCloseable {
         positionColorTexProgram.getUniform(GLProgram.UNIFORM_PROJECTION_VIEW_MATRIX).set(projectionView);
         positionColorTexProgram.getUniform(GLProgram.UNIFORM_MODEL_MATRIX).set(matrix);
         positionColorTexProgram.uploadUniforms();
+        final TextureRegion region = texture.getRegion(TEX_GRASS_BLOCK);
+        final float u0 = region.u0(texture.width());
+        final float u1 = region.u1(texture.width());
+        final float v0 = region.v0(texture.height());
+        final float v1 = region.v1(texture.height());
         final Tessellator t = Tessellator.getInstance();
         t.begin(GLDrawMode.TRIANGLES);
         // +x
         t.index(0, 1, 2, 2, 3, 0);
-        t.position(0.5f, 0.5f, 0.5f).color(1f, 1f, 1f).texCoord(0f, 0f).emit();
-        t.position(0.5f, -0.5f, 0.5f).color(1f, 1f, 1f).texCoord(0f, 1f).emit();
-        t.position(0.5f, -0.5f, -0.5f).color(1f, 1f, 1f).texCoord(1f, 1f).emit();
-        t.position(0.5f, 0.5f, -0.5f).color(1f, 1f, 1f).texCoord(1f, 0f).emit();
+        t.position(0.5f, 0.5f, 0.5f).color(1f, 1f, 1f).texCoord(u0, v0).emit();
+        t.position(0.5f, -0.5f, 0.5f).color(1f, 1f, 1f).texCoord(u0, v1).emit();
+        t.position(0.5f, -0.5f, -0.5f).color(1f, 1f, 1f).texCoord(u1, v1).emit();
+        t.position(0.5f, 0.5f, -0.5f).color(1f, 1f, 1f).texCoord(u1, v0).emit();
         // +z
         t.index(0, 1, 2, 2, 3, 0);
-        t.position(-0.5f, 0.5f, 0.5f).color(1f, 1f, 1f).texCoord(0f, 0f).emit();
-        t.position(-0.5f, -0.5f, 0.5f).color(1f, 1f, 1f).texCoord(0f, 1f).emit();
-        t.position(0.5f, -0.5f, 0.5f).color(1f, 1f, 1f).texCoord(1f, 1f).emit();
-        t.position(0.5f, 0.5f, 0.5f).color(1f, 1f, 1f).texCoord(1f, 0f).emit();
+        t.position(-0.5f, 0.5f, 0.5f).color(1f, 1f, 1f).texCoord(u0, v0).emit();
+        t.position(-0.5f, -0.5f, 0.5f).color(1f, 1f, 1f).texCoord(u0, v1).emit();
+        t.position(0.5f, -0.5f, 0.5f).color(1f, 1f, 1f).texCoord(u1, v1).emit();
+        t.position(0.5f, 0.5f, 0.5f).color(1f, 1f, 1f).texCoord(u1, v0).emit();
         t.end();
         gl.useProgram(0);
         gl.bindTexture(GL10C.TEXTURE_2D, 0);
