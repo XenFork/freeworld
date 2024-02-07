@@ -10,6 +10,8 @@
 
 package io.github.xenfork.freeworld.util;
 
+import java.util.List;
+
 /**
  * @author squid233
  * @since 0.1.0
@@ -22,6 +24,7 @@ public enum Direction {
     NORTH(4, 5, 0, 0, -1),
     SOUTH(5, 4, 0, 0, 1);
 
+    public static final List<Direction> LIST = List.of(values());
     private final int id;
     private final int oppositeId;
     private final int axisX;

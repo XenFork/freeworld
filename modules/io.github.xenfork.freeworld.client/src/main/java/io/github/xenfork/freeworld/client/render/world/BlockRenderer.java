@@ -17,6 +17,7 @@ import io.github.xenfork.freeworld.client.texture.TextureManager;
 import io.github.xenfork.freeworld.client.texture.TextureRegion;
 import io.github.xenfork.freeworld.core.Identifier;
 import io.github.xenfork.freeworld.core.registry.BuiltinRegistries;
+import io.github.xenfork.freeworld.util.Direction;
 import io.github.xenfork.freeworld.world.block.BlockState;
 import io.github.xenfork.freeworld.world.block.BlockType;
 
@@ -31,7 +32,7 @@ public final class BlockRenderer {
         this.gameRenderer = gameRenderer;
     }
 
-    public void renderBlock(Tessellator t, BlockState blockState, int x, int y, int z) {
+    public void renderBlockFace(Tessellator t, BlockState blockState, int x, int y, int z, Direction direction) {
         final BlockType blockType = blockState.blockType();
         if (blockType.air()) {
             return;
@@ -53,41 +54,55 @@ public final class BlockRenderer {
         final float u1 = region.u1(texture.width());
         final float v0 = region.v0(texture.height());
         final float v1 = region.v1(texture.height());
-        // -x
-        t.index(0, 1, 2, 2, 3, 0);
-        t.position(x0, y1, z0).color(1f, 1f, 1f).texCoord(u0, v0).emit();
-        t.position(x0, y0, z0).color(1f, 1f, 1f).texCoord(u0, v1).emit();
-        t.position(x0, y0, z1).color(1f, 1f, 1f).texCoord(u1, v1).emit();
-        t.position(x0, y1, z1).color(1f, 1f, 1f).texCoord(u1, v0).emit();
-        // +x
-        t.index(0, 1, 2, 2, 3, 0);
-        t.position(x1, y1, z1).color(1f, 1f, 1f).texCoord(u0, v0).emit();
-        t.position(x1, y0, z1).color(1f, 1f, 1f).texCoord(u0, v1).emit();
-        t.position(x1, y0, z0).color(1f, 1f, 1f).texCoord(u1, v1).emit();
-        t.position(x1, y1, z0).color(1f, 1f, 1f).texCoord(u1, v0).emit();
-        // -y
-        t.index(0, 1, 2, 2, 3, 0);
-        t.position(x0, y0, z1).color(1f, 1f, 1f).texCoord(u0, v0).emit();
-        t.position(x0, y0, z0).color(1f, 1f, 1f).texCoord(u0, v1).emit();
-        t.position(x1, y0, z0).color(1f, 1f, 1f).texCoord(u1, v1).emit();
-        t.position(x1, y0, z1).color(1f, 1f, 1f).texCoord(u1, v0).emit();
-        // +y
-        t.index(0, 1, 2, 2, 3, 0);
-        t.position(x0, y1, z0).color(1f, 1f, 1f).texCoord(u0, v0).emit();
-        t.position(x0, y1, z1).color(1f, 1f, 1f).texCoord(u0, v1).emit();
-        t.position(x1, y1, z1).color(1f, 1f, 1f).texCoord(u1, v1).emit();
-        t.position(x1, y1, z0).color(1f, 1f, 1f).texCoord(u1, v0).emit();
-        // -z
-        t.index(0, 1, 2, 2, 3, 0);
-        t.position(x1, y1, z0).color(1f, 1f, 1f).texCoord(u0, v0).emit();
-        t.position(x1, y0, z0).color(1f, 1f, 1f).texCoord(u0, v1).emit();
-        t.position(x0, y0, z0).color(1f, 1f, 1f).texCoord(u1, v1).emit();
-        t.position(x0, y1, z0).color(1f, 1f, 1f).texCoord(u1, v0).emit();
-        // +z
-        t.index(0, 1, 2, 2, 3, 0);
-        t.position(x0, y1, z1).color(1f, 1f, 1f).texCoord(u0, v0).emit();
-        t.position(x0, y0, z1).color(1f, 1f, 1f).texCoord(u0, v1).emit();
-        t.position(x1, y0, z1).color(1f, 1f, 1f).texCoord(u1, v1).emit();
-        t.position(x1, y1, z1).color(1f, 1f, 1f).texCoord(u1, v0).emit();
+        switch (direction) {
+            case WEST -> {
+                // -x
+                t.index(0, 1, 2, 2, 3, 0);
+                t.position(x0, y1, z0).color(1f, 1f, 1f).texCoord(u0, v0).emit();
+                t.position(x0, y0, z0).color(1f, 1f, 1f).texCoord(u0, v1).emit();
+                t.position(x0, y0, z1).color(1f, 1f, 1f).texCoord(u1, v1).emit();
+                t.position(x0, y1, z1).color(1f, 1f, 1f).texCoord(u1, v0).emit();
+            }
+            case EAST -> {
+                // +x
+                t.index(0, 1, 2, 2, 3, 0);
+                t.position(x1, y1, z1).color(1f, 1f, 1f).texCoord(u0, v0).emit();
+                t.position(x1, y0, z1).color(1f, 1f, 1f).texCoord(u0, v1).emit();
+                t.position(x1, y0, z0).color(1f, 1f, 1f).texCoord(u1, v1).emit();
+                t.position(x1, y1, z0).color(1f, 1f, 1f).texCoord(u1, v0).emit();
+            }
+            case DOWN -> {
+                // -y
+                t.index(0, 1, 2, 2, 3, 0);
+                t.position(x0, y0, z1).color(1f, 1f, 1f).texCoord(u0, v0).emit();
+                t.position(x0, y0, z0).color(1f, 1f, 1f).texCoord(u0, v1).emit();
+                t.position(x1, y0, z0).color(1f, 1f, 1f).texCoord(u1, v1).emit();
+                t.position(x1, y0, z1).color(1f, 1f, 1f).texCoord(u1, v0).emit();
+            }
+            case UP -> {
+                // +y
+                t.index(0, 1, 2, 2, 3, 0);
+                t.position(x0, y1, z0).color(1f, 1f, 1f).texCoord(u0, v0).emit();
+                t.position(x0, y1, z1).color(1f, 1f, 1f).texCoord(u0, v1).emit();
+                t.position(x1, y1, z1).color(1f, 1f, 1f).texCoord(u1, v1).emit();
+                t.position(x1, y1, z0).color(1f, 1f, 1f).texCoord(u1, v0).emit();
+            }
+            case NORTH -> {
+                // -z
+                t.index(0, 1, 2, 2, 3, 0);
+                t.position(x1, y1, z0).color(1f, 1f, 1f).texCoord(u0, v0).emit();
+                t.position(x1, y0, z0).color(1f, 1f, 1f).texCoord(u0, v1).emit();
+                t.position(x0, y0, z0).color(1f, 1f, 1f).texCoord(u1, v1).emit();
+                t.position(x0, y1, z0).color(1f, 1f, 1f).texCoord(u1, v0).emit();
+            }
+            case SOUTH -> {
+                // +z
+                t.index(0, 1, 2, 2, 3, 0);
+                t.position(x0, y1, z1).color(1f, 1f, 1f).texCoord(u0, v0).emit();
+                t.position(x0, y0, z1).color(1f, 1f, 1f).texCoord(u0, v1).emit();
+                t.position(x1, y0, z1).color(1f, 1f, 1f).texCoord(u1, v1).emit();
+                t.position(x1, y1, z1).color(1f, 1f, 1f).texCoord(u1, v0).emit();
+            }
+        }
     }
 }

@@ -11,16 +11,15 @@
 package io.github.xenfork.freeworld.client.render;
 
 import io.github.xenfork.freeworld.client.Freeworld;
-import io.github.xenfork.freeworld.client.render.gl.GLDrawMode;
 import io.github.xenfork.freeworld.client.render.gl.GLProgram;
 import io.github.xenfork.freeworld.client.render.model.VertexLayout;
 import io.github.xenfork.freeworld.client.render.model.VertexLayouts;
 import io.github.xenfork.freeworld.client.render.world.BlockRenderer;
+import io.github.xenfork.freeworld.client.render.world.WorldRenderer;
 import io.github.xenfork.freeworld.client.texture.TextureAtlas;
 import io.github.xenfork.freeworld.client.texture.TextureManager;
 import io.github.xenfork.freeworld.core.Identifier;
 import io.github.xenfork.freeworld.util.Logging;
-import io.github.xenfork.freeworld.world.block.BlockTypes;
 import org.joml.Matrix4f;
 import org.slf4j.Logger;
 import overrungl.opengl.GL;
@@ -58,6 +57,7 @@ public final class GameRenderer implements AutoCloseable {
     private TextureAtlas texture;
     private TextureManager textureManager;
     private BlockRenderer blockRenderer;
+    private WorldRenderer worldRenderer;
 
     public GameRenderer(Freeworld client) {
         this.client = client;
@@ -79,6 +79,7 @@ public final class GameRenderer implements AutoCloseable {
         logger.info("Created {}x{}x{} {}", texture.width(), texture.height(), texture.mipmapLevel(), TextureManager.BLOCK_ATLAS);
 
         blockRenderer = new BlockRenderer(this);
+        worldRenderer = new WorldRenderer(client, this, client.world());
     }
 
     private void initGLPrograms() {
@@ -124,16 +125,7 @@ public final class GameRenderer implements AutoCloseable {
         positionColorTexProgram.getUniform(GLProgram.UNIFORM_PROJECTION_VIEW_MATRIX).set(projectionView);
         positionColorTexProgram.getUniform(GLProgram.UNIFORM_MODEL_MATRIX).set(matrix);
         positionColorTexProgram.uploadUniforms();
-        final Tessellator t = Tessellator.getInstance();
-        t.begin(GLDrawMode.TRIANGLES);
-        for (int x = 0; x < 3; x++) {
-            for (int z = 0; z < 3; z++) {
-                blockRenderer.renderBlock(t, BlockTypes.GRASS_BLOCK.defaultBlockState(), x, 2, z);
-                blockRenderer.renderBlock(t, BlockTypes.DIRT.defaultBlockState(), x, 1, z);
-                blockRenderer.renderBlock(t, BlockTypes.STONE.defaultBlockState(), x, 0, z);
-            }
-        }
-        t.end();
+        worldRenderer.render();
         gl.useProgram(0);
         gl.bindTexture(GL10C.TEXTURE_2D, 0);
         gl.disable(GL10C.CULL_FACE);
@@ -172,5 +164,9 @@ public final class GameRenderer implements AutoCloseable {
 
     public TextureManager textureManager() {
         return textureManager;
+    }
+
+    public BlockRenderer blockRenderer() {
+        return blockRenderer;
     }
 }
