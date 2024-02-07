@@ -16,7 +16,7 @@ import java.util.Objects;
  * @author baka4n
  * @since 0.1.0
  */
-public abstract class BlockStateProperty<T> {
+public class BlockStateProperty<T> {
     private final String name;
 
     protected BlockStateProperty(String name) {

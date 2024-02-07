@@ -20,7 +20,8 @@ import io.github.xenfork.freeworld.core.registry.Registry;
  */
 public final class BlockTypes {
     public static final BlockType.Builder BUILDER_EMPTY = BlockType.builder();
-    public static final BlockType AIR = BUILDER_EMPTY.build();
+    public static final BlockType.Builder BUILDER_AIR = BlockType.builder().air();
+    public static final BlockType AIR = BUILDER_AIR.build();
     public static final BlockType GRASS_BLOCK = BUILDER_EMPTY.build();
     public static final BlockType DIRT = BUILDER_EMPTY.build();
     public static final BlockType STONE = BUILDER_EMPTY.build();
@@ -28,13 +29,14 @@ public final class BlockTypes {
     private BlockTypes() {
     }
 
-    private static void register(String name, BlockType blockType) {
-        Registry.register(BuiltinRegistries.BLOCK_TYPE, Identifier.ofBuiltin(name), blockType);
+    private static void register(String name, int rawId, BlockType blockType) {
+        Registry.register(BuiltinRegistries.BLOCK_TYPE, Identifier.ofBuiltin(name), rawId, blockType);
     }
 
     public static void bootstrap() {
-        register("grass_block", GRASS_BLOCK);
-        register("dirt", DIRT);
-        register("stone", STONE);
+        register("air", 0, AIR);
+        register("grass_block", 1, GRASS_BLOCK);
+        register("dirt", 2, DIRT);
+        register("stone", 3, STONE);
     }
 }

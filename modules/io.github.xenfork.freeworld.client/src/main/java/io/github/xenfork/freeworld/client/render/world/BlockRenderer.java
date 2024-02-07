@@ -18,6 +18,7 @@ import io.github.xenfork.freeworld.client.texture.TextureRegion;
 import io.github.xenfork.freeworld.core.Identifier;
 import io.github.xenfork.freeworld.core.registry.BuiltinRegistries;
 import io.github.xenfork.freeworld.world.block.BlockState;
+import io.github.xenfork.freeworld.world.block.BlockType;
 
 /**
  * @author squid233
@@ -31,8 +32,13 @@ public final class BlockRenderer {
     }
 
     public void renderBlock(Tessellator t, BlockState blockState, int x, int y, int z) {
+        final BlockType blockType = blockState.blockType();
+        if (blockType.air()) {
+            return;
+        }
+
         final TextureAtlas texture = (TextureAtlas) gameRenderer.textureManager().getTexture(TextureManager.BLOCK_ATLAS);
-        final TextureRegion region = texture.getRegion(BuiltinRegistries.BLOCK_TYPE.getId(blockState.blockType()).toResourceId("texture/block", Identifier.EXT_PNG));
+        final TextureRegion region = texture.getRegion(BuiltinRegistries.BLOCK_TYPE.getId(blockType).toResourceId("texture/block", Identifier.EXT_PNG));
         if (region == null) {
             return;
         }

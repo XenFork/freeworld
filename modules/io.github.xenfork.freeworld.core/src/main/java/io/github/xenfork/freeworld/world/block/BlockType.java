@@ -17,10 +17,12 @@ import io.github.xenfork.freeworld.world.block.function.BlockStateDefiner;
  * @since 0.1.0
  */
 public final class BlockType {
+    private final boolean air;
     private final BlockStateDefiner blockStateDefiner;
     private BlockState defaultBlockState;
 
-    private BlockType(BlockStateDefiner blockStateDefiner) {
+    private BlockType(boolean air, BlockStateDefiner blockStateDefiner) {
+        this.air = air;
         this.blockStateDefiner = blockStateDefiner;
     }
 
@@ -33,7 +35,13 @@ public final class BlockType {
      * @since 0.1.0
      */
     public static final class Builder {
+        private boolean air = false;
         private BlockStateDefiner blockStateDefiner = BlockStateDefiner.identity();
+
+        public Builder air() {
+            this.air = true;
+            return this;
+        }
 
         public Builder stateDefinitions(BlockStateDefiner definer) {
             this.blockStateDefiner = definer;
@@ -41,7 +49,7 @@ public final class BlockType {
         }
 
         public BlockType build() {
-            return new BlockType(blockStateDefiner);
+            return new BlockType(air, blockStateDefiner);
         }
     }
 
@@ -50,5 +58,9 @@ public final class BlockType {
             defaultBlockState = blockStateDefiner.apply(BlockState.empty(this));
         }
         return defaultBlockState;
+    }
+
+    public boolean air() {
+        return air;
     }
 }

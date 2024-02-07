@@ -46,6 +46,10 @@ public final class Freeworld implements AutoCloseable {
     private final AtomicBoolean framebufferResized = new AtomicBoolean();
     private final Timer timer = new Timer(Timer.DEFAULT_TPS);
     private final Camera camera = new Camera();
+    private double cursorX;
+    private double cursorY;
+    private double cursorDeltaX;
+    private double cursorDeltaY;
 
     private Freeworld() {
         this.glfw = GLFW.INSTANCE;
@@ -77,6 +81,7 @@ public final class Freeworld implements AutoCloseable {
             framebufferHeight = height;
             framebufferResized.setRelease(true);
         });
+        glfw.setCursorPosCallback(window, (_, xpos, ypos) -> onCursorPos(xpos, ypos));
 
         final Pair.OfInt framebufferSize = glfw.getFramebufferSize(window);
         framebufferWidth = framebufferSize.x();
@@ -94,6 +99,8 @@ public final class Freeworld implements AutoCloseable {
 
         BlockTypes.bootstrap();
         BuiltinRegistries.BLOCK_TYPE.freeze();
+
+        camera.setPosition(1.5, 3.0, 1.5);
 
         final RenderThread renderThread = new RenderThread(this, "Render Thread");
         renderThread.setUncaughtExceptionHandler((t, e) -> {
@@ -116,19 +123,29 @@ public final class Freeworld implements AutoCloseable {
         logger.info("Closing client");
     }
 
+    private void onCursorPos(double x, double y) {
+        cursorDeltaX = x - cursorX;
+        cursorDeltaY = y - cursorY;
+        if (glfw.getMouseButton(window, GLFW.MOUSE_BUTTON_RIGHT) == GLFW.PRESS) {
+            camera.rotate(-cursorDeltaY * 0.7, -cursorDeltaX * 0.7);
+        }
+        cursorX = x;
+        cursorY = y;
+    }
+
     private void tick() {
         camera.preUpdate();
         final double speed = 0.1;
         double xo = 0.0;
         double yo = 0.0;
         double zo = 0.0;
-        if (glfw.getKey(window, GLFW.KEY_W) == GLFW.PRESS) zo -= speed;
-        if (glfw.getKey(window, GLFW.KEY_S) == GLFW.PRESS) zo += speed;
-        if (glfw.getKey(window, GLFW.KEY_A) == GLFW.PRESS) xo -= speed;
-        if (glfw.getKey(window, GLFW.KEY_D) == GLFW.PRESS) xo += speed;
-        if (glfw.getKey(window, GLFW.KEY_LEFT_SHIFT) == GLFW.PRESS) yo -= speed;
-        if (glfw.getKey(window, GLFW.KEY_SPACE) == GLFW.PRESS) yo += speed;
-        camera.move(xo, yo, zo);
+        if (glfw.getKey(window, GLFW.KEY_W) == GLFW.PRESS) zo -= 1.0;
+        if (glfw.getKey(window, GLFW.KEY_S) == GLFW.PRESS) zo += 1.0;
+        if (glfw.getKey(window, GLFW.KEY_A) == GLFW.PRESS) xo -= 1.0;
+        if (glfw.getKey(window, GLFW.KEY_D) == GLFW.PRESS) xo += 1.0;
+        if (glfw.getKey(window, GLFW.KEY_LEFT_SHIFT) == GLFW.PRESS) yo -= 1.0;
+        if (glfw.getKey(window, GLFW.KEY_SPACE) == GLFW.PRESS) yo += 1.0;
+        camera.moveRelative(xo, yo, zo, speed);
     }
 
     public void run() {
