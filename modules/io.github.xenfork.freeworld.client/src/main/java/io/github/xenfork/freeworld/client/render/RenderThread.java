@@ -12,6 +12,7 @@ package io.github.xenfork.freeworld.client.render;
 
 import io.github.xenfork.freeworld.client.Freeworld;
 import io.github.xenfork.freeworld.util.Logging;
+import io.github.xenfork.freeworld.util.Timer;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import overrungl.glfw.GLFW;
@@ -30,6 +31,7 @@ import java.util.Objects;
 public final class RenderThread extends Thread {
     private static final Logger logger = Logging.caller();
     private final Freeworld client;
+    private final Timer timer = new Timer(Timer.DEFAULT_TPS);
 
     public RenderThread(Freeworld client, @NotNull String name) {
         super(name);
@@ -52,8 +54,13 @@ public final class RenderThread extends Thread {
             .run(() -> {
                 try (GameRenderer gameRenderer = new GameRenderer(client)) {
                     gameRenderer.init();
+                    timer.update();
                     while (client.windowOpen().getOpaque()) {
-                        gameRenderer.render();
+                        timer.update();
+                        for (int i = 0, c = timer.tickCount(); i < c; i++) {
+                            gameRenderer.tick();
+                        }
+                        gameRenderer.render(timer.partialTick());
                     }
                 }
             });
