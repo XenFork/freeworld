@@ -30,8 +30,9 @@ public record Identifier(@NotNull String namespace, @NotNull String path) {
     public static final String RES_SHADER = "shader";
     public static final String RES_TEXTURE = "texture";
     public static final String EXT_JSON = ".json";
-    private static final Pattern NAMESPACE_RULE = Pattern.compile("^\\w+$");
-    private static final Pattern PATH_RULE = Pattern.compile("^[\\w/.]*$");
+    public static final String EXT_PNG = ".png";
+    private static final Pattern NAMESPACE_RULE = Pattern.compile("^[\\w-]+$");
+    private static final Pattern PATH_RULE = Pattern.compile("^[\\w/.-]*$");
     private static final Identifier EMPTY = new Identifier(DEFAULT_NAMESPACE, "");
 
     public Identifier(@NotNull String namespace, @NotNull String path) {
@@ -98,6 +99,10 @@ public record Identifier(@NotNull String namespace, @NotNull String path) {
 
     public String toResourcePath(@Nullable String root, @Nullable String type, @Nullable String suffix) {
         return STR."\{root != null ? STR."\{root}/" : ""}\{namespace()}/\{type != null ? STR."\{type}/" : ""}\{path()}\{suffix != null ? suffix : ""}";
+    }
+
+    public Identifier toResourceId(@Nullable String type, @Nullable String suffix) {
+        return new Identifier(namespace(), STR."\{type != null ? STR."\{type}/" : ""}\{path()}\{suffix != null ? suffix : ""}");
     }
 
     @Override

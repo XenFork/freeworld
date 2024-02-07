@@ -15,8 +15,12 @@
  */
 module io.github.xenfork.freeworld.core {
     exports io.github.xenfork.freeworld.core;
+    exports io.github.xenfork.freeworld.core.registry;
     exports io.github.xenfork.freeworld.file;
     exports io.github.xenfork.freeworld.util;
+    exports io.github.xenfork.freeworld.world.block;
+    exports io.github.xenfork.freeworld.world.block.function;
+    exports io.github.xenfork.freeworld.world.block.property;
 
     requires ch.qos.logback.core;
     requires ch.qos.logback.classic;

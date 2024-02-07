@@ -15,10 +15,12 @@ import io.github.xenfork.freeworld.client.render.gl.GLDrawMode;
 import io.github.xenfork.freeworld.client.render.gl.GLProgram;
 import io.github.xenfork.freeworld.client.render.model.VertexLayout;
 import io.github.xenfork.freeworld.client.render.model.VertexLayouts;
+import io.github.xenfork.freeworld.client.render.world.BlockRenderer;
 import io.github.xenfork.freeworld.client.texture.TextureAtlas;
-import io.github.xenfork.freeworld.client.texture.TextureRegion;
+import io.github.xenfork.freeworld.client.texture.TextureManager;
 import io.github.xenfork.freeworld.core.Identifier;
 import io.github.xenfork.freeworld.util.Logging;
+import io.github.xenfork.freeworld.world.block.BlockTypes;
 import org.joml.Matrix4f;
 import org.slf4j.Logger;
 import overrungl.opengl.GL;
@@ -50,10 +52,12 @@ public final class GameRenderer implements AutoCloseable {
     private int framebufferHeight;
     private final Matrix4f projectionView = new Matrix4f();
     private final Matrix4f matrix = new Matrix4f();
-    private static final Identifier TEX_DIRT = Identifier.ofBuiltin("texture/block/dirt.png");
-    private static final Identifier TEX_GRASS_BLOCK = Identifier.ofBuiltin("texture/block/grass_block.png");
-    private static final Identifier TEX_STONE = Identifier.ofBuiltin("texture/block/stone.png");
+    public static final Identifier TEX_DIRT = Identifier.ofBuiltin("texture/block/dirt.png");
+    public static final Identifier TEX_GRASS_BLOCK = Identifier.ofBuiltin("texture/block/grass_block.png");
+    public static final Identifier TEX_STONE = Identifier.ofBuiltin("texture/block/stone.png");
     private TextureAtlas texture;
+    private TextureManager textureManager;
+    private BlockRenderer blockRenderer;
 
     public GameRenderer(Freeworld client) {
         this.client = client;
@@ -68,8 +72,13 @@ public final class GameRenderer implements AutoCloseable {
 
         gl.clearColor(0.4f, 0.6f, 0.9f, 1.0f);
 
+        textureManager = new TextureManager();
+
         texture = TextureAtlas.load(List.of(TEX_DIRT, TEX_GRASS_BLOCK, TEX_STONE));
-        logger.info("Created {}x{}x{} block-atlas", texture.width(), texture.height(), texture.mipmapLevel());
+        textureManager.addTexture(TextureManager.BLOCK_ATLAS, texture);
+        logger.info("Created {}x{}x{} {}", texture.width(), texture.height(), texture.mipmapLevel(), TextureManager.BLOCK_ATLAS);
+
+        blockRenderer = new BlockRenderer(this);
     }
 
     private void initGLPrograms() {
@@ -97,6 +106,9 @@ public final class GameRenderer implements AutoCloseable {
 
         gl.clear(GL10C.COLOR_BUFFER_BIT | GL10C.DEPTH_BUFFER_BIT);
 
+        gl.enable(GL10C.CULL_FACE);
+        gl.enable(GL10C.DEPTH_TEST);
+        gl.depthFunc(GL10C.LEQUAL);
         texture.bind();
         positionColorTexProgram.use();
         projectionView.setPerspective(
@@ -112,28 +124,20 @@ public final class GameRenderer implements AutoCloseable {
         positionColorTexProgram.getUniform(GLProgram.UNIFORM_PROJECTION_VIEW_MATRIX).set(projectionView);
         positionColorTexProgram.getUniform(GLProgram.UNIFORM_MODEL_MATRIX).set(matrix);
         positionColorTexProgram.uploadUniforms();
-        final TextureRegion region = texture.getRegion(TEX_GRASS_BLOCK);
-        final float u0 = region.u0(texture.width());
-        final float u1 = region.u1(texture.width());
-        final float v0 = region.v0(texture.height());
-        final float v1 = region.v1(texture.height());
         final Tessellator t = Tessellator.getInstance();
         t.begin(GLDrawMode.TRIANGLES);
-        // +x
-        t.index(0, 1, 2, 2, 3, 0);
-        t.position(0.5f, 0.5f, 0.5f).color(1f, 1f, 1f).texCoord(u0, v0).emit();
-        t.position(0.5f, -0.5f, 0.5f).color(1f, 1f, 1f).texCoord(u0, v1).emit();
-        t.position(0.5f, -0.5f, -0.5f).color(1f, 1f, 1f).texCoord(u1, v1).emit();
-        t.position(0.5f, 0.5f, -0.5f).color(1f, 1f, 1f).texCoord(u1, v0).emit();
-        // +z
-        t.index(0, 1, 2, 2, 3, 0);
-        t.position(-0.5f, 0.5f, 0.5f).color(1f, 1f, 1f).texCoord(u0, v0).emit();
-        t.position(-0.5f, -0.5f, 0.5f).color(1f, 1f, 1f).texCoord(u0, v1).emit();
-        t.position(0.5f, -0.5f, 0.5f).color(1f, 1f, 1f).texCoord(u1, v1).emit();
-        t.position(0.5f, 0.5f, 0.5f).color(1f, 1f, 1f).texCoord(u1, v0).emit();
+        for (int x = 0; x < 3; x++) {
+            for (int z = 0; z < 3; z++) {
+                blockRenderer.renderBlock(t, BlockTypes.GRASS_BLOCK.defaultBlockState(), x, 2, z);
+                blockRenderer.renderBlock(t, BlockTypes.DIRT.defaultBlockState(), x, 1, z);
+                blockRenderer.renderBlock(t, BlockTypes.STONE.defaultBlockState(), x, 0, z);
+            }
+        }
         t.end();
         gl.useProgram(0);
         gl.bindTexture(GL10C.TEXTURE_2D, 0);
+        gl.disable(GL10C.CULL_FACE);
+        gl.disable(GL10C.DEPTH_TEST);
 
         client.glfw().swapBuffers(client.window());
     }
@@ -142,7 +146,7 @@ public final class GameRenderer implements AutoCloseable {
     public void close() {
         logger.info("Closing game renderer");
 
-        if (texture != null) texture.close();
+        if (textureManager != null) textureManager.close();
 
         if (positionColorProgram != null) positionColorProgram.close();
         if (positionColorTexProgram != null) positionColorTexProgram.close();
@@ -164,5 +168,9 @@ public final class GameRenderer implements AutoCloseable {
 
     public int framebufferHeight() {
         return framebufferHeight;
+    }
+
+    public TextureManager textureManager() {
+        return textureManager;
     }
 }

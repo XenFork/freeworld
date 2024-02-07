@@ -12,8 +12,10 @@ package io.github.xenfork.freeworld.client;
 
 import io.github.xenfork.freeworld.client.render.Camera;
 import io.github.xenfork.freeworld.client.render.RenderThread;
+import io.github.xenfork.freeworld.core.registry.BuiltinRegistries;
 import io.github.xenfork.freeworld.util.Logging;
 import io.github.xenfork.freeworld.util.Timer;
+import io.github.xenfork.freeworld.world.block.BlockTypes;
 import org.slf4j.Logger;
 import overrun.marshal.Unmarshal;
 import overrungl.glfw.GLFW;
@@ -89,6 +91,9 @@ public final class Freeworld implements AutoCloseable {
                 (videoMode.width() - windowSize.x()) / 2,
                 (videoMode.height() - windowSize.y()) / 2);
         }
+
+        BlockTypes.bootstrap();
+        BuiltinRegistries.BLOCK_TYPE.freeze();
 
         final RenderThread renderThread = new RenderThread(this, "Render Thread");
         renderThread.setUncaughtExceptionHandler((t, e) -> {
