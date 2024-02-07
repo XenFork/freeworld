@@ -10,8 +10,10 @@
 
 package io.github.xenfork.freeworld.client;
 
+import io.github.xenfork.freeworld.client.render.Camera;
 import io.github.xenfork.freeworld.client.render.RenderThread;
 import io.github.xenfork.freeworld.util.Logging;
+import io.github.xenfork.freeworld.util.Timer;
 import org.slf4j.Logger;
 import overrun.marshal.Unmarshal;
 import overrungl.glfw.GLFW;
@@ -21,6 +23,7 @@ import overrungl.glfw.GLFWVidMode;
 import overrungl.util.value.Pair;
 
 import java.lang.foreign.MemorySegment;
+import java.lang.invoke.VarHandle;
 import java.time.Duration;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -39,6 +42,8 @@ public final class Freeworld implements AutoCloseable {
     private int framebufferWidth;
     private int framebufferHeight;
     private final AtomicBoolean framebufferResized = new AtomicBoolean();
+    private final Timer timer = new Timer(Timer.DEFAULT_TPS);
+    private final Camera camera = new Camera();
 
     private Freeworld() {
         this.glfw = GLFW.INSTANCE;
@@ -106,9 +111,30 @@ public final class Freeworld implements AutoCloseable {
         logger.info("Closing client");
     }
 
+    private void tick() {
+        camera.preUpdate();
+        final double speed = 0.1;
+        double xo = 0.0;
+        double yo = 0.0;
+        double zo = 0.0;
+        if (glfw.getKey(window, GLFW.KEY_W) == GLFW.PRESS) zo -= speed;
+        if (glfw.getKey(window, GLFW.KEY_S) == GLFW.PRESS) zo += speed;
+        if (glfw.getKey(window, GLFW.KEY_A) == GLFW.PRESS) xo -= speed;
+        if (glfw.getKey(window, GLFW.KEY_D) == GLFW.PRESS) xo += speed;
+        if (glfw.getKey(window, GLFW.KEY_LEFT_SHIFT) == GLFW.PRESS) yo -= speed;
+        if (glfw.getKey(window, GLFW.KEY_SPACE) == GLFW.PRESS) yo += speed;
+        camera.move(xo, yo, zo);
+    }
+
     public void run() {
+        timer.update();
         while (!glfw.windowShouldClose(window)) {
-            glfw.waitEvents();
+            glfw.pollEvents();
+            VarHandle.releaseFence();
+            timer.update();
+            for (int i = 0, c = timer.tickCount(); i < c; i++) {
+                tick();
+            }
         }
         windowOpen.setOpaque(false);
     }
@@ -145,6 +171,14 @@ public final class Freeworld implements AutoCloseable {
 
     public AtomicBoolean framebufferResized() {
         return framebufferResized;
+    }
+
+    public Timer timer() {
+        return timer;
+    }
+
+    public Camera camera() {
+        return camera;
     }
 
     public static Freeworld getInstance() {

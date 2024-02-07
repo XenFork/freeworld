@@ -48,15 +48,12 @@ public final class GameRenderer implements AutoCloseable {
     private GLProgram positionColorTexProgram;
     private int framebufferWidth;
     private int framebufferHeight;
-    private int renderTick = 0;
     private final Matrix4f projectionView = new Matrix4f();
     private final Matrix4f matrix = new Matrix4f();
     private static final Identifier TEX_DIRT = Identifier.ofBuiltin("texture/block/dirt.png");
     private static final Identifier TEX_GRASS_BLOCK = Identifier.ofBuiltin("texture/block/grass_block.png");
     private static final Identifier TEX_STONE = Identifier.ofBuiltin("texture/block/stone.png");
     private TextureAtlas texture;
-    private double prevRotation = 0.0;
-    private double rotation = 0.0;
 
     public GameRenderer(Freeworld client) {
         this.client = client;
@@ -89,12 +86,6 @@ public final class GameRenderer implements AutoCloseable {
         return program;
     }
 
-    public void tick() {
-        prevRotation = rotation;
-        rotation += 90.0 / 50;
-        renderTick++;
-    }
-
     public void render(double partialTick) {
         final GL gl = OpenGL.get();
         if (client.framebufferResized().getAcquire()) {
@@ -113,8 +104,11 @@ public final class GameRenderer implements AutoCloseable {
             framebufferHeight > 0 ? (float) framebufferWidth / framebufferHeight : 0.00001f,
             0.01f,
             1000.0f
-        ).translate(0f, 0f, -2f);
-        matrix.rotationZ((float) Math.toRadians(org.joml.Math.lerp(prevRotation, rotation, partialTick)));
+        );
+        final Camera camera = client.camera();
+        camera.updateLerp(partialTick);
+        camera.updateViewMatrix();
+        projectionView.mul(camera.viewMatrix());
         positionColorTexProgram.getUniform(GLProgram.UNIFORM_PROJECTION_VIEW_MATRIX).set(projectionView);
         positionColorTexProgram.getUniform(GLProgram.UNIFORM_MODEL_MATRIX).set(matrix);
         positionColorTexProgram.uploadUniforms();

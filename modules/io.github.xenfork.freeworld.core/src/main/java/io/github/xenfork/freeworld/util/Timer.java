@@ -15,7 +15,7 @@ package io.github.xenfork.freeworld.util;
  * @since 0.1.0
  */
 public final class Timer {
-    public static final double DEFAULT_TPS = 50.0;
+    public static final double DEFAULT_TPS = 20.0;
     private static final int MAX_TPS = 100;
     private final double tickPerSecond;
     private long currentTime = System.nanoTime();
