@@ -8,6 +8,8 @@
  * version 2.1 of the License, or (at your option) any later version.
  */
 
+// last updated: 2024/3/16
+
 plugins {
     `java-platform`
     signing
@@ -118,10 +120,10 @@ allprojects {
         mavenCentral()
         // snapshot repositories
         //maven { url = uri("https://oss.sonatype.org/content/repositories/snapshots") }
-        maven { url = uri("https://s01.oss.sonatype.org/content/repositories/snapshots") }
+        maven("https://s01.oss.sonatype.org/content/repositories/snapshots")
 
         //maven { url = uri("https://oss.oss.sonatype.org/content/repositories/releases") }
-        maven { url = uri("https://s01.oss.sonatype.org/content/repositories/releases") }
+        maven("https://s01.oss.sonatype.org/content/repositories/releases")
     }
 }
 
@@ -138,7 +140,6 @@ subprojects {
         implementation("org.joml:joml:$jomlVersion")
         implementation("ch.qos.logback:logback-classic:$logbackVersion")
         implementation("com.google.code.gson:gson:$gsonVersion")
-        implementation("io.github.over-run:marshal:0.1.0-alpha.18-jdk22")
     }
 }
 

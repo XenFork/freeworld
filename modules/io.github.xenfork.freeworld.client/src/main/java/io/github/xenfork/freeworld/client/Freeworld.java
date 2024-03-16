@@ -36,6 +36,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public final class Freeworld implements AutoCloseable {
     private static final Freeworld INSTANCE = new Freeworld();
     private static final Logger logger = Logging.caller();
+    private static final int INIT_WINDOW_WIDTH = 854;
+    private static final int INIT_WINDOW_HEIGHT = 480;
     private final AtomicBoolean windowOpen = new AtomicBoolean();
     private final GLFW glfw;
     private MemorySegment window;
@@ -48,11 +50,6 @@ public final class Freeworld implements AutoCloseable {
     private double cursorY;
     private double cursorDeltaX;
     private double cursorDeltaY;
-    private boolean fullscreen = false;
-    private int oldWindowX = 0;
-    private int oldWindowY = 0;
-    private int oldWindowW = 0;
-    private int oldWindowH = 0;
     private World world;
 
     private Freeworld() {
@@ -73,8 +70,15 @@ public final class Freeworld implements AutoCloseable {
         glfw.windowHint(GLFW.OPENGL_FORWARD_COMPAT, true);
         glfw.windowHint(GLFW.CONTEXT_VERSION_MAJOR, 3);
         glfw.windowHint(GLFW.CONTEXT_VERSION_MINOR, 3);
-        glfw.windowHint(GLFW.VISIBLE, false);
-        window = glfw.createWindow(854, 480, "freeworld", FreeworldConfig.options.get().fullscreen ? glfw.getPrimaryMonitor() : MemorySegment.NULL, MemorySegment.NULL);
+
+        // center window
+        final GLFWVidMode.Value videoMode = glfw.getVideoMode(glfw.getPrimaryMonitor());
+        if (videoMode != null) {
+            glfw.windowHint(GLFW.POSITION_X, (videoMode.width() - INIT_WINDOW_WIDTH) / 2);
+            glfw.windowHint(GLFW.POSITION_Y, (videoMode.height() - INIT_WINDOW_HEIGHT) / 2);
+        }
+
+        window = glfw.createWindow(INIT_WINDOW_WIDTH, INIT_WINDOW_HEIGHT, "freeworld", MemorySegment.NULL, MemorySegment.NULL);
         if (Unmarshal.isNullPointer(window)) {
             throw new IllegalStateException("Failed to create GLFW window");
         }
@@ -86,41 +90,11 @@ public final class Freeworld implements AutoCloseable {
             framebufferResized.setRelease(true);
         });
         glfw.setCursorPosCallback(window, (_, xpos, ypos) -> onCursorPos(xpos, ypos));
-        glfw.setKeyCallback(window, (_, key, _, action, _) -> {
-            if (action == GLFW.RELEASE && key == GLFW.KEY_F11) {
-                if (fullscreen) {
-                    glfw.setWindowMonitor(window, MemorySegment.NULL, oldWindowX, oldWindowY, oldWindowW, oldWindowH, GLFW.DONT_CARE);
-                    fullscreen = false;
-                } else {
-                    final MemorySegment primaryMonitor = glfw.getPrimaryMonitor();
-                    final GLFWVidMode.Value videoMode = glfw.getVideoMode(primaryMonitor);
-                    if (videoMode != null) {
-                        final Pair.OfInt pos = glfw.getWindowPos(window);
-                        final Pair.OfInt size = glfw.getFramebufferSize(window);
-                        oldWindowX = pos.x();
-                        oldWindowY = pos.y();
-                        oldWindowW = size.x();
-                        oldWindowH = size.y();
-                        glfw.setWindowMonitor(window, primaryMonitor, 0, 0, videoMode.width(), videoMode.height(), videoMode.refreshRate());
-                        fullscreen = true;
-                    }
-                }
-            }
-        });
 
         final Pair.OfInt framebufferSize = glfw.getFramebufferSize(window);
         framebufferWidth = framebufferSize.x();
         framebufferHeight = framebufferSize.y();
         framebufferResized.setPlain(true);
-
-        // center window
-        final GLFWVidMode.Value videoMode = glfw.getVideoMode(glfw.getPrimaryMonitor());
-        if (videoMode != null) {
-            final Pair.OfInt windowSize = glfw.getWindowSize(window);
-            glfw.setWindowPos(window,
-                (videoMode.width() - windowSize.x()) / 2,
-                (videoMode.height() - windowSize.y()) / 2);
-        }
 
         BlockTypes.bootstrap();
         BuiltinRegistries.BLOCK_TYPE.freeze();
@@ -136,8 +110,6 @@ public final class Freeworld implements AutoCloseable {
             windowOpen.setOpaque(false);
         });
         renderThread.start();
-
-        glfw.showWindow(window);
 
         run();
 
@@ -190,7 +162,6 @@ public final class Freeworld implements AutoCloseable {
 
     @Override
     public void close() {
-        FreeworldConfig.closeAll();
         if (!Unmarshal.isNullPointer(window)) {
             GLFWCallbacks.free(window);
             glfw.destroyWindow(window);
