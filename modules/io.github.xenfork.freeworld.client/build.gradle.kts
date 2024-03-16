@@ -8,9 +8,9 @@
  * version 2.1 of the License, or (at your option) any later version.
  */
 
-/*plugins {
+plugins {
     application
-}*/
+}
 
 val jdkEnablePreview: String by rootProject
 
@@ -52,7 +52,7 @@ dependencies {
     implementation("io.github.over-run:marshal:0.1.0-alpha.24-jdk22")
 }
 
-/*application {
+application {
     applicationName = "freeworld"
     mainModule = "io.github.xenfork.freeworld.client"
     mainClass = "io.github.xenfork.freeworld.client.main.Main"
@@ -71,4 +71,4 @@ dependencies {
             }"
         )
     }
-}*/
+}
