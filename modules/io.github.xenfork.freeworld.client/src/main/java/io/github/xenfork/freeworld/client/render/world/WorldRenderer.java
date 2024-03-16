@@ -62,8 +62,8 @@ public final class WorldRenderer implements AutoCloseable {
             for (int x = chunk.fromX(), x1 = chunk.toX(); x < x1; x++) {
                 for (int y = chunk.fromY(), y1 = chunk.toY(); y < y1; y++) {
                     for (int z = chunk.fromZ(), z1 = chunk.toZ(); z < z1; z++) {
-                        if (chunk.getBlockState(x + direction.axisX(), y + direction.axisY(), z + direction.axisZ()).blockType().air()) {
-                            blockRenderer.renderBlockFace(gl, t, chunk.getBlockState(x, y, z), x, y, z, direction);
+                        if (chunk.getBlockType(x + direction.axisX(), y + direction.axisY(), z + direction.axisZ()).air()) {
+                            blockRenderer.renderBlockFace(gl, t, chunk.getBlockType(x, y, z), x, y, z, direction);
                         }
                     }
                 }

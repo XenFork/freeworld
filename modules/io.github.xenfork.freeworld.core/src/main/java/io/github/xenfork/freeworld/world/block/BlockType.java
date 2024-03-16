@@ -10,20 +10,15 @@
 
 package io.github.xenfork.freeworld.world.block;
 
-import io.github.xenfork.freeworld.world.block.function.BlockStateDefiner;
-
 /**
  * @author squid233
  * @since 0.1.0
  */
 public final class BlockType {
     private final boolean air;
-    private final BlockStateDefiner blockStateDefiner;
-    private BlockState defaultBlockState;
 
-    private BlockType(boolean air, BlockStateDefiner blockStateDefiner) {
+    private BlockType(boolean air) {
         this.air = air;
-        this.blockStateDefiner = blockStateDefiner;
     }
 
     public static Builder builder() {
@@ -36,28 +31,15 @@ public final class BlockType {
      */
     public static final class Builder {
         private boolean air = false;
-        private BlockStateDefiner blockStateDefiner = BlockStateDefiner.identity();
 
         public Builder air() {
             this.air = true;
             return this;
         }
 
-        public Builder stateDefinitions(BlockStateDefiner definer) {
-            this.blockStateDefiner = definer;
-            return this;
-        }
-
         public BlockType build() {
-            return new BlockType(air, blockStateDefiner);
+            return new BlockType(air);
         }
-    }
-
-    public BlockState defaultBlockState() {
-        if (defaultBlockState == null) {
-            defaultBlockState = blockStateDefiner.apply(BlockState.empty(this));
-        }
-        return defaultBlockState;
     }
 
     public boolean air() {

@@ -102,7 +102,7 @@ public final class Freeworld implements AutoCloseable {
 
         camera.setPosition(1.5, 16.0, 1.5);
 
-        world = new World("world", "world");
+        world = new World("New world");
 
         initGL();
         run();

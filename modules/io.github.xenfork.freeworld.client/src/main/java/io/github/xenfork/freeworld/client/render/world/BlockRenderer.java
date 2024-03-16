@@ -19,7 +19,6 @@ import io.github.xenfork.freeworld.client.render.texture.TextureRegion;
 import io.github.xenfork.freeworld.core.Identifier;
 import io.github.xenfork.freeworld.core.registry.BuiltinRegistries;
 import io.github.xenfork.freeworld.util.Direction;
-import io.github.xenfork.freeworld.world.block.BlockState;
 import io.github.xenfork.freeworld.world.block.BlockType;
 
 /**
@@ -33,8 +32,7 @@ public final class BlockRenderer {
         this.gameRenderer = gameRenderer;
     }
 
-    public void renderBlockFace(GLStateMgr gl, Tessellator t, BlockState blockState, int x, int y, int z, Direction direction) {
-        final BlockType blockType = blockState.blockType();
+    public void renderBlockFace(GLStateMgr gl, Tessellator t, BlockType blockType, int x, int y, int z, Direction direction) {
         if (blockType.air()) {
             return;
         }
