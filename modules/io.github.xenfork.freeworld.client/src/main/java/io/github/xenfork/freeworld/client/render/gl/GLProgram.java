@@ -275,7 +275,7 @@ public final class GLProgram implements GLResource {
     }
 
     public void use(GLStateMgr gl) {
-        gl.useProgram(id());
+        gl.setCurrentProgram(id());
     }
 
     public void uploadUniforms(GLStateMgr gl) {

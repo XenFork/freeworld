@@ -188,7 +188,7 @@ public final class Tessellator {
         if (vbo == 0) vbo = gl.genBuffers();
         if (ebo == 0) ebo = gl.genBuffers();
 
-        gl.bindVertexArray(vao);
+        gl.setVertexArrayBinding(vao);
         gl.bindBuffer(GL15C.ARRAY_BUFFER, vbo);
         if (firstFlush) {
             gl.bufferData(GL15C.ARRAY_BUFFER, buffer, GL15C.STREAM_DRAW);
@@ -205,7 +205,6 @@ public final class Tessellator {
             gl.bufferSubData(GL15C.ELEMENT_ARRAY_BUFFER, 0L, ValueLayout.JAVA_INT.scale(0L, indexCount), indexBuffer);
         }
         gl.drawElements(drawMode.value(), indexCount, GL10C.UNSIGNED_INT, MemorySegment.NULL);
-        gl.bindVertexArray(0);
 
         vertexCount = 0;
         indexCount = 0;

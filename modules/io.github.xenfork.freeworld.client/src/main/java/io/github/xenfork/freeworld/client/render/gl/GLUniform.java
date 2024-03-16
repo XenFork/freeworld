@@ -70,13 +70,12 @@ public final class GLUniform {
                 case MAT4 -> gl.programUniformMatrix4fv(programId, location, 1, false, value);
             }
         } else {
-            gl.useProgram(programId);
+            gl.setCurrentProgram(programId);
             switch (type) {
                 case INT -> gl.uniform1iv(location, 1, value);
                 case VEC4 -> gl.uniform4fv(location, 1, value);
                 case MAT4 -> gl.uniformMatrix4fv(location, 1, false, value);
             }
-            gl.useProgram(0);
         }
         dirty = false;
     }

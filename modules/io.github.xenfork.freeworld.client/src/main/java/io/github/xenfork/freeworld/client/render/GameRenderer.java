@@ -106,10 +106,6 @@ public final class GameRenderer implements GLResource {
         positionColorTexProgram.getUniform(GLProgram.UNIFORM_MODEL_MATRIX).set(matrix);
         positionColorTexProgram.uploadUniforms(gl);
         worldRenderer.render(gl);
-        gl.useProgram(0);
-        gl.bindTexture(GL10C.TEXTURE_2D, 0);
-        gl.disable(GL10C.CULL_FACE);
-        gl.disable(GL10C.DEPTH_TEST);
 
         client.glfw().swapBuffers(client.window());
     }

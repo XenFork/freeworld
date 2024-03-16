@@ -51,7 +51,7 @@ public sealed class Texture implements GLResource permits TextureAtlas {
             final int mipmapLevel = hasMipmap ? Math.min(Integer.numberOfTrailingZeros(width), Integer.numberOfTrailingZeros(height)) : 0;
 
             final int id = gl.genTextures();
-            gl.bindTexture(GL10C.TEXTURE_2D, id);
+            gl.setTextureBinding2D(id);
             gl.texParameteri(GL10C.TEXTURE_2D, GL10C.TEXTURE_MIN_FILTER, hasMipmap ? GL10C.NEAREST_MIPMAP_NEAREST : GL10C.NEAREST);
             gl.texParameteri(GL10C.TEXTURE_2D, GL10C.TEXTURE_MAG_FILTER, GL10C.NEAREST);
             gl.texParameteri(GL10C.TEXTURE_2D, GL.TEXTURE_MAX_LEVEL, mipmapLevel);
@@ -67,7 +67,6 @@ public sealed class Texture implements GLResource permits TextureAtlas {
             if (hasMipmap) {
                 gl.generateMipmap(GL10C.TEXTURE_2D);
             }
-            gl.bindTexture(GL10C.TEXTURE_2D, 0);
             return new Texture(id, width, height, mipmapLevel);
         }
     }
@@ -77,7 +76,7 @@ public sealed class Texture implements GLResource permits TextureAtlas {
     }
 
     public void bind(GLStateMgr gl) {
-        gl.bindTexture(GL10C.TEXTURE_2D, id());
+        gl.setTextureBinding2D(id());
     }
 
     public int id() {

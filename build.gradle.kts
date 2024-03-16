@@ -140,6 +140,8 @@ subprojects {
         implementation("org.joml:joml:$jomlVersion")
         implementation("ch.qos.logback:logback-classic:$logbackVersion")
         implementation("com.google.code.gson:gson:$gsonVersion")
+        //TODO
+        implementation("io.github.over-run:marshal:0.1.0-alpha.24-jdk22")
     }
 }
 

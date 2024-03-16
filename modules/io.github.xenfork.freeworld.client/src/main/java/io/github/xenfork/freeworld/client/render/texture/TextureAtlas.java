@@ -72,7 +72,7 @@ public final class TextureAtlas extends Texture {
 
             final Map<Identifier, TextureRegion> regionMap = HashMap.newHashMap(numIds);
             final int id = gl.genTextures();
-            gl.bindTexture(GL10C.TEXTURE_2D, id);
+            gl.setTextureBinding2D(id);
             gl.texParameteri(GL10C.TEXTURE_2D, GL10C.TEXTURE_MIN_FILTER, mipmapLevel > 0 ? GL10C.NEAREST_MIPMAP_NEAREST : GL10C.NEAREST);
             gl.texParameteri(GL10C.TEXTURE_2D, GL10C.TEXTURE_MAG_FILTER, GL10C.NEAREST);
             gl.texParameteri(GL10C.TEXTURE_2D, GL.TEXTURE_MAX_LEVEL, mipmapLevel);
@@ -107,7 +107,6 @@ public final class TextureAtlas extends Texture {
             if (mipmapLevel > 0) {
                 gl.generateMipmap(GL10C.TEXTURE_2D);
             }
-            gl.bindTexture(GL10C.TEXTURE_2D, 0);
             return new TextureAtlas(id, packerSize, packerSize, mipmapLevel, regionMap);
         }
     }

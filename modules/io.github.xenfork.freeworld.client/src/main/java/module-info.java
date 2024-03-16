@@ -24,6 +24,7 @@ module io.github.xenfork.freeworld.client {
     exports io.github.xenfork.freeworld.client.render.world;
     exports io.github.xenfork.freeworld.client.util;
     exports io.github.xenfork.freeworld.client.world.chunk;
+    requires java.management;
 
     requires transitive io.github.xenfork.freeworld.core;
     requires io.github.overrun.marshal;
