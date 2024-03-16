@@ -189,7 +189,7 @@ public final class Tessellator {
         if (ebo == 0) ebo = gl.genBuffers();
 
         gl.setVertexArrayBinding(vao);
-        gl.bindBuffer(GL15C.ARRAY_BUFFER, vbo);
+        gl.setArrayBufferBinding(vbo);
         if (firstFlush) {
             gl.bufferData(GL15C.ARRAY_BUFFER, buffer, GL15C.STREAM_DRAW);
             VERTEX_LAYOUT.enableAttribs(gl);
@@ -197,7 +197,6 @@ public final class Tessellator {
         } else {
             gl.bufferSubData(GL15C.ARRAY_BUFFER, 0L, LAYOUT.scale(0L, vertexCount), buffer);
         }
-        gl.bindBuffer(GL15C.ARRAY_BUFFER, 0);
         gl.bindBuffer(GL15C.ELEMENT_ARRAY_BUFFER, ebo);
         if (firstFlush) {
             gl.bufferData(GL15C.ELEMENT_ARRAY_BUFFER, indexBuffer, GL15C.STREAM_DRAW);

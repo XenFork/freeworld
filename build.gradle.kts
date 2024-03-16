@@ -14,7 +14,6 @@ plugins {
     `java-platform`
     signing
     `maven-publish`
-    //application
 }
 
 val hasJavadocJar: String by rootProject
@@ -88,7 +87,6 @@ val annotationsVersion: String by rootProject
 val gsonVersion: String by rootProject
 val jomlVersion: String by rootProject
 val logbackVersion: String by rootProject
-val overrunglVersion: String by rootProject
 
 class GameModule(
     val artifactId: String,
@@ -134,14 +132,9 @@ subprojects {
     val implementation by configurations
     dependencies {
         compileOnly("org.jetbrains:annotations:$annotationsVersion")
-        implementation(platform("io.github.over-run:overrungl-bom:$overrunglVersion"))
-        implementation("io.github.over-run:overrungl")
-        implementation("io.github.over-run:overrungl-joml")
         implementation("org.joml:joml:$jomlVersion")
         implementation("ch.qos.logback:logback-classic:$logbackVersion")
         implementation("com.google.code.gson:gson:$gsonVersion")
-        //TODO
-        implementation("io.github.over-run:marshal:0.1.0-alpha.24-jdk22")
     }
 }
 
@@ -191,11 +184,6 @@ gameModules.forEach {
                 }
             }
         }
-
-//application {
-//    applicationName = projName
-//    mainClass = "org.example.Main"
-//}
 
         tasks.named<Jar>("jar") {
             manifestContentCharset = "utf-8"

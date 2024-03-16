@@ -25,9 +25,23 @@ public abstract class GLStateMgr implements
     GL30C,
     GL41C,
     DirectAccess {
+    private int arrayBufferBinding = 0;
     private int currentProgram = 0;
     private int textureBinding2D = 0;
     private int vertexArrayBinding = 0;
+
+    @Skip
+    public void setArrayBufferBinding(int arrayBufferBinding) {
+        if (this.arrayBufferBinding != arrayBufferBinding) {
+            this.arrayBufferBinding = arrayBufferBinding;
+            bindBuffer(ARRAY_BUFFER, arrayBufferBinding);
+        }
+    }
+
+    @Skip
+    public int arrayBufferBinding() {
+        return arrayBufferBinding;
+    }
 
     @Skip
     public void setCurrentProgram(int currentProgram) {

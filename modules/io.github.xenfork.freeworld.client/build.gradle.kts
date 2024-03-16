@@ -1,22 +1,20 @@
 /*
- * freeworld
+ * freeworld - 3D sandbox game
  * Copyright (C) 2024  XenFork Union
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 2.1 of the License, or (at your option) any later version.
- *
- * This library is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- * Lesser General Public License for more details.
- *
- * You should have received a copy of the GNU Lesser General Public
- * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301
- * USA
  */
+
+/*plugins {
+    application
+}*/
+
+val jdkEnablePreview: String by rootProject
+
+val overrunglVersion: String by rootProject
 
 val overrunglNatives = Pair(
     System.getProperty("os.name")!!,
@@ -42,9 +40,35 @@ val overrunglNatives = Pair(
 
 dependencies {
     api(project(":freeworld"))
+    implementation(platform("io.github.over-run:overrungl-bom:$overrunglVersion"))
+    implementation("io.github.over-run:overrungl")
+    implementation("io.github.over-run:overrungl-joml")
     implementation("io.github.over-run:overrungl-glfw")
     runtimeOnly("io.github.over-run:overrungl-glfw::$overrunglNatives")
     implementation("io.github.over-run:overrungl-opengl")
     implementation("io.github.over-run:overrungl-stb")
     runtimeOnly("io.github.over-run:overrungl-stb::$overrunglNatives")
+    //TODO
+    implementation("io.github.over-run:marshal:0.1.0-alpha.24-jdk22")
 }
+
+/*application {
+    applicationName = "freeworld"
+    mainModule = "io.github.xenfork.freeworld.client"
+    mainClass = "io.github.xenfork.freeworld.client.main.Main"
+    applicationDefaultJvmArgs = buildList {
+        if (jdkEnablePreview.toBoolean())add("--enable-preview")
+        add(
+            "--enable-native-access=${
+                listOf(
+                    "io.github.xenfork.freeworld.client",
+                    "io.github.overrun.marshal",
+                    "overrungl.core",
+                    "overrungl.glfw",
+                    "overrungl.opengl",
+                    "overrungl.stb"
+                ).joinToString(separator = ",")
+            }"
+        )
+    }
+}*/
