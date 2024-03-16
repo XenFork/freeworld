@@ -15,10 +15,7 @@ import io.github.xenfork.freeworld.client.render.gl.GLStateMgr;
 import java.lang.foreign.MemoryLayout;
 import java.lang.foreign.MemorySegment;
 import java.lang.foreign.StructLayout;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * @author squid233
@@ -30,7 +27,7 @@ public final class VertexLayout {
     private final StructLayout layout;
 
     public VertexLayout(Map<String, VertexFormat> formatMap) {
-        this.formatMap = Map.copyOf(formatMap);
+        this.formatMap = formatMap;
         this.attribLocationMap = HashMap.newHashMap(formatMap.size());
         final List<MemoryLayout> elements = new ArrayList<>(formatMap.size());
 
@@ -44,6 +41,15 @@ public final class VertexLayout {
         }
 
         this.layout = MemoryLayout.structLayout(elements.toArray(MemoryLayout[]::new));
+    }
+
+    @SafeVarargs
+    public VertexLayout(Map.Entry<String, VertexFormat>... formats) {
+        final Map<String, VertexFormat> map = LinkedHashMap.newLinkedHashMap(formats.length);
+        for (var format : formats) {
+            map.put(format.getKey(), format.getValue());
+        }
+        this(map);
     }
 
     public void bindLocations(GLStateMgr gl, int program) {

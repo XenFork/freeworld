@@ -22,7 +22,6 @@ public final class VertexLayouts {
     public static final String NAME_POSITION = "Position";
     public static final String NAME_COLOR = "Color";
     public static final String NAME_UV = "UV";
-    // TODO: 2024/3/16 squid233: Map.of is sorted
     public static final VertexLayout POSITION_COLOR = new VertexLayout(Map.of(
         NAME_POSITION, VertexFormat.POSITION,
         NAME_COLOR, VertexFormat.COLOR

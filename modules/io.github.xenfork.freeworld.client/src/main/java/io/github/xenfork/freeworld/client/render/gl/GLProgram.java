@@ -40,9 +40,6 @@ import java.util.Objects;
  * @since 0.1.0
  */
 public final class GLProgram implements GLResource {
-    public static final int INPUT_POSITION = 0;
-    public static final int INPUT_COLOR = 1;
-    public static final int INPUT_UV = 2;
     public static final String UNIFORM_PROJECTION_VIEW_MATRIX = "ProjectionViewMatrix";
     public static final String UNIFORM_MODEL_MATRIX = "ModelMatrix";
     public static final String UNIFORM_COLOR_MODULATOR = "ColorModulator";
