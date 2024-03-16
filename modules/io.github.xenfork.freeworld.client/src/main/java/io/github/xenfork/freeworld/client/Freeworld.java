@@ -11,7 +11,8 @@
 package io.github.xenfork.freeworld.client;
 
 import io.github.xenfork.freeworld.client.render.Camera;
-import io.github.xenfork.freeworld.client.render.RenderThread;
+import io.github.xenfork.freeworld.client.render.GameRenderer;
+import io.github.xenfork.freeworld.client.render.gl.GLStateMgr;
 import io.github.xenfork.freeworld.core.registry.BuiltinRegistries;
 import io.github.xenfork.freeworld.util.Logging;
 import io.github.xenfork.freeworld.util.Timer;
@@ -19,12 +20,16 @@ import io.github.xenfork.freeworld.world.World;
 import io.github.xenfork.freeworld.world.block.BlockTypes;
 import org.slf4j.Logger;
 import overrun.marshal.Unmarshal;
-import overrungl.glfw.*;
+import overrungl.glfw.GLFW;
+import overrungl.glfw.GLFWCallbacks;
+import overrungl.glfw.GLFWErrorCallback;
+import overrungl.glfw.GLFWVidMode;
+import overrungl.opengl.GLFlags;
+import overrungl.opengl.GLLoader;
 import overrungl.util.value.Pair;
 
 import java.lang.foreign.MemorySegment;
-import java.lang.invoke.VarHandle;
-import java.time.Duration;
+import java.lang.invoke.MethodHandles;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
@@ -40,16 +45,18 @@ public final class Freeworld implements AutoCloseable {
     private static final int INIT_WINDOW_HEIGHT = 480;
     private final AtomicBoolean windowOpen = new AtomicBoolean();
     private final GLFW glfw;
+    private GLFlags glFlags;
+    private GLStateMgr gl;
     private MemorySegment window;
     private int framebufferWidth;
     private int framebufferHeight;
-    private final AtomicBoolean framebufferResized = new AtomicBoolean();
     private final Timer timer = new Timer(Timer.DEFAULT_TPS);
     private final Camera camera = new Camera();
     private double cursorX;
     private double cursorY;
     private double cursorDeltaX;
     private double cursorDeltaY;
+    private GameRenderer gameRenderer;
     private World world;
 
     private Freeworld() {
@@ -82,19 +89,13 @@ public final class Freeworld implements AutoCloseable {
         if (Unmarshal.isNullPointer(window)) {
             throw new IllegalStateException("Failed to create GLFW window");
         }
-        windowOpen.setPlain(true);
 
-        glfw.setFramebufferSizeCallback(window, (_, width, height) -> {
-            framebufferWidth = width;
-            framebufferHeight = height;
-            framebufferResized.setRelease(true);
-        });
+        glfw.setFramebufferSizeCallback(window, (_, width, height) -> onResize(width, height));
         glfw.setCursorPosCallback(window, (_, xpos, ypos) -> onCursorPos(xpos, ypos));
 
         final Pair.OfInt framebufferSize = glfw.getFramebufferSize(window);
         framebufferWidth = framebufferSize.x();
         framebufferHeight = framebufferSize.y();
-        framebufferResized.setPlain(true);
 
         BlockTypes.bootstrap();
         BuiltinRegistries.BLOCK_TYPE.freeze();
@@ -103,23 +104,16 @@ public final class Freeworld implements AutoCloseable {
 
         world = new World("world", "world");
 
-        final RenderThread renderThread = new RenderThread(this, "Render Thread");
-        renderThread.setUncaughtExceptionHandler((t, e) -> {
-            logger.error("Exception thrown in {}", t, e);
-            glfw.setWindowShouldClose(window, true);
-            windowOpen.setOpaque(false);
-        });
-        renderThread.start();
-
+        initGL();
         run();
 
-        try {
-            renderThread.join(Duration.ofSeconds(10));
-        } catch (InterruptedException e) {
-            logger.error("Render thread interrupted", e);
-        }
-
         logger.info("Closing client");
+    }
+
+    private void onResize(int width, int height) {
+        framebufferWidth = width;
+        framebufferHeight = height;
+        gl.viewport(0, 0, width, height);
     }
 
     private void onCursorPos(double x, double y) {
@@ -147,15 +141,24 @@ public final class Freeworld implements AutoCloseable {
         camera.moveRelative(xo, yo, zo, speed);
     }
 
+    private void initGL() {
+        glfw.makeContextCurrent(window);
+        glFlags = GLLoader.loadFlags(glfw::getProcAddress);
+        gl = GLLoader.loadContext(MethodHandles.lookup(), glFlags, GLStateMgr.class);
+
+        gameRenderer = new GameRenderer(this);
+        gameRenderer.init(gl);
+    }
+
     public void run() {
         timer.update();
         while (!glfw.windowShouldClose(window)) {
             glfw.pollEvents();
-            VarHandle.releaseFence();
             timer.update();
             for (int i = 0, c = timer.tickCount(); i < c; i++) {
                 tick();
             }
+            gameRenderer.render(gl, timer.partialTick());
         }
         windowOpen.setOpaque(false);
     }
@@ -170,12 +173,12 @@ public final class Freeworld implements AutoCloseable {
         glfw.setErrorCallback(null);
     }
 
-    public AtomicBoolean windowOpen() {
-        return windowOpen;
-    }
-
     public GLFW glfw() {
         return glfw;
+    }
+
+    public GLFlags glFlags() {
+        return glFlags;
     }
 
     public MemorySegment window() {
@@ -188,10 +191,6 @@ public final class Freeworld implements AutoCloseable {
 
     public int framebufferHeight() {
         return framebufferHeight;
-    }
-
-    public AtomicBoolean framebufferResized() {
-        return framebufferResized;
     }
 
     public Timer timer() {

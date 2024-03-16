@@ -8,9 +8,9 @@
  * version 2.1 of the License, or (at your option) any later version.
  */
 
-package io.github.xenfork.freeworld.client.texture;
+package io.github.xenfork.freeworld.client.render.texture;
 
-import io.github.xenfork.freeworld.client.render.GameRenderer;
+import io.github.xenfork.freeworld.client.render.gl.GLStateMgr;
 import io.github.xenfork.freeworld.core.Identifier;
 import overrungl.opengl.GL;
 import overrungl.opengl.GL10C;
@@ -37,7 +37,7 @@ public final class TextureAtlas extends Texture {
         this.regionMap = regionMap;
     }
 
-    public static TextureAtlas load(List<Identifier> identifierList) {
+    public static TextureAtlas load(GLStateMgr gl, List<Identifier> identifierList) {
         final int numIds = identifierList.size();
         final STBRectPack stbrp = STBRectPack.INSTANCE;
         try (Arena arena = Arena.ofConfined()) {
@@ -57,9 +57,9 @@ public final class TextureAtlas extends Texture {
                 } else if (mipmapLevel > 0) {
                     mipmapLevel = Math.min(Integer.numberOfTrailingZeros(width), Integer.numberOfTrailingZeros(height));
                 }
-                rects.id.set(i, i);
-                rects.w.set(i, width);
-                rects.h.set(i, height);
+                STBRPRect.id.set(rects, i, i);
+                STBRPRect.w.set(rects, i, width);
+                STBRPRect.h.set(rects, i, height);
             }
 
             int packerSize = 256;
@@ -71,7 +71,6 @@ public final class TextureAtlas extends Texture {
             packerSize /= 2;
 
             final Map<Identifier, TextureRegion> regionMap = HashMap.newHashMap(numIds);
-            final GL gl = GameRenderer.OpenGL.get();
             final int id = gl.genTextures();
             gl.bindTexture(GL10C.TEXTURE_2D, id);
             gl.texParameteri(GL10C.TEXTURE_2D, GL10C.TEXTURE_MIN_FILTER, mipmapLevel > 0 ? GL10C.NEAREST_MIPMAP_NEAREST : GL10C.NEAREST);
@@ -87,12 +86,12 @@ public final class TextureAtlas extends Texture {
                 GL10C.UNSIGNED_BYTE,
                 MemorySegment.NULL);
             for (int i = 0; i < numIds; i++) {
-                if (rects.wasPacked.get(i) != 0) {
-                    final Identifier identifier = identifierList.get(rects.id.get(i));
-                    final int xo = rects.x.get(i);
-                    final int yo = rects.y.get(i);
-                    final int width = rects.w.get(i);
-                    final int height = rects.h.get(i);
+                if (STBRPRect.wasPacked.get(rects, i) != 0) {
+                    final Identifier identifier = identifierList.get(STBRPRect.id.get(rects, i));
+                    final int xo = STBRPRect.x.get(rects, i);
+                    final int yo = STBRPRect.y.get(rects, i);
+                    final int width = STBRPRect.w.get(rects, i);
+                    final int height = STBRPRect.h.get(rects, i);
                     regionMap.put(identifier, new TextureRegion(xo, yo, width, height));
                     gl.texSubImage2D(GL10C.TEXTURE_2D,
                         0,

@@ -10,11 +10,8 @@
 
 package io.github.xenfork.freeworld.client.render.gl;
 
-import io.github.xenfork.freeworld.client.render.GameRenderer;
 import org.joml.Matrix4fc;
 import overrungl.joml.Matrixn;
-import overrungl.opengl.GL;
-import overrungl.opengl.GLFlags;
 
 import java.lang.foreign.Arena;
 import java.lang.foreign.MemorySegment;
@@ -62,13 +59,11 @@ public final class GLUniform {
         Matrixn.put(mat, value);
     }
 
-    public void upload() {
+    public void upload(GLStateMgr gl) {
         if (!dirty) {
             return;
         }
-        final GLFlags glFlags = GameRenderer.OpenGLFlags.get();
-        final GL gl = GameRenderer.OpenGL.get();
-        if (glFlags.GL_ARB_separate_shader_objects) {
+        if (gl.flags().GL_ARB_separate_shader_objects) {
             switch (type) {
                 case INT -> gl.programUniform1iv(programId, location, 1, value);
                 case VEC4 -> gl.programUniform4fv(programId, location, 1, value);

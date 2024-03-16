@@ -10,8 +10,7 @@
 
 package io.github.xenfork.freeworld.client.render.model;
 
-import io.github.xenfork.freeworld.client.render.GameRenderer;
-import overrungl.opengl.GL;
+import io.github.xenfork.freeworld.client.render.gl.GLStateMgr;
 
 import java.lang.foreign.MemoryLayout;
 import java.lang.foreign.MemorySegment;
@@ -47,18 +46,17 @@ public final class VertexLayout {
         this.layout = MemoryLayout.structLayout(elements.toArray(MemoryLayout[]::new));
     }
 
-    public void bindLocations(int program) {
-        final GL gl = GameRenderer.OpenGL.get();
-        attribLocationMap.forEach((name, loc) -> gl.bindAttribLocation(program, loc, name));
+    public void bindLocations(GLStateMgr gl, int program) {
+        for (var entry : attribLocationMap.entrySet()) {
+            gl.bindAttribLocation(program, entry.getValue(), entry.getKey());
+        }
     }
 
-    public void enableAttribs() {
-        final GL gl = GameRenderer.OpenGL.get();
+    public void enableAttribs(GLStateMgr gl) {
         attribLocationMap.values().forEach(gl::enableVertexAttribArray);
     }
 
-    public void specifyAttribPointers() {
-        final GL gl = GameRenderer.OpenGL.get();
+    public void specifyAttribPointers(GLStateMgr gl) {
         final int stride = Math.toIntExact(layout().byteSize());
         long offset = 0L;
         for (var entry : formatMap.entrySet()) {

@@ -14,6 +14,7 @@ import io.github.xenfork.freeworld.client.Freeworld;
 import io.github.xenfork.freeworld.client.render.GameRenderer;
 import io.github.xenfork.freeworld.client.render.Tessellator;
 import io.github.xenfork.freeworld.client.render.gl.GLDrawMode;
+import io.github.xenfork.freeworld.client.render.gl.GLStateMgr;
 import io.github.xenfork.freeworld.client.world.chunk.ClientChunk;
 import io.github.xenfork.freeworld.util.Direction;
 import io.github.xenfork.freeworld.world.World;
@@ -52,7 +53,7 @@ public final class WorldRenderer implements AutoCloseable {
     public void compileChunks() {
     }
 
-    public void render() {
+    public void render(GLStateMgr gl) {
 //        final Vector3dc position = client.camera().position();
         final BlockRenderer blockRenderer = gameRenderer.blockRenderer();
         final Tessellator t = Tessellator.getInstance();
@@ -62,13 +63,13 @@ public final class WorldRenderer implements AutoCloseable {
                 for (int y = chunk.fromY(), y1 = chunk.toY(); y < y1; y++) {
                     for (int z = chunk.fromZ(), z1 = chunk.toZ(); z < z1; z++) {
                         if (chunk.getBlockState(x + direction.axisX(), y + direction.axisY(), z + direction.axisZ()).blockType().air()) {
-                            blockRenderer.renderBlockFace(t, chunk.getBlockState(x, y, z), x, y, z, direction);
+                            blockRenderer.renderBlockFace(gl, t, chunk.getBlockState(x, y, z), x, y, z, direction);
                         }
                     }
                 }
             }
         }
-        t.end();
+        t.end(gl);
     }
 
     @Override

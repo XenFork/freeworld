@@ -8,7 +8,7 @@
  * version 2.1 of the License, or (at your option) any later version.
  */
 
-package io.github.xenfork.freeworld.client.texture;
+package io.github.xenfork.freeworld.client.render.texture;
 
 /**
  * @author squid233

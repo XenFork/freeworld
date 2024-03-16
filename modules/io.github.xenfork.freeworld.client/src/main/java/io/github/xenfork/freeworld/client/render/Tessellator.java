@@ -11,9 +11,9 @@
 package io.github.xenfork.freeworld.client.render;
 
 import io.github.xenfork.freeworld.client.render.gl.GLDrawMode;
+import io.github.xenfork.freeworld.client.render.gl.GLStateMgr;
 import io.github.xenfork.freeworld.client.render.model.VertexLayout;
 import io.github.xenfork.freeworld.client.render.model.VertexLayouts;
-import overrungl.opengl.GL;
 import overrungl.opengl.GL10C;
 import overrungl.opengl.GL15C;
 
@@ -28,8 +28,6 @@ import static io.github.xenfork.freeworld.client.util.Conversions.colorToInt;
 
 /**
  * A tessellator that allows rendering things dynamically.
- * <p>
- * The tessellator is <strong>NOT</strong> thread-safe and can only be used in render thread.
  *
  * @author squid233
  * @since 0.1.0
@@ -112,8 +110,7 @@ public final class Tessellator {
         return Holder.INSTANCE;
     }
 
-    public static void free() {
-        final GL gl = GameRenderer.OpenGL.get();
+    public static void free(GLStateMgr gl) {
         gl.deleteVertexArrays(Holder.INSTANCE.vao);
         gl.deleteBuffers(Holder.INSTANCE.vbo, Holder.INSTANCE.ebo);
     }
@@ -151,10 +148,10 @@ public final class Tessellator {
         return this;
     }
 
-    public void emit() {
+    public void emit(GLStateMgr gl) {
         // check vertex count
         if ((vertexCount + 1) > MAX_VERTEX_COUNT) {
-            flush();
+            flush(gl);
         }
         final long longVertexCount = vertexCount;
         X.set(buffer, 0L, longVertexCount, x);
@@ -169,9 +166,9 @@ public final class Tessellator {
         vertexCount++;
     }
 
-    public void indexWithOffset(int offset, int... indices) {
+    public void indexWithOffset(GLStateMgr gl, int offset, int... indices) {
         if (indexCount + indices.length > MAX_INDEX_COUNT) {
-            flush();
+            flush(gl);
         }
         for (int i = 0; i < indices.length; i++) {
             indexBuffer.setAtIndex(ValueLayout.JAVA_INT, indexCount + i, indices[i] + offset);
@@ -179,13 +176,12 @@ public final class Tessellator {
         indexCount += indices.length;
     }
 
-    public void index(int... indices) {
-        indexWithOffset(vertexCount, indices);
+    public void index(GLStateMgr gl, int... indices) {
+        indexWithOffset(gl, vertexCount, indices);
     }
 
-    public void flush() {
+    public void flush(GLStateMgr gl) {
         if (!drawing) throw new IllegalStateException("Do not call Tessellator.flush when not drawing");
-        final GL gl = GameRenderer.OpenGL.get();
 
         final boolean firstFlush = vao == 0;
         if (vao == 0) vao = gl.genVertexArrays();
@@ -196,8 +192,8 @@ public final class Tessellator {
         gl.bindBuffer(GL15C.ARRAY_BUFFER, vbo);
         if (firstFlush) {
             gl.bufferData(GL15C.ARRAY_BUFFER, buffer, GL15C.STREAM_DRAW);
-            VERTEX_LAYOUT.enableAttribs();
-            VERTEX_LAYOUT.specifyAttribPointers();
+            VERTEX_LAYOUT.enableAttribs(gl);
+            VERTEX_LAYOUT.specifyAttribPointers(gl);
         } else {
             gl.bufferSubData(GL15C.ARRAY_BUFFER, 0L, LAYOUT.scale(0L, vertexCount), buffer);
         }
@@ -223,9 +219,9 @@ public final class Tessellator {
         this.drawMode = drawMode;
     }
 
-    public void end() {
+    public void end(GLStateMgr gl) {
         if (!drawing) throw new IllegalStateException("Do not call Tessellator.end when not drawing");
-        flush();
+        flush(gl);
         drawing = false;
     }
 }
