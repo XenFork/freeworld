@@ -45,6 +45,7 @@ public final class Freeworld implements AutoCloseable {
     private static final Logger logger = Logging.caller();
     private static final int INIT_WINDOW_WIDTH = 854;
     private static final int INIT_WINDOW_HEIGHT = 480;
+    private static final double MOUSE_SENSITIVITY = 0.15;
     private final GLFW glfw;
     private GLFlags glFlags;
     private GLStateMgr gl;
@@ -57,6 +58,7 @@ public final class Freeworld implements AutoCloseable {
     private double cursorY;
     private double cursorDeltaX;
     private double cursorDeltaY;
+    private boolean disableCursor = false;
     private GameRenderer gameRenderer;
     private World world;
     private Entity player;
@@ -87,11 +89,12 @@ public final class Freeworld implements AutoCloseable {
             glfw.windowHint(GLFW.POSITION_Y, (videoMode.height() - INIT_WINDOW_HEIGHT) / 2);
         }
 
-        window = glfw.createWindow(INIT_WINDOW_WIDTH, INIT_WINDOW_HEIGHT, "freeworld", MemorySegment.NULL, MemorySegment.NULL);
+        window = glfw.createWindow(INIT_WINDOW_WIDTH, INIT_WINDOW_HEIGHT, "freeworld ~: toggle camera", MemorySegment.NULL, MemorySegment.NULL);
         if (Unmarshal.isNullPointer(window)) {
             throw new IllegalStateException("Failed to create GLFW window");
         }
 
+        glfw.setKeyCallback(window, (_, key, scancode, action, mods) -> onKey(key, scancode, action, mods));
         glfw.setFramebufferSizeCallback(window, (_, width, height) -> onResize(width, height));
         glfw.setCursorPosCallback(window, (_, xpos, ypos) -> onCursorPos(xpos, ypos));
 
@@ -115,6 +118,19 @@ public final class Freeworld implements AutoCloseable {
         logger.info("Closing client");
     }
 
+    private void onKey(int key, int scancode, int action, int mods) {
+        switch (action) {
+            case GLFW.RELEASE -> {
+                switch (key) {
+                    case GLFW.KEY_GRAVE_ACCENT -> {
+                        disableCursor = !disableCursor;
+                        glfw.setInputMode(window, GLFW.CURSOR, disableCursor ? GLFW.CURSOR_DISABLED : GLFW.CURSOR_NORMAL);
+                    }
+                }
+            }
+        }
+    }
+
     private void onResize(int width, int height) {
         framebufferWidth = width;
         framebufferHeight = height;
@@ -124,8 +140,8 @@ public final class Freeworld implements AutoCloseable {
     private void onCursorPos(double x, double y) {
         cursorDeltaX = x - cursorX;
         cursorDeltaY = y - cursorY;
-        if (glfw.getMouseButton(window, GLFW.MOUSE_BUTTON_RIGHT) == GLFW.PRESS) {
-            camera.rotate(-cursorDeltaY * 0.7, -cursorDeltaX * 0.7);
+        if (disableCursor) {
+            camera.rotate(-cursorDeltaY * MOUSE_SENSITIVITY, -cursorDeltaX * MOUSE_SENSITIVITY);
         }
         cursorX = x;
         cursorY = y;
@@ -164,6 +180,7 @@ public final class Freeworld implements AutoCloseable {
                 tick();
             }
             gameRenderer.render(gl, timer.partialTick());
+            glfw.swapBuffers(window);
         }
     }
 

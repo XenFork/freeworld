@@ -19,7 +19,7 @@ import java.lang.foreign.SequenceLayout;
  * @author squid233
  * @since 0.1.0
  */
-public record DefaultVertexFormat(int size, GLDataType type, boolean normalized) implements VertexFormat {
+public record DefaultVertexFormat(String name, int size, GLDataType type, boolean normalized) implements VertexFormat {
     @Override
     public int usedAttribCount() {
         return 1;

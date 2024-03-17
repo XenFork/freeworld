@@ -11,6 +11,7 @@
 package io.github.xenfork.freeworld.client.render;
 
 import io.github.xenfork.freeworld.client.Freeworld;
+import io.github.xenfork.freeworld.client.render.gl.GLDrawMode;
 import io.github.xenfork.freeworld.client.render.gl.GLProgram;
 import io.github.xenfork.freeworld.client.render.gl.GLResource;
 import io.github.xenfork.freeworld.client.render.gl.GLStateMgr;
@@ -48,6 +49,7 @@ public final class GameRenderer implements GLResource {
     private TextureManager textureManager;
     private BlockRenderer blockRenderer;
     private WorldRenderer worldRenderer;
+    private Tessellator tessellator;
 
     public GameRenderer(Freeworld client) {
         this.client = client;
@@ -68,6 +70,8 @@ public final class GameRenderer implements GLResource {
 
         blockRenderer = new BlockRenderer(this);
         worldRenderer = new WorldRenderer(client, this, client.world());
+
+        tessellator = new Tessellator();
     }
 
     private void initGLPrograms(GLStateMgr gl) {
@@ -87,13 +91,13 @@ public final class GameRenderer implements GLResource {
     public void render(GLStateMgr gl, double partialTick) {
         gl.clear(GL10C.COLOR_BUFFER_BIT | GL10C.DEPTH_BUFFER_BIT);
 
-        gl.enable(GL10C.CULL_FACE);
-        gl.enable(GL10C.DEPTH_TEST);
-        gl.depthFunc(GL10C.LEQUAL);
+        gl.enableCullFace();
+        gl.enableDepthTest();
+        gl.setDepthFunc(GL10C.LEQUAL);
         texture.bind(gl);
         positionColorTexProgram.use(gl);
         projectionView.setPerspective(
-            (float) Math.toRadians(90.0),
+            (float) Math.toRadians(70.0),
             (float) client.framebufferWidth() / client.framebufferHeight(),
             0.01f,
             1000.0f
@@ -102,12 +106,43 @@ public final class GameRenderer implements GLResource {
         camera.updateLerp(partialTick);
         camera.updateViewMatrix();
         projectionView.mul(camera.viewMatrix());
+        matrix.identity();
         positionColorTexProgram.getUniform(GLProgram.UNIFORM_PROJECTION_VIEW_MATRIX).set(projectionView);
         positionColorTexProgram.getUniform(GLProgram.UNIFORM_MODEL_MATRIX).set(matrix);
         positionColorTexProgram.uploadUniforms(gl);
-        worldRenderer.render(gl);
+        worldRenderer.render(gl, tessellator);
 
-        client.glfw().swapBuffers(client.window());
+        renderGui(gl, partialTick);
+    }
+
+    private void renderGui(GLStateMgr gl, double partialTick) {
+        final int width = client.framebufferWidth();
+        final int height = client.framebufferHeight();
+
+        gl.clear(GL10C.DEPTH_BUFFER_BIT);
+
+        gl.disableCullFace();
+        gl.disableDepthTest();
+        gl.setTextureBinding2D(0);
+        positionColorProgram.use(gl);
+        projectionView.setOrtho(0.0f, width, 0.0f, height, -100.0f, 100.0f);
+        matrix.translation(width * 0.5f, height * 0.5f, 0.0f);
+        positionColorProgram.getUniform(GLProgram.UNIFORM_PROJECTION_VIEW_MATRIX).set(projectionView);
+        positionColorProgram.getUniform(GLProgram.UNIFORM_MODEL_MATRIX).set(matrix);
+        positionColorProgram.uploadUniforms(gl);
+        tessellator.begin(GLDrawMode.TRIANGLES);
+        tessellator.color(1.0f, 1.0f, 1.0f);
+        tessellator.index(gl, 0, 1, 2, 2, 3, 0);
+        tessellator.position(-8, 1, 0).emit(gl);
+        tessellator.position(-8, -1, 0).emit(gl);
+        tessellator.position(8, -1, 0).emit(gl);
+        tessellator.position(8, 1, 0).emit(gl);
+        tessellator.index(gl, 0, 1, 2, 2, 3, 0);
+        tessellator.position(1, 8, 0).emit(gl);
+        tessellator.position(1, -8, 0).emit(gl);
+        tessellator.position(-1, -8, 0).emit(gl);
+        tessellator.position(-1, 8, 0).emit(gl);
+        tessellator.end(gl);
     }
 
     @Override
@@ -119,7 +154,7 @@ public final class GameRenderer implements GLResource {
         if (positionColorProgram != null) positionColorProgram.close(gl);
         if (positionColorTexProgram != null) positionColorTexProgram.close(gl);
 
-        Tessellator.free(gl);
+        if (tessellator != null) tessellator.close(gl);
     }
 
     public GLProgram positionColorProgram() {

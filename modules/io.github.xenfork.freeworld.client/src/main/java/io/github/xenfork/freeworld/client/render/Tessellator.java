@@ -11,7 +11,9 @@
 package io.github.xenfork.freeworld.client.render;
 
 import io.github.xenfork.freeworld.client.render.gl.GLDrawMode;
+import io.github.xenfork.freeworld.client.render.gl.GLResource;
 import io.github.xenfork.freeworld.client.render.gl.GLStateMgr;
+import io.github.xenfork.freeworld.client.render.model.VertexFormat;
 import io.github.xenfork.freeworld.client.render.model.VertexLayout;
 import io.github.xenfork.freeworld.client.render.model.VertexLayouts;
 import overrungl.opengl.GL10C;
@@ -32,47 +34,51 @@ import static io.github.xenfork.freeworld.client.util.Conversions.colorToInt;
  * @author squid233
  * @since 0.1.0
  */
-public final class Tessellator {
+public final class Tessellator implements GLResource {
     private static final int MAX_VERTEX_COUNT = 60000;
     private static final int MAX_INDEX_COUNT = 90000;
     private static final VertexLayout VERTEX_LAYOUT = VertexLayouts.POSITION_COLOR_TEX;
     private static final StructLayout LAYOUT = VERTEX_LAYOUT.layout();
+    private static final String POSITION_NAME = VertexFormat.POSITION.name();
+    private static final String COLOR_NAME = VertexFormat.COLOR.name();
+    private static final String UV_NAME = VertexFormat.UV.name();
     private static final VarHandle X = LAYOUT.arrayElementVarHandle(
-        PathElement.groupElement(VertexLayouts.NAME_POSITION),
+        PathElement.groupElement(POSITION_NAME),
         PathElement.sequenceElement(0L)
     );
     private static final VarHandle Y = LAYOUT.arrayElementVarHandle(
-        PathElement.groupElement(VertexLayouts.NAME_POSITION),
+        PathElement.groupElement(POSITION_NAME),
         PathElement.sequenceElement(1L)
     );
     private static final VarHandle Z = LAYOUT.arrayElementVarHandle(
-        PathElement.groupElement(VertexLayouts.NAME_POSITION),
+        PathElement.groupElement(POSITION_NAME),
         PathElement.sequenceElement(2L)
     );
     private static final VarHandle R = LAYOUT.arrayElementVarHandle(
-        PathElement.groupElement(VertexLayouts.NAME_COLOR),
+        PathElement.groupElement(COLOR_NAME),
         PathElement.sequenceElement(0L)
     );
     private static final VarHandle G = LAYOUT.arrayElementVarHandle(
-        PathElement.groupElement(VertexLayouts.NAME_COLOR),
+        PathElement.groupElement(COLOR_NAME),
         PathElement.sequenceElement(1L)
     );
     private static final VarHandle B = LAYOUT.arrayElementVarHandle(
-        PathElement.groupElement(VertexLayouts.NAME_COLOR),
+        PathElement.groupElement(COLOR_NAME),
         PathElement.sequenceElement(2L)
     );
     private static final VarHandle A = LAYOUT.arrayElementVarHandle(
-        PathElement.groupElement(VertexLayouts.NAME_COLOR),
+        PathElement.groupElement(COLOR_NAME),
         PathElement.sequenceElement(3L)
     );
     private static final VarHandle U = LAYOUT.arrayElementVarHandle(
-        PathElement.groupElement(VertexLayouts.NAME_UV),
+        PathElement.groupElement(UV_NAME),
         PathElement.sequenceElement(0L)
     );
     private static final VarHandle V = LAYOUT.arrayElementVarHandle(
-        PathElement.groupElement(VertexLayouts.NAME_UV),
+        PathElement.groupElement(UV_NAME),
         PathElement.sequenceElement(1L)
     );
+    private final Arena arena;
     private final MemorySegment buffer;
     private final MemorySegment indexBuffer;
     private int vertexCount = 0;
@@ -92,27 +98,10 @@ public final class Tessellator {
     private float u = 0f;
     private float v = 0f;
 
-    private Tessellator() {
-        final Arena arena = Arena.ofAuto();
-        buffer = arena.allocate(LAYOUT, MAX_VERTEX_COUNT);
-        indexBuffer = arena.allocate(ValueLayout.JAVA_INT, MAX_INDEX_COUNT);
-    }
-
-    /**
-     * @author squid233
-     * @since 0.1.0
-     */
-    private static final class Holder {
-        private static final Tessellator INSTANCE = new Tessellator();
-    }
-
-    public static Tessellator getInstance() {
-        return Holder.INSTANCE;
-    }
-
-    public static void free(GLStateMgr gl) {
-        gl.deleteVertexArrays(Holder.INSTANCE.vao);
-        gl.deleteBuffers(Holder.INSTANCE.vbo, Holder.INSTANCE.ebo);
+    public Tessellator() {
+        this.arena = Arena.ofConfined();
+        this.buffer = arena.allocate(LAYOUT, MAX_VERTEX_COUNT);
+        this.indexBuffer = arena.allocate(ValueLayout.JAVA_INT, MAX_INDEX_COUNT);
     }
 
     public Tessellator position(float x, float y, float z) {
@@ -221,5 +210,12 @@ public final class Tessellator {
         if (!drawing) throw new IllegalStateException("Do not call Tessellator.end when not drawing");
         flush(gl);
         drawing = false;
+    }
+
+    @Override
+    public void close(GLStateMgr gl) {
+        arena.close();
+        gl.deleteVertexArrays(vao);
+        gl.deleteBuffers(vbo, ebo);
     }
 }

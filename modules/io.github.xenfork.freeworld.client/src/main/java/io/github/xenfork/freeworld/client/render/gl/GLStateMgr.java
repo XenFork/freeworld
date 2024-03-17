@@ -26,7 +26,10 @@ public abstract class GLStateMgr implements
     GL41C,
     DirectAccess {
     private int arrayBufferBinding = 0;
+    private boolean cullFace = false;
     private int currentProgram = 0;
+    private int depthFunc = LESS;
+    private boolean depthTest = false;
     private int textureBinding2D = 0;
     private int vertexArrayBinding = 0;
 
@@ -44,6 +47,27 @@ public abstract class GLStateMgr implements
     }
 
     @Skip
+    public void enableCullFace() {
+        if (!this.cullFace) {
+            this.cullFace = true;
+            enable(CULL_FACE);
+        }
+    }
+
+    @Skip
+    public void disableCullFace() {
+        if (this.cullFace) {
+            this.cullFace = false;
+            disable(CULL_FACE);
+        }
+    }
+
+    @Skip
+    public boolean cullFace() {
+        return cullFace;
+    }
+
+    @Skip
     public void setCurrentProgram(int currentProgram) {
         if (this.currentProgram != currentProgram) {
             this.currentProgram = currentProgram;
@@ -54,6 +78,40 @@ public abstract class GLStateMgr implements
     @Skip
     public int currentProgram() {
         return currentProgram;
+    }
+
+    @Skip
+    public void setDepthFunc(int depthFunc) {
+        if (this.depthFunc != depthFunc) {
+            this.depthFunc = depthFunc;
+            depthFunc(depthFunc);
+        }
+    }
+
+    @Skip
+    public int depthFunc() {
+        return depthFunc;
+    }
+
+    @Skip
+    public void enableDepthTest() {
+        if (!this.depthTest) {
+            this.depthTest = true;
+            enable(DEPTH_TEST);
+        }
+    }
+
+    @Skip
+    public void disableDepthTest() {
+        if (this.depthTest) {
+            this.depthTest = false;
+            disable(DEPTH_TEST);
+        }
+    }
+
+    @Skip
+    public boolean depthTest() {
+        return depthTest;
     }
 
     @Skip

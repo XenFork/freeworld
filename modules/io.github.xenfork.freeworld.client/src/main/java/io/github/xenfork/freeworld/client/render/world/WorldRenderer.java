@@ -50,25 +50,24 @@ public final class WorldRenderer implements AutoCloseable {
     public void compileChunks() {
     }
 
-    public void render(GLStateMgr gl) {
+    public void render(GLStateMgr gl, Tessellator tessellator) {
 //        final Vector3dc position = client.camera().position();
         final BlockRenderer blockRenderer = gameRenderer.blockRenderer();
-        final Tessellator t = Tessellator.getInstance();
-        t.begin(GLDrawMode.TRIANGLES);
+        tessellator.begin(GLDrawMode.TRIANGLES);
         for (Chunk chunk : world.chunks) {
             for (Direction direction : Direction.LIST) {
                 for (int x = chunk.fromX(), x1 = chunk.toX(); x < x1; x++) {
                     for (int y = chunk.fromY(), y1 = chunk.toY(); y < y1; y++) {
                         for (int z = chunk.fromZ(), z1 = chunk.toZ(); z < z1; z++) {
                             if (chunk.getBlockType(x + direction.axisX(), y + direction.axisY(), z + direction.axisZ()).air()) {
-                                blockRenderer.renderBlockFace(gl, t, chunk.getBlockType(x, y, z), x, y, z, direction);
+                                blockRenderer.renderBlockFace(gl, tessellator, chunk.getBlockType(x, y, z), x, y, z, direction);
                             }
                         }
                     }
                 }
             }
         }
-        t.end(gl);
+        tessellator.end(gl);
     }
 
     @Override

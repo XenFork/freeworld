@@ -19,9 +19,11 @@ import java.lang.foreign.SequenceLayout;
  * @since 0.1.0
  */
 public interface VertexFormat {
-    VertexFormat POSITION = new DefaultVertexFormat(3, GLDataType.FLOAT, false);
-    VertexFormat COLOR = new DefaultVertexFormat(4, GLDataType.UNSIGNED_BYTE, true);
-    VertexFormat UV = new DefaultVertexFormat(2, GLDataType.FLOAT, false);
+    VertexFormat POSITION = new DefaultVertexFormat("Position", 3, GLDataType.FLOAT, false);
+    VertexFormat COLOR = new DefaultVertexFormat("Color", 4, GLDataType.UNSIGNED_BYTE, true);
+    VertexFormat UV = new DefaultVertexFormat("UV", 2, GLDataType.FLOAT, false);
+
+    String name();
 
     int size();
 

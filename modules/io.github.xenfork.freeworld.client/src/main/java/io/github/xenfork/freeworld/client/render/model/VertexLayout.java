@@ -15,41 +15,38 @@ import io.github.xenfork.freeworld.client.render.gl.GLStateMgr;
 import java.lang.foreign.MemoryLayout;
 import java.lang.foreign.MemorySegment;
 import java.lang.foreign.StructLayout;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * @author squid233
  * @since 0.1.0
  */
 public final class VertexLayout {
-    private final Map<String, VertexFormat> formatMap;
+    private final List<VertexFormat> formats;
     private final Map<String, Integer> attribLocationMap;
     private final StructLayout layout;
 
-    public VertexLayout(Map<String, VertexFormat> formatMap) {
-        this.formatMap = formatMap;
-        this.attribLocationMap = HashMap.newHashMap(formatMap.size());
-        final List<MemoryLayout> elements = new ArrayList<>(formatMap.size());
+    public VertexLayout(List<VertexFormat> formats) {
+        this.formats = formats;
+        this.attribLocationMap = HashMap.newHashMap(formats.size());
+        final List<MemoryLayout> elements = new ArrayList<>(formats.size());
 
         int i = 0;
-        for (var entry : this.formatMap.entrySet()) {
-            final String key = entry.getKey();
-            final VertexFormat value = entry.getValue();
-            this.attribLocationMap.put(key, i);
-            elements.add(value.layout().withName(key));
-            i += value.usedAttribCount();
+        for (var format : formats) {
+            final String name = format.name();
+            this.attribLocationMap.put(name, i);
+            elements.add(format.layout().withName(name));
+            i += format.usedAttribCount();
         }
 
         this.layout = MemoryLayout.structLayout(elements.toArray(MemoryLayout[]::new));
     }
 
-    @SafeVarargs
-    public VertexLayout(Map.Entry<String, VertexFormat>... formats) {
-        final Map<String, VertexFormat> map = LinkedHashMap.newLinkedHashMap(formats.length);
-        for (var format : formats) {
-            map.put(format.getKey(), format.getValue());
-        }
-        this(map);
+    public VertexLayout(VertexFormat... formats) {
+        this(List.of(formats));
     }
 
     public void bindLocations(GLStateMgr gl, int program) {
@@ -65,9 +62,8 @@ public final class VertexLayout {
     public void specifyAttribPointers(GLStateMgr gl) {
         final int stride = Math.toIntExact(layout().byteSize());
         long offset = 0L;
-        for (var entry : formatMap.entrySet()) {
-            final VertexFormat format = entry.getValue();
-            gl.vertexAttribPointer(attribLocationMap.get(entry.getKey()),
+        for (var format : formats) {
+            gl.vertexAttribPointer(attribLocationMap.get(format.name()),
                 format.size(),
                 format.type().value(),
                 format.normalized(),
