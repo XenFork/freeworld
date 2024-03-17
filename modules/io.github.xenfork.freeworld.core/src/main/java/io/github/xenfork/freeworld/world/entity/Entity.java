@@ -56,6 +56,10 @@ public final class Entity {
         return componentMap.containsKey(id);
     }
 
+    public AccelerationComponent acceleration() {
+        return getComponent(AccelerationComponent.ID);
+    }
+
     public PositionComponent position() {
         return getComponent(PositionComponent.ID);
     }

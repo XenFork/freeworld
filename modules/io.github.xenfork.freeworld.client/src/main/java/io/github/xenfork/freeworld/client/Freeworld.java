@@ -103,6 +103,10 @@ public final class Freeworld implements AutoCloseable {
         framebufferWidth = framebufferSize.x();
         framebufferHeight = framebufferSize.y();
 
+        if (glfw.rawMouseMotionSupported()) {
+            glfw.setInputMode(window, GLFW.RAW_MOUSE_MOTION, GLFW.TRUE);
+        }
+
         BlockTypes.bootstrap();
         BuiltinRegistries.BLOCK_TYPE.freeze();
         EntityTypes.bootstrap();
@@ -162,8 +166,7 @@ public final class Freeworld implements AutoCloseable {
 
     private void tick() {
         camera.preUpdate();
-        world.tick();
-        final double speed = 0.5;
+        final double speed = 0.3;
         double xo = 0.0;
         double yo = 0.0;
         double zo = 0.0;
@@ -173,7 +176,8 @@ public final class Freeworld implements AutoCloseable {
         if (glfw.getKey(window, GLFW.KEY_D) == GLFW.PRESS) xo += 1.0;
         if (glfw.getKey(window, GLFW.KEY_LEFT_SHIFT) == GLFW.PRESS) yo -= 1.0;
         if (glfw.getKey(window, GLFW.KEY_SPACE) == GLFW.PRESS) yo += 1.0;
-        player.velocity().velocity().set(xo, yo, zo).mul(speed);
+        player.acceleration().acceleration().set(xo, yo, zo).mul(speed);
+        world.tick();
     }
 
     private void initGL() {

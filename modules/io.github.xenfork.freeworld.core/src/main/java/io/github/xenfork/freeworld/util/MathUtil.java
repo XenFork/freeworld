@@ -26,16 +26,12 @@ public final class MathUtil {
         double moveY = 0.0;
         double moveZ = 0.0;
         if (dst > 0.001) {
-            final double sqrt = Math.sqrt(dst);
-            final double invSqrt = 1.0 / sqrt;
             final double yaw = Math.toRadians(yawDegrees);
 
-            final double normalX = x * invSqrt;
-            final double normalZ = z * invSqrt;
             final double sin = Math.sin(yaw);
             final double cos = Math.cos(yaw);
-            moveX += normalX * cos + normalZ * sin;
-            moveZ += normalZ * cos - normalX * sin;
+            moveX += x * cos + z * sin;
+            moveZ += z * cos - x * sin;
         }
         moveY += y;
         return dest.set(moveX, moveY, moveZ);

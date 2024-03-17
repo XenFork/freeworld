@@ -11,14 +11,21 @@
 package io.github.xenfork.freeworld.world.entity.component;
 
 import io.github.xenfork.freeworld.core.Identifier;
+import org.joml.Vector3d;
 
 /**
  * @author squid233
  * @since 0.1.0
  */
-public sealed interface EntityComponent permits AccelerationComponent, PositionComponent, RotationXYComponent, VelocityComponent {
-    /**
-     * {@return a unique identifier of this component}
-     */
-    Identifier componentId();
+public record AccelerationComponent(Vector3d acceleration) implements EntityComponent {
+    public static final Identifier ID = Identifier.ofBuiltin("acceleration");
+
+    public AccelerationComponent() {
+        this(new Vector3d());
+    }
+
+    @Override
+    public Identifier componentId() {
+        return ID;
+    }
 }

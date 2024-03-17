@@ -13,6 +13,7 @@ package io.github.xenfork.freeworld.world.entity;
 import io.github.xenfork.freeworld.core.Identifier;
 import io.github.xenfork.freeworld.core.registry.BuiltinRegistries;
 import io.github.xenfork.freeworld.core.registry.Registry;
+import io.github.xenfork.freeworld.world.entity.component.AccelerationComponent;
 import io.github.xenfork.freeworld.world.entity.component.PositionComponent;
 import io.github.xenfork.freeworld.world.entity.component.RotationXYComponent;
 import io.github.xenfork.freeworld.world.entity.component.VelocityComponent;
@@ -26,6 +27,7 @@ import java.util.List;
 public final class EntityTypes {
     public static final EntityType PLAYER = register(0, "player",
         new EntityType(List.of(
+            AccelerationComponent::new,
             PositionComponent::new,
             RotationXYComponent::new,
             VelocityComponent::new

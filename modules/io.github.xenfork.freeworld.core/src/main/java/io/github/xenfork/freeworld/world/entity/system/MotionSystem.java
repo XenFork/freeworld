@@ -12,6 +12,7 @@ package io.github.xenfork.freeworld.world.entity.system;
 
 import io.github.xenfork.freeworld.util.MathUtil;
 import io.github.xenfork.freeworld.world.entity.Entity;
+import io.github.xenfork.freeworld.world.entity.component.AccelerationComponent;
 import io.github.xenfork.freeworld.world.entity.component.PositionComponent;
 import io.github.xenfork.freeworld.world.entity.component.RotationXYComponent;
 import io.github.xenfork.freeworld.world.entity.component.VelocityComponent;
@@ -30,13 +31,19 @@ public final class MotionSystem implements EntitySystem {
     @Override
     public void process(List<Entity> entities) {
         for (Entity entity : entities) {
-            if (EntitySystem.filter(entity, PositionComponent.ID, RotationXYComponent.ID, VelocityComponent.ID)) {
+            if (EntitySystem.filter(entity,
+                AccelerationComponent.ID,
+                PositionComponent.ID,
+                RotationXYComponent.ID,
+                VelocityComponent.ID)) {
+                final Vector3d acceleration = entity.acceleration().acceleration();
                 final Vector3d position = entity.position().position();
                 final Vector2d rotation = entity.rotation().rotation();
                 final Vector3d velocity = entity.velocity().velocity();
+                velocity.add(acceleration);
                 MathUtil.moveRelative(velocity.x(), velocity.y(), velocity.z(), rotation.y(), movement);
                 position.add(movement);
-                velocity.mul(0.5, 0.5, 0.5);
+                velocity.mul(0.5);
             }
         }
     }
