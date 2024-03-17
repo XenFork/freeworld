@@ -14,6 +14,7 @@ import io.github.xenfork.freeworld.core.Identifier;
 import io.github.xenfork.freeworld.core.registry.BuiltinRegistries;
 import io.github.xenfork.freeworld.core.registry.Registry;
 import io.github.xenfork.freeworld.world.entity.component.PositionComponent;
+import io.github.xenfork.freeworld.world.entity.component.RotationXYComponent;
 import io.github.xenfork.freeworld.world.entity.component.VelocityComponent;
 
 import java.util.List;
@@ -23,7 +24,15 @@ import java.util.List;
  * @since 0.1.0
  */
 public final class EntityTypes {
-    public static final EntityType PLAYER = register(0, "player", new EntityType(List.of(new PositionComponent(), new VelocityComponent())));
+    public static final EntityType PLAYER = register(0, "player",
+        new EntityType(List.of(
+            PositionComponent::new,
+            RotationXYComponent::new,
+            VelocityComponent::new
+        )));
+
+    private EntityTypes() {
+    }
 
     private static EntityType register(int rawId, String name, EntityType entityType) {
         return Registry.register(BuiltinRegistries.ENTITY_TYPE, Identifier.ofBuiltin(name), rawId, entityType);

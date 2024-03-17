@@ -13,6 +13,7 @@ package io.github.xenfork.freeworld.world.entity;
 import io.github.xenfork.freeworld.world.entity.component.EntityComponent;
 
 import java.util.List;
+import java.util.function.Supplier;
 
 /**
  * @author squid233
@@ -20,13 +21,13 @@ import java.util.List;
  */
 @SuppressWarnings("ClassCanBeRecord")
 public final class EntityType {
-    private final List<EntityComponent> defaultComponents;
+    private final List<Supplier<EntityComponent>> defaultComponents;
 
-    public EntityType(List<EntityComponent> defaultComponents) {
+    public EntityType(List<Supplier<EntityComponent>> defaultComponents) {
         this.defaultComponents = defaultComponents;
     }
 
-    public List<EntityComponent> defaultComponents() {
+    public List<Supplier<EntityComponent>> defaultComponents() {
         return defaultComponents;
     }
 }

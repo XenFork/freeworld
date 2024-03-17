@@ -20,6 +20,7 @@ import io.github.xenfork.freeworld.world.World;
 import io.github.xenfork.freeworld.world.block.BlockTypes;
 import io.github.xenfork.freeworld.world.entity.Entity;
 import io.github.xenfork.freeworld.world.entity.EntityTypes;
+import org.joml.Vector2d;
 import org.slf4j.Logger;
 import overrun.marshal.Unmarshal;
 import overrungl.glfw.GLFW;
@@ -107,10 +108,10 @@ public final class Freeworld implements AutoCloseable {
         EntityTypes.bootstrap();
         BuiltinRegistries.ENTITY_TYPE.freeze();
 
-        camera.setPosition(1.5, 16.0, 1.5);
-
         world = new World("New world");
         player = new Entity(world, UUID.randomUUID(), EntityTypes.PLAYER);
+        player.position().position().set(1.5, 16.0, 1.5);
+        world.entities.add(player);
 
         initGL();
         run();
@@ -141,7 +142,19 @@ public final class Freeworld implements AutoCloseable {
         cursorDeltaX = x - cursorX;
         cursorDeltaY = y - cursorY;
         if (disableCursor) {
-            camera.rotate(-cursorDeltaY * MOUSE_SENSITIVITY, -cursorDeltaX * MOUSE_SENSITIVITY);
+            final double pitch = -cursorDeltaY * MOUSE_SENSITIVITY;
+            final double yaw = -cursorDeltaX * MOUSE_SENSITIVITY;
+            final Vector2d rotation = player.rotation().rotation();
+            final double updateX = Math.clamp(rotation.x() + pitch, -90.0, 90.0);
+            double updateY = rotation.y() + yaw;
+
+            if (updateY < 0.0) {
+                updateY += 360.0;
+            } else if (updateY >= 360.0) {
+                updateY -= 360.0;
+            }
+
+            rotation.set(updateX, updateY);
         }
         cursorX = x;
         cursorY = y;
@@ -149,6 +162,7 @@ public final class Freeworld implements AutoCloseable {
 
     private void tick() {
         camera.preUpdate();
+        world.tick();
         final double speed = 0.5;
         double xo = 0.0;
         double yo = 0.0;
@@ -159,7 +173,7 @@ public final class Freeworld implements AutoCloseable {
         if (glfw.getKey(window, GLFW.KEY_D) == GLFW.PRESS) xo += 1.0;
         if (glfw.getKey(window, GLFW.KEY_LEFT_SHIFT) == GLFW.PRESS) yo -= 1.0;
         if (glfw.getKey(window, GLFW.KEY_SPACE) == GLFW.PRESS) yo += 1.0;
-        camera.moveRelative(xo, yo, zo, speed);
+        player.velocity().velocity().set(xo, yo, zo).mul(speed);
     }
 
     private void initGL() {
@@ -225,6 +239,10 @@ public final class Freeworld implements AutoCloseable {
 
     public World world() {
         return world;
+    }
+
+    public Entity player() {
+        return player;
     }
 
     public static Freeworld getInstance() {

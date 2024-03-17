@@ -10,6 +10,7 @@
 
 package io.github.xenfork.freeworld.world.entity.component;
 
+import io.github.xenfork.freeworld.core.Identifier;
 import org.joml.Vector3d;
 
 /**
@@ -17,14 +18,14 @@ import org.joml.Vector3d;
  * @since 0.1.0
  */
 public record VelocityComponent(Vector3d velocity) implements EntityComponent {
-    public static final String NAME = "velocity";
+    public static final Identifier ID = Identifier.ofBuiltin("velocity");
 
     public VelocityComponent() {
         this(new Vector3d());
     }
 
     @Override
-    public String componentName() {
-        return NAME;
+    public Identifier componentId() {
+        return ID;
     }
 }

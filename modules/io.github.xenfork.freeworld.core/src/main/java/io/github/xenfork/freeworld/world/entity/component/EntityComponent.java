@@ -10,15 +10,15 @@
 
 package io.github.xenfork.freeworld.world.entity.component;
 
+import io.github.xenfork.freeworld.core.Identifier;
+
 /**
  * @author squid233
  * @since 0.1.0
  */
-public sealed interface EntityComponent permits
-    PositionComponent,
-    VelocityComponent {
+public sealed interface EntityComponent permits PositionComponent, RotationXYComponent, VelocityComponent {
     /**
-     * {@return a unique name of this component}
+     * {@return a unique identifier of this component}
      */
-    String componentName();
+    Identifier componentId();
 }

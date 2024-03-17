@@ -23,6 +23,7 @@ module io.github.xenfork.freeworld.core {
     exports io.github.xenfork.freeworld.world.chunk;
     exports io.github.xenfork.freeworld.world.entity;
     exports io.github.xenfork.freeworld.world.entity.component;
+    exports io.github.xenfork.freeworld.world.entity.system;
 
     requires ch.qos.logback.core;
     requires ch.qos.logback.classic;

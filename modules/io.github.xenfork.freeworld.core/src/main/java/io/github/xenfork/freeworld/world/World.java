@@ -11,7 +11,10 @@
 package io.github.xenfork.freeworld.world;
 
 import io.github.xenfork.freeworld.world.chunk.Chunk;
+import io.github.xenfork.freeworld.world.entity.Entity;
+import io.github.xenfork.freeworld.world.entity.system.MotionSystem;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -24,9 +27,15 @@ public final class World {
     public final Chunk c2 = new Chunk(this, 0, 0, 1);
     public final Chunk c3 = new Chunk(this, 1, 0, 1);
     public final List<Chunk> chunks = List.of(c0, c1, c2, c3);
+    public final List<Entity> entities = new ArrayList<>();
+    public final MotionSystem motionSystem = new MotionSystem();
 
     public World(String name) {
         chunks.forEach(Chunk::generateTerrain);
+    }
+
+    public void tick() {
+        motionSystem.process(entities);
     }
 
     public Chunk createChunk(int x, int y, int z) {

@@ -10,13 +10,13 @@
 
 package io.github.xenfork.freeworld.world.entity;
 
+import io.github.xenfork.freeworld.core.Identifier;
 import io.github.xenfork.freeworld.world.World;
-import io.github.xenfork.freeworld.world.entity.component.EntityComponent;
-import io.github.xenfork.freeworld.world.entity.component.PositionComponent;
-import io.github.xenfork.freeworld.world.entity.component.VelocityComponent;
+import io.github.xenfork.freeworld.world.entity.component.*;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 import java.util.UUID;
 
 /**
@@ -27,34 +27,45 @@ public final class Entity {
     private final World world;
     private final UUID uuid;
     private final EntityType entityType;
-    private final Map<String, EntityComponent> componentMap = new HashMap<>();
+    private final Map<Identifier, EntityComponent> componentMap = new HashMap<>();
 
     public Entity(World world, UUID uuid, EntityType entityType) {
         this.world = world;
         this.uuid = uuid;
         this.entityType = entityType;
-        entityType.defaultComponents().forEach(this::addComponent);
+        for (var supplier : entityType.defaultComponents()) {
+            addComponent(supplier.get());
+        }
     }
 
     public void addComponent(EntityComponent component) {
-        final String name = component.componentName();
-        if (componentMap.containsKey(name)) {
+        Objects.requireNonNull(component);
+        final Identifier id = component.componentId();
+        if (componentMap.containsKey(id)) {
             return;
         }
-        componentMap.put(name, component);
+        componentMap.put(id, component);
     }
 
     @SuppressWarnings("unchecked")
-    public <T extends EntityComponent> T getComponent(String name) {
-        return (T) componentMap.get(name);
+    public <T extends EntityComponent> T getComponent(Identifier id) {
+        return (T) componentMap.get(id);
+    }
+
+    public boolean hasComponent(Identifier id) {
+        return componentMap.containsKey(id);
     }
 
     public PositionComponent position() {
-        return getComponent(PositionComponent.NAME);
+        return getComponent(PositionComponent.ID);
+    }
+
+    public RotationXYComponent rotation() {
+        return getComponent(RotationXYComponent.ID);
     }
 
     public VelocityComponent velocity() {
-        return getComponent(VelocityComponent.NAME);
+        return getComponent(VelocityComponent.ID);
     }
 
     public World world() {

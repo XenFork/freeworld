@@ -103,6 +103,7 @@ public final class GameRenderer implements GLResource {
             1000.0f
         );
         final Camera camera = client.camera();
+        camera.moveToEntity(client.player());
         camera.updateLerp(partialTick);
         camera.updateViewMatrix();
         projectionView.mul(camera.viewMatrix());

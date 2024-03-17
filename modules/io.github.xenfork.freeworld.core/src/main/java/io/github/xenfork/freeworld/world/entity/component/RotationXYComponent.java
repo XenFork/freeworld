@@ -11,17 +11,17 @@
 package io.github.xenfork.freeworld.world.entity.component;
 
 import io.github.xenfork.freeworld.core.Identifier;
-import org.joml.Vector3d;
+import org.joml.Vector2d;
 
 /**
  * @author squid233
  * @since 0.1.0
  */
-public record PositionComponent(Vector3d position) implements EntityComponent {
-    public static final Identifier ID = Identifier.ofBuiltin("position");
+public record RotationXYComponent(Vector2d rotation) implements EntityComponent {
+    public static final Identifier ID = Identifier.ofBuiltin("rotation");
 
-    public PositionComponent() {
-        this(new Vector3d());
+    public RotationXYComponent() {
+        this(new Vector2d());
     }
 
     @Override
