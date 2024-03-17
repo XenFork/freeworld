@@ -33,7 +33,6 @@ import overrungl.util.value.Pair;
 
 import java.lang.foreign.MemorySegment;
 import java.lang.invoke.MethodHandles;
-import java.util.UUID;
 
 /**
  * Client logic
@@ -113,9 +112,7 @@ public final class Freeworld implements AutoCloseable {
         BuiltinRegistries.ENTITY_TYPE.freeze();
 
         world = new World("New world");
-        player = new Entity(world, UUID.randomUUID(), EntityTypes.PLAYER);
-        player.position().position().set(1.5, 16.0, 1.5);
-        world.entities.add(player);
+        player = world.createEntity(EntityTypes.PLAYER, 32.0, 16.0, 32.0);
 
         initGL();
         run();

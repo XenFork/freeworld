@@ -57,6 +57,7 @@ public class Chunk {
     }
 
     public void generateTerrain() {
+        if (y != 0) return;
         for (int bx = 0; bx < width; bx++) {
             for (int bz = 0; bz < depth; bz++) {
                 for (int by = 0; by < 8; by++) {

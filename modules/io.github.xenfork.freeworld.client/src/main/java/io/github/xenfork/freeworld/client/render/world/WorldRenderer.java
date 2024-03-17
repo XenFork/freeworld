@@ -18,6 +18,7 @@ import io.github.xenfork.freeworld.client.render.gl.GLStateMgr;
 import io.github.xenfork.freeworld.util.Direction;
 import io.github.xenfork.freeworld.world.World;
 import io.github.xenfork.freeworld.world.chunk.Chunk;
+import io.github.xenfork.freeworld.world.chunk.ChunkPos;
 
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.LinkedBlockingDeque;
@@ -55,12 +56,21 @@ public final class WorldRenderer implements AutoCloseable {
         final BlockRenderer blockRenderer = gameRenderer.blockRenderer();
         tessellator.begin(GLDrawMode.TRIANGLES);
         for (Chunk chunk : world.chunks) {
+            final int cx = chunk.x();
+            final int cy = chunk.y();
+            final int cz = chunk.z();
             for (Direction direction : Direction.LIST) {
-                for (int x = chunk.fromX(), x1 = chunk.toX(); x < x1; x++) {
-                    for (int y = chunk.fromY(), y1 = chunk.toY(); y < y1; y++) {
-                        for (int z = chunk.fromZ(), z1 = chunk.toZ(); z < z1; z++) {
+                for (int x = 0; x < Chunk.SIZE; x++) {
+                    for (int y = 0; y < Chunk.SIZE; y++) {
+                        for (int z = 0; z < Chunk.SIZE; z++) {
                             if (chunk.getBlockType(x + direction.axisX(), y + direction.axisY(), z + direction.axisZ()).air()) {
-                                blockRenderer.renderBlockFace(gl, tessellator, chunk.getBlockType(x, y, z), x, y, z, direction);
+                                blockRenderer.renderBlockFace(gl,
+                                    tessellator,
+                                    chunk.getBlockType(x, y, z),
+                                    ChunkPos.relativeToAbsolute(cx, x),
+                                    ChunkPos.relativeToAbsolute(cy, y),
+                                    ChunkPos.relativeToAbsolute(cz, z),
+                                    direction);
                             }
                         }
                     }
