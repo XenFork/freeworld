@@ -35,9 +35,9 @@ public record Identifier(@NotNull String namespace, @NotNull String path) {
     private static final Pattern PATH_RULE = Pattern.compile("^[\\w/.-]*$");
     private static final Identifier EMPTY = new Identifier(DEFAULT_NAMESPACE, "");
 
-    public Identifier(@NotNull String namespace, @NotNull String path) {
-        this.namespace = checkNamespace(namespace);
-        this.path = checkPath(path);
+    public Identifier {
+        checkNamespace(namespace);
+        checkPath(path);
     }
 
     @NotNull

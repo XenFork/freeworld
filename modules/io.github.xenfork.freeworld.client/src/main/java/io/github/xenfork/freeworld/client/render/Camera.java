@@ -10,6 +10,10 @@
 
 package io.github.xenfork.freeworld.client.render;
 
+import io.github.xenfork.freeworld.world.entity.Entity;
+import io.github.xenfork.freeworld.world.entity.component.PositionComponent;
+import io.github.xenfork.freeworld.world.entity.component.RotationXYComponent;
+import io.github.xenfork.freeworld.world.entity.system.EntitySystem;
 import org.joml.*;
 
 import java.lang.Math;
@@ -25,42 +29,11 @@ public final class Camera {
     private final Vector2d rotation = new Vector2d();
     private final Matrix4f viewMatrix = new Matrix4f();
 
-    public void setPosition(double x, double y, double z) {
-        position.set(x, y, z);
-    }
-
-    public void move(double x, double y, double z) {
-        position.add(x, y, z);
-    }
-
-    public void moveRelative(double x, double y, double z, double speed) {
-        final double dest = x * x + z * z;
-        if (dest > 0.001) {
-            final double sqrt = Math.sqrt(dest);
-            final double invSqrt = 1.0 / sqrt;
-            final double yaw = Math.toRadians(rotation.y());
-
-            final double normalX = x * invSqrt * speed;
-            final double normalZ = z * invSqrt * speed;
-            final double sin = Math.sin(yaw);
-            final double cos = Math.cos(yaw);
-            position.x += normalX * cos + normalZ * sin;
-            position.z += normalZ * cos - normalX * sin;
+    public void moveToEntity(Entity entity) {
+        if (EntitySystem.filter(entity, PositionComponent.ID, RotationXYComponent.ID)) {
+            position.set(entity.position().position());
+            rotation.set(entity.rotation().rotation());
         }
-        position.y += y * speed;
-    }
-
-    public void rotate(double pitch, double yaw) {
-        final double updateX = Math.clamp(rotation.x() + pitch, -90.0, 90.0);
-        double updateY = rotation.y() + yaw;
-
-        if (updateY < 0.0) {
-            updateY += 360.0;
-        } else if (updateY >= 360.0) {
-            updateY -= 360.0;
-        }
-
-        rotation.set(updateX, updateY);
     }
 
     public void preUpdate() {

@@ -8,17 +8,17 @@
  * version 2.1 of the License, or (at your option) any later version.
  */
 
-package io.github.xenfork.freeworld.world.block.property;
+package io.github.xenfork.freeworld.world.entity.component;
 
-import io.github.xenfork.freeworld.util.Direction;
+import io.github.xenfork.freeworld.core.Identifier;
 
 /**
  * @author squid233
  * @since 0.1.0
  */
-public final class BlockStateProperties {
-    public static final EnumProperty<Direction> DIRECTION = EnumProperty.of("direction", Direction.class);
-
-    private BlockStateProperties() {
-    }
+public sealed interface EntityComponent permits AccelerationComponent, PositionComponent, RotationXYComponent, VelocityComponent {
+    /**
+     * {@return a unique identifier of this component}
+     */
+    Identifier componentId();
 }

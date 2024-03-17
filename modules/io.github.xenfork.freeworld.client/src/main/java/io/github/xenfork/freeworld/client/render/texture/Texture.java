@@ -8,9 +8,10 @@
  * version 2.1 of the License, or (at your option) any later version.
  */
 
-package io.github.xenfork.freeworld.client.texture;
+package io.github.xenfork.freeworld.client.render.texture;
 
-import io.github.xenfork.freeworld.client.render.GameRenderer;
+import io.github.xenfork.freeworld.client.render.gl.GLResource;
+import io.github.xenfork.freeworld.client.render.gl.GLStateMgr;
 import io.github.xenfork.freeworld.core.Identifier;
 import io.github.xenfork.freeworld.util.Logging;
 import org.slf4j.Logger;
@@ -23,7 +24,7 @@ import java.lang.foreign.Arena;
  * @author squid233
  * @since 0.1.0
  */
-public sealed class Texture implements AutoCloseable permits TextureAtlas {
+public sealed class Texture implements GLResource permits TextureAtlas {
     private static final Logger logger = Logging.caller();
     private final int id;
     private final int width;
@@ -37,7 +38,7 @@ public sealed class Texture implements AutoCloseable permits TextureAtlas {
         this.mipmapLevel = mipmapLevel;
     }
 
-    public static Texture load(Identifier identifier) {
+    public static Texture load(GLStateMgr gl, Identifier identifier) {
         try (Arena arena = Arena.ofConfined()) {
             final String path = identifier.toResourcePath(Identifier.ROOT_ASSETS, null, null);
             final NativeImage image = NativeImage.load(arena, path);
@@ -49,9 +50,8 @@ public sealed class Texture implements AutoCloseable permits TextureAtlas {
             final boolean hasMipmap = isPowerOfTwo(width) && isPowerOfTwo(height);
             final int mipmapLevel = hasMipmap ? Math.min(Integer.numberOfTrailingZeros(width), Integer.numberOfTrailingZeros(height)) : 0;
 
-            final GL gl = GameRenderer.OpenGL.get();
             final int id = gl.genTextures();
-            gl.bindTexture(GL10C.TEXTURE_2D, id);
+            gl.setTextureBinding2D(id);
             gl.texParameteri(GL10C.TEXTURE_2D, GL10C.TEXTURE_MIN_FILTER, hasMipmap ? GL10C.NEAREST_MIPMAP_NEAREST : GL10C.NEAREST);
             gl.texParameteri(GL10C.TEXTURE_2D, GL10C.TEXTURE_MAG_FILTER, GL10C.NEAREST);
             gl.texParameteri(GL10C.TEXTURE_2D, GL.TEXTURE_MAX_LEVEL, mipmapLevel);
@@ -67,7 +67,6 @@ public sealed class Texture implements AutoCloseable permits TextureAtlas {
             if (hasMipmap) {
                 gl.generateMipmap(GL10C.TEXTURE_2D);
             }
-            gl.bindTexture(GL10C.TEXTURE_2D, 0);
             return new Texture(id, width, height, mipmapLevel);
         }
     }
@@ -76,9 +75,8 @@ public sealed class Texture implements AutoCloseable permits TextureAtlas {
         return value != 0 && value == Integer.highestOneBit(value);
     }
 
-    public void bind() {
-        final GL gl = GameRenderer.OpenGL.get();
-        gl.bindTexture(GL10C.TEXTURE_2D, id());
+    public void bind(GLStateMgr gl) {
+        gl.setTextureBinding2D(id());
     }
 
     public int id() {
@@ -98,8 +96,7 @@ public sealed class Texture implements AutoCloseable permits TextureAtlas {
     }
 
     @Override
-    public void close() {
-        final GL gl = GameRenderer.OpenGL.get();
+    public void close(GLStateMgr gl) {
         gl.deleteTextures(id());
     }
 }

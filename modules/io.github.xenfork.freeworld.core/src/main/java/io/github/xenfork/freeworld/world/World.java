@@ -11,98 +11,34 @@
 package io.github.xenfork.freeworld.world;
 
 import io.github.xenfork.freeworld.world.chunk.Chunk;
+import io.github.xenfork.freeworld.world.entity.Entity;
+import io.github.xenfork.freeworld.world.entity.system.MotionSystem;
 
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
- * @author baka4n
  * @author squid233
  * @since 0.1.0
  */
 public final class World {
-    private final String name;
-    private final String directoryName;
-    private final Path worldDir;
-    private final Map<Position, Chunk> loadedChunks = new HashMap<>();
+    public final Chunk c0 = new Chunk(this, 0, 0, 0);
+    public final Chunk c1 = new Chunk(this, 1, 0, 0);
+    public final Chunk c2 = new Chunk(this, 0, 0, 1);
+    public final Chunk c3 = new Chunk(this, 1, 0, 1);
+    public final List<Chunk> chunks = List.of(c0, c1, c2, c3);
+    public final List<Entity> entities = new ArrayList<>();
+    public final MotionSystem motionSystem = new MotionSystem();
 
-    public World(String name, String directoryName) {
-        this.name = name;
-        this.directoryName = directoryName;
-        this.worldDir = Path.of("saves", directoryName);
+    public World(String name) {
+        chunks.forEach(Chunk::generateTerrain);
     }
 
-    public static String chunkFilename(int x, int y, int z) {
-        return STR."\{x}-\{y}-\{z}.fwc";
-    }
-
-    public Chunk loadOrCreateChunk(int x, int y, int z) {
-        return loadedChunks.computeIfAbsent(new Position(x, y, z), position -> {
-            final int cx = position.x();
-            final int cy = position.y();
-            final int cz = position.z();
-            final Path chunksPath = getResourcePath(Resource.CHUNKS);
-            final Path chunkFile = chunksPath.resolve(chunkFilename(cx, cy, cz));
-
-            if (!Files.exists(chunkFile)) {
-                final Chunk chunk = createChunk(cx, cy, cz);
-                chunk.generateTerrain();
-                return chunk;
-            }
-
-            return loadChunk(chunkFile, cx, cy, cz);
-        });
-    }
-
-    public Chunk loadChunk(Path chunkFile, int x, int y, int z) {
-        final Path parent = chunkFile.getParent();
-        try {
-            Files.createDirectories(parent);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-
-        final Chunk chunk = createChunk(x, y, z);
-        chunk.loadFromFile(chunkFile);
-        return chunk;
+    public void tick() {
+        motionSystem.process(entities);
     }
 
     public Chunk createChunk(int x, int y, int z) {
         return new Chunk(this, x, y, z);
-    }
-
-    public String name() {
-        return name;
-    }
-
-    @Override
-    public String toString() {
-        return STR."World[name=\{name}]";
-    }
-
-    public Path getResourcePath(Resource resource) {
-        return worldDir.resolve(resource.path());
-    }
-
-    /**
-     * @author baka4n
-     * @since 0.1.0
-     */
-    public enum Resource {
-        ROOT("."),
-        CHUNKS("chunks"),
-        ;
-
-        private final String path;
-
-        Resource(String path) {
-            this.path = path;
-        }
-
-        public String path() {
-            return path;
-        }
     }
 }

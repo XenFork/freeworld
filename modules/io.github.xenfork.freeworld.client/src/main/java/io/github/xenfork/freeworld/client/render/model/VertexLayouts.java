@@ -10,8 +10,6 @@
 
 package io.github.xenfork.freeworld.client.render.model;
 
-import java.util.Map;
-
 /**
  * Vertex layouts
  *
@@ -19,18 +17,15 @@ import java.util.Map;
  * @since 0.1.0
  */
 public final class VertexLayouts {
-    public static final String NAME_POSITION = "Position";
-    public static final String NAME_COLOR = "Color";
-    public static final String NAME_UV = "UV";
-    public static final VertexLayout POSITION_COLOR = new VertexLayout(Map.of(
-        NAME_POSITION, VertexFormat.POSITION,
-        NAME_COLOR, VertexFormat.COLOR
-    ));
-    public static final VertexLayout POSITION_COLOR_TEX = new VertexLayout(Map.of(
-        NAME_POSITION, VertexFormat.POSITION,
-        NAME_COLOR, VertexFormat.COLOR,
-        NAME_UV, VertexFormat.UV
-    ));
+    public static final VertexLayout POSITION_COLOR = new VertexLayout(
+        VertexFormat.POSITION,
+        VertexFormat.COLOR
+    );
+    public static final VertexLayout POSITION_COLOR_TEX = new VertexLayout(
+        VertexFormat.POSITION,
+        VertexFormat.COLOR,
+        VertexFormat.UV
+    );
 
     private VertexLayouts() {
     }

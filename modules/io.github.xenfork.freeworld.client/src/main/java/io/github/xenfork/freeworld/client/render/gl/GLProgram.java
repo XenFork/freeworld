@@ -14,7 +14,6 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
-import io.github.xenfork.freeworld.client.render.GameRenderer;
 import io.github.xenfork.freeworld.client.render.model.VertexLayout;
 import io.github.xenfork.freeworld.core.Identifier;
 import io.github.xenfork.freeworld.file.BuiltinFiles;
@@ -40,10 +39,7 @@ import java.util.Objects;
  * @author squid233
  * @since 0.1.0
  */
-public final class GLProgram implements AutoCloseable {
-    public static final int INPUT_POSITION = 0;
-    public static final int INPUT_COLOR = 1;
-    public static final int INPUT_UV = 2;
+public final class GLProgram implements GLResource {
     public static final String UNIFORM_PROJECTION_VIEW_MATRIX = "ProjectionViewMatrix";
     public static final String UNIFORM_MODEL_MATRIX = "ModelMatrix";
     public static final String UNIFORM_COLOR_MODULATOR = "ColorModulator";
@@ -63,11 +59,11 @@ public final class GLProgram implements AutoCloseable {
     }
 
     @Nullable
-    public static GLProgram load(@NotNull Identifier identifier, @NotNull VertexLayout vertexLayout) {
+    public static GLProgram load(GLStateMgr gl, @NotNull Identifier identifier, @NotNull VertexLayout vertexLayout) {
         Objects.requireNonNull(identifier);
         Objects.requireNonNull(vertexLayout);
 
-        final GLProgram program = loadFromJson(identifier, vertexLayout);
+        final GLProgram program = loadFromJson(gl, identifier, vertexLayout);
         if (program != null) {
             logger.debug("Created {}", program);
             return program;
@@ -75,7 +71,7 @@ public final class GLProgram implements AutoCloseable {
         return null;
     }
 
-    private static GLProgram loadFromJson(Identifier identifier, VertexLayout vertexLayout) {
+    private static GLProgram loadFromJson(GLStateMgr gl, Identifier identifier, VertexLayout vertexLayout) {
         final String path = identifier.toResourcePath(Identifier.ROOT_ASSETS,
             Identifier.RES_SHADER,
             Identifier.EXT_JSON);
@@ -158,14 +154,13 @@ public final class GLProgram implements AutoCloseable {
         }
 
         // OpenGL stuff
-        final GL gl = GameRenderer.OpenGL.get();
 
         final String vshPath = vshId.toResourcePath(Identifier.ROOT_ASSETS, Identifier.RES_SHADER, null);
         final String vshSrc = BuiltinFiles.readText(BuiltinFiles.load(vshPath), vshPath);
         if (vshSrc == null) {
             return null;
         }
-        final int vsh = compileShader(GL.VERTEX_SHADER, "vertex", vshSrc);
+        final int vsh = compileShader(gl, GL.VERTEX_SHADER, "vertex", vshSrc);
         if (vsh == -1) {
             return null;
         }
@@ -176,14 +171,14 @@ public final class GLProgram implements AutoCloseable {
             gl.deleteShader(vsh);
             return null;
         }
-        final int fsh = compileShader(GL.FRAGMENT_SHADER, "fragment", fshSrc);
+        final int fsh = compileShader(gl, GL.FRAGMENT_SHADER, "fragment", fshSrc);
         if (fsh == -1) {
             gl.deleteShader(fsh);
             return null;
         }
 
         final int id = gl.createProgram();
-        vertexLayout.bindLocations(id);
+        vertexLayout.bindLocations(gl, id);
         gl.attachShader(id, vsh);
         gl.attachShader(id, fsh);
         gl.linkProgram(id);
@@ -267,8 +262,7 @@ public final class GLProgram implements AutoCloseable {
         logger.error("Failed to load GLProgram {}: Malformed JSON from file {}: {}", identifier, file, msg);
     }
 
-    private static int compileShader(int type, String name, String src) {
-        final GL gl = GameRenderer.OpenGL.get();
+    private static int compileShader(GLStateMgr gl, int type, String name, String src) {
         final int shader = gl.createShader(type);
         gl.shaderSource(shader, src);
         gl.compileShader(shader);
@@ -280,13 +274,14 @@ public final class GLProgram implements AutoCloseable {
         return shader;
     }
 
-    public void use() {
-        final GL gl = GameRenderer.OpenGL.get();
-        gl.useProgram(id());
+    public void use(GLStateMgr gl) {
+        gl.setCurrentProgram(id());
     }
 
-    public void uploadUniforms() {
-        uniformMap.values().forEach(GLUniform::upload);
+    public void uploadUniforms(GLStateMgr gl) {
+        for (GLUniform uniform : uniformMap.values()) {
+            uniform.upload(gl);
+        }
     }
 
     public GLUniform getUniform(String name) {
@@ -294,8 +289,7 @@ public final class GLProgram implements AutoCloseable {
     }
 
     @Override
-    public void close() {
-        final GL gl = GameRenderer.OpenGL.get();
+    public void close(GLStateMgr gl) {
         gl.deleteProgram(id);
         if (uniformArena != null) {
             uniformArena.close();

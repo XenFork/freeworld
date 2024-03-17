@@ -29,12 +29,22 @@ import java.util.Map;
 public class MappedRegistry<T> implements MutableRegistry<T> {
     private static final Logger logger = Logging.caller();
     private static final int DEFAULT_CAPACITY = 256;
+    private final Identifier registryName;
     private final Map<Identifier, T> idToEntryMap = HashMap.newHashMap(DEFAULT_CAPACITY);
     private final Map<T, Identifier> entryToIdMap = HashMap.newHashMap(DEFAULT_CAPACITY);
     private final Map<Integer, T> rawIdToEntryMap = HashMap.newHashMap(DEFAULT_CAPACITY);
     protected final Map<T, Integer> entryToRawIdMap = HashMap.newHashMap(DEFAULT_CAPACITY);
     private int nextId = -1;
     private boolean frozen = false;
+
+    public MappedRegistry(Identifier registryName) {
+        this.registryName = registryName;
+    }
+
+    @Override
+    public Identifier registryName() {
+        return registryName;
+    }
 
     @Override
     public <R extends T> R set(Identifier identifier, int rawId, R entry) {
@@ -83,13 +93,13 @@ public class MappedRegistry<T> implements MutableRegistry<T> {
 
     @Override
     public void unfreeze() {
-        logger.warn("Unfreezing registry; use at your own risk.");
+        logger.warn("Unfreezing registry {}; use at your own risk.", registryName());
         frozen = false;
     }
 
     @Override
     public void freeze() {
-        logger.info("Freezing registry");
+        logger.info("Freezing registry {}", registryName());
         frozen = true;
     }
 

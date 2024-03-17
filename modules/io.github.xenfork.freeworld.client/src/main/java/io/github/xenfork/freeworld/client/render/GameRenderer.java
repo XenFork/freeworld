@@ -11,20 +11,21 @@
 package io.github.xenfork.freeworld.client.render;
 
 import io.github.xenfork.freeworld.client.Freeworld;
+import io.github.xenfork.freeworld.client.render.gl.GLDrawMode;
 import io.github.xenfork.freeworld.client.render.gl.GLProgram;
+import io.github.xenfork.freeworld.client.render.gl.GLResource;
+import io.github.xenfork.freeworld.client.render.gl.GLStateMgr;
 import io.github.xenfork.freeworld.client.render.model.VertexLayout;
 import io.github.xenfork.freeworld.client.render.model.VertexLayouts;
+import io.github.xenfork.freeworld.client.render.texture.TextureAtlas;
+import io.github.xenfork.freeworld.client.render.texture.TextureManager;
 import io.github.xenfork.freeworld.client.render.world.BlockRenderer;
 import io.github.xenfork.freeworld.client.render.world.WorldRenderer;
-import io.github.xenfork.freeworld.client.texture.TextureAtlas;
-import io.github.xenfork.freeworld.client.texture.TextureManager;
 import io.github.xenfork.freeworld.core.Identifier;
 import io.github.xenfork.freeworld.util.Logging;
 import org.joml.Matrix4f;
 import org.slf4j.Logger;
-import overrungl.opengl.GL;
 import overrungl.opengl.GL10C;
-import overrungl.opengl.GLFlags;
 
 import java.util.List;
 
@@ -34,21 +35,11 @@ import java.util.List;
  * @author squid233
  * @since 0.1.0
  */
-public final class GameRenderer implements AutoCloseable {
+public final class GameRenderer implements GLResource {
     private static final Logger logger = Logging.caller();
-    /**
-     * The OpenGL flags, which is only available in render thread.
-     */
-    public static final ScopedValue<GLFlags> OpenGLFlags = ScopedValue.newInstance();
-    /**
-     * The OpenGL context, which is only available in render thread.
-     */
-    public static final ScopedValue<GL> OpenGL = ScopedValue.newInstance();
     private final Freeworld client;
     private GLProgram positionColorProgram;
     private GLProgram positionColorTexProgram;
-    private int framebufferWidth;
-    private int framebufferHeight;
     private final Matrix4f projectionView = new Matrix4f();
     private final Matrix4f matrix = new Matrix4f();
     public static final Identifier TEX_DIRT = Identifier.ofBuiltin("texture/block/dirt.png");
@@ -58,92 +49,113 @@ public final class GameRenderer implements AutoCloseable {
     private TextureManager textureManager;
     private BlockRenderer blockRenderer;
     private WorldRenderer worldRenderer;
+    private Tessellator tessellator;
 
     public GameRenderer(Freeworld client) {
         this.client = client;
     }
 
-    public void init() {
+    public void init(GLStateMgr gl) {
         logger.info("Initializing game renderer");
 
-        final GL gl = OpenGL.get();
-
-        initGLPrograms();
+        initGLPrograms(gl);
 
         gl.clearColor(0.4f, 0.6f, 0.9f, 1.0f);
 
         textureManager = new TextureManager();
 
-        texture = TextureAtlas.load(List.of(TEX_DIRT, TEX_GRASS_BLOCK, TEX_STONE));
+        texture = TextureAtlas.load(gl, List.of(TEX_DIRT, TEX_GRASS_BLOCK, TEX_STONE));
         textureManager.addTexture(TextureManager.BLOCK_ATLAS, texture);
         logger.info("Created {}x{}x{} {}", texture.width(), texture.height(), texture.mipmapLevel(), TextureManager.BLOCK_ATLAS);
 
         blockRenderer = new BlockRenderer(this);
         worldRenderer = new WorldRenderer(client, this, client.world());
+
+        tessellator = new Tessellator();
     }
 
-    private void initGLPrograms() {
-        positionColorProgram = initBootstrapProgram("init/position_color", VertexLayouts.POSITION_COLOR);
-        positionColorTexProgram = initBootstrapProgram("init/position_color_tex", VertexLayouts.POSITION_COLOR_TEX);
+    private void initGLPrograms(GLStateMgr gl) {
+        positionColorProgram = initBootstrapProgram(gl, "init/position_color", VertexLayouts.POSITION_COLOR);
+        positionColorTexProgram = initBootstrapProgram(gl, "init/position_color_tex", VertexLayouts.POSITION_COLOR_TEX);
     }
 
-    private GLProgram initBootstrapProgram(String path, VertexLayout layout) {
+    private GLProgram initBootstrapProgram(GLStateMgr gl, String path, VertexLayout layout) {
         final Identifier identifier = Identifier.ofBuiltin(path);
-        final GLProgram program = GLProgram.load(identifier, layout);
+        final GLProgram program = GLProgram.load(gl, identifier, layout);
         if (program == null) {
             throw new IllegalStateException(STR."Failed to initialize bootstrap GLProgram \{identifier}");
         }
         return program;
     }
 
-    public void render(double partialTick) {
-        final GL gl = OpenGL.get();
-        if (client.framebufferResized().getAcquire()) {
-            framebufferWidth = client.framebufferWidth();
-            framebufferHeight = client.framebufferHeight();
-            gl.viewport(0, 0, framebufferWidth, framebufferHeight);
-            client.framebufferResized().setOpaque(false);
-        }
-
+    public void render(GLStateMgr gl, double partialTick) {
         gl.clear(GL10C.COLOR_BUFFER_BIT | GL10C.DEPTH_BUFFER_BIT);
 
-        gl.enable(GL10C.CULL_FACE);
-        gl.enable(GL10C.DEPTH_TEST);
-        gl.depthFunc(GL10C.LEQUAL);
-        texture.bind();
-        positionColorTexProgram.use();
+        gl.enableCullFace();
+        gl.enableDepthTest();
+        gl.setDepthFunc(GL10C.LEQUAL);
+        texture.bind(gl);
+        positionColorTexProgram.use(gl);
         projectionView.setPerspective(
-            ((float) Math.toRadians(90.0)),
-            framebufferHeight > 0 ? (float) framebufferWidth / framebufferHeight : 0.00001f,
+            (float) Math.toRadians(70.0),
+            (float) client.framebufferWidth() / client.framebufferHeight(),
             0.01f,
             1000.0f
         );
         final Camera camera = client.camera();
+        camera.moveToEntity(client.player());
         camera.updateLerp(partialTick);
         camera.updateViewMatrix();
         projectionView.mul(camera.viewMatrix());
+        matrix.identity();
         positionColorTexProgram.getUniform(GLProgram.UNIFORM_PROJECTION_VIEW_MATRIX).set(projectionView);
         positionColorTexProgram.getUniform(GLProgram.UNIFORM_MODEL_MATRIX).set(matrix);
-        positionColorTexProgram.uploadUniforms();
-        worldRenderer.render();
-        gl.useProgram(0);
-        gl.bindTexture(GL10C.TEXTURE_2D, 0);
-        gl.disable(GL10C.CULL_FACE);
-        gl.disable(GL10C.DEPTH_TEST);
+        positionColorTexProgram.uploadUniforms(gl);
+        worldRenderer.render(gl, tessellator);
 
-        client.glfw().swapBuffers(client.window());
+        renderGui(gl, partialTick);
+    }
+
+    private void renderGui(GLStateMgr gl, double partialTick) {
+        final int width = client.framebufferWidth();
+        final int height = client.framebufferHeight();
+
+        gl.clear(GL10C.DEPTH_BUFFER_BIT);
+
+        gl.disableCullFace();
+        gl.disableDepthTest();
+        gl.setTextureBinding2D(0);
+        positionColorProgram.use(gl);
+        projectionView.setOrtho(0.0f, width, 0.0f, height, -100.0f, 100.0f);
+        matrix.translation(width * 0.5f, height * 0.5f, 0.0f);
+        positionColorProgram.getUniform(GLProgram.UNIFORM_PROJECTION_VIEW_MATRIX).set(projectionView);
+        positionColorProgram.getUniform(GLProgram.UNIFORM_MODEL_MATRIX).set(matrix);
+        positionColorProgram.uploadUniforms(gl);
+        tessellator.begin(GLDrawMode.TRIANGLES);
+        tessellator.color(1.0f, 1.0f, 1.0f);
+        tessellator.index(gl, 0, 1, 2, 2, 3, 0);
+        tessellator.position(-8, 1, 0).emit(gl);
+        tessellator.position(-8, -1, 0).emit(gl);
+        tessellator.position(8, -1, 0).emit(gl);
+        tessellator.position(8, 1, 0).emit(gl);
+        tessellator.index(gl, 0, 1, 2, 2, 3, 0);
+        tessellator.position(1, 8, 0).emit(gl);
+        tessellator.position(1, -8, 0).emit(gl);
+        tessellator.position(-1, -8, 0).emit(gl);
+        tessellator.position(-1, 8, 0).emit(gl);
+        tessellator.end(gl);
     }
 
     @Override
-    public void close() {
+    public void close(GLStateMgr gl) {
         logger.info("Closing game renderer");
 
-        if (textureManager != null) textureManager.close();
+        if (textureManager != null) textureManager.close(gl);
 
-        if (positionColorProgram != null) positionColorProgram.close();
-        if (positionColorTexProgram != null) positionColorTexProgram.close();
+        if (positionColorProgram != null) positionColorProgram.close(gl);
+        if (positionColorTexProgram != null) positionColorTexProgram.close(gl);
 
-        Tessellator.free();
+        if (tessellator != null) tessellator.close(gl);
     }
 
     public GLProgram positionColorProgram() {
@@ -152,14 +164,6 @@ public final class GameRenderer implements AutoCloseable {
 
     public GLProgram positionColorTexProgram() {
         return positionColorTexProgram;
-    }
-
-    public int framebufferWidth() {
-        return framebufferWidth;
-    }
-
-    public int framebufferHeight() {
-        return framebufferHeight;
     }
 
     public TextureManager textureManager() {

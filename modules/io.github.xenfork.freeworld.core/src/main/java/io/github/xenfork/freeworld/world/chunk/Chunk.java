@@ -10,18 +10,11 @@
 
 package io.github.xenfork.freeworld.world.chunk;
 
-import io.github.xenfork.freeworld.core.Identifier;
-import io.github.xenfork.freeworld.core.registry.BuiltinRegistries;
 import io.github.xenfork.freeworld.world.World;
-import io.github.xenfork.freeworld.world.block.BlockState;
+import io.github.xenfork.freeworld.world.block.BlockType;
 import io.github.xenfork.freeworld.world.block.BlockTypes;
 
-import java.io.*;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Map;
 
 /**
  * @author baka4n
@@ -29,7 +22,6 @@ import java.util.Map;
  * @since 0.1.0
  */
 public class Chunk {
-    public static final int CHUNK_VERSION = 0;
     public static final int SIZE = 32;
     private final World world;
     private final int x;
@@ -44,7 +36,7 @@ public class Chunk {
     private final int width;
     private final int height;
     private final int depth;
-    private final BlockState[] states;
+    private final BlockType[] blocks;
 
     public Chunk(World world, int x, int y, int z) {
         this.world = world;
@@ -60,99 +52,33 @@ public class Chunk {
         this.width = toX - fromX;
         this.height = toY - fromY;
         this.depth = toZ - fromZ;
-        this.states = new BlockState[width * height * depth];
-        Arrays.fill(states, BlockTypes.AIR.defaultBlockState());
-    }
-
-    public void loadFromFile(Path path) {
-        try (DataInputStream stream = new DataInputStream(new BufferedInputStream(Files.newInputStream(path)))) {
-            final int version = stream.readInt();
-            if (version != 0) {
-                throw new IllegalStateException(STR."Invalid version: \{version}");
-            }
-            final int width = stream.readInt();
-            final int height = stream.readInt();
-            final int depth = stream.readInt();
-
-            // registry
-            final int registrySize = stream.readInt();
-            final Map<Integer, Identifier> blockIdMap = HashMap.newHashMap(registrySize);
-            for (int i = 0; i < registrySize; i++) {
-                final Identifier identifier = Identifier.ofSafe(stream.readUTF());
-                if (identifier == null) {
-                    continue;
-                }
-                blockIdMap.put(stream.readInt(), identifier);
-            }
-
-            // block state
-            for (int bx = 0; bx < width; bx++) {
-                for (int by = 0; by < height; by++) {
-                    for (int bz = 0; bz < depth; bz++) {
-                        setBlockState(bx, by, bz, BuiltinRegistries.BLOCK_TYPE.get(blockIdMap.get(stream.readInt())).defaultBlockState());
-                    }
-                }
-            }
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    public void saveToFile(Path path) {
-        try (DataOutputStream stream = new DataOutputStream(new BufferedOutputStream(Files.newOutputStream(path)))) {
-            stream.writeInt(CHUNK_VERSION);
-            stream.writeInt(width);
-            stream.writeInt(height);
-            stream.writeInt(depth);
-
-            // registry
-            final Map<Identifier, Integer> blockIdMap = new HashMap<>();
-            int blockId = 0;
-            for (BlockState state : states) {
-                final Identifier id = BuiltinRegistries.BLOCK_TYPE.getId(state.blockType());
-                if (!blockIdMap.containsKey(id)) {
-                    blockIdMap.put(id, blockId);
-                    blockId++;
-                }
-            }
-            stream.writeInt(blockIdMap.size());
-            for (var entry : blockIdMap.entrySet()) {
-                stream.writeUTF(entry.getKey().toString());
-                stream.writeInt(entry.getValue());
-            }
-
-            // block states
-            for (BlockState state : states) {
-                stream.writeInt(blockIdMap.get(BuiltinRegistries.BLOCK_TYPE.getId(state.blockType())));
-            }
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
+        this.blocks = new BlockType[width * height * depth];
+        Arrays.fill(blocks, BlockTypes.AIR);
     }
 
     public void generateTerrain() {
         for (int bx = 0; bx < width; bx++) {
             for (int bz = 0; bz < depth; bz++) {
                 for (int by = 0; by < 8; by++) {
-                    setBlockState(bx, by, bz, BlockTypes.STONE.defaultBlockState());
+                    setBlockState(bx, by, bz, BlockTypes.STONE);
                 }
                 for (int by = 8; by < 11; by++) {
-                    setBlockState(bx, by, bz, BlockTypes.DIRT.defaultBlockState());
+                    setBlockState(bx, by, bz, BlockTypes.DIRT);
                 }
-                setBlockState(bx, 11, bz, BlockTypes.GRASS_BLOCK.defaultBlockState());
+                setBlockState(bx, 11, bz, BlockTypes.GRASS_BLOCK);
             }
         }
     }
 
-    public void setBlockState(int x, int y, int z, BlockState blockState) {
-        states[(y * depth + z) * width + x] = blockState;
+    public void setBlockState(int x, int y, int z, BlockType blockType) {
+        blocks[(y * depth + z) * width + x] = blockType;
     }
 
-    public BlockState getBlockState(int x, int y, int z) {
+    public BlockType getBlockType(int x, int y, int z) {
         if (x >= 0 && x < width && y >= 0 && y < height && z >= 0 && z < depth) {
-            return states[(y * depth + z) * width + x];
+            return blocks[(y * depth + z) * width + x];
         }
-        return BlockTypes.AIR.defaultBlockState();
+        return BlockTypes.AIR;
     }
 
     public int x() {

@@ -8,11 +8,12 @@
  * version 2.1 of the License, or (at your option) any later version.
  */
 
-package io.github.xenfork.freeworld.world;
+package io.github.xenfork.freeworld.client.render.gl;
 
 /**
  * @author squid233
  * @since 0.1.0
  */
-public record Position(int x, int y, int z) {
+public interface GLResource {
+    void close(GLStateMgr gl);
 }
