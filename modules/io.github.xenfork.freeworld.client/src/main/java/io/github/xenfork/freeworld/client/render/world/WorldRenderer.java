@@ -15,9 +15,9 @@ import io.github.xenfork.freeworld.client.render.GameRenderer;
 import io.github.xenfork.freeworld.client.render.Tessellator;
 import io.github.xenfork.freeworld.client.render.gl.GLDrawMode;
 import io.github.xenfork.freeworld.client.render.gl.GLStateMgr;
-import io.github.xenfork.freeworld.client.world.chunk.ClientChunk;
 import io.github.xenfork.freeworld.util.Direction;
 import io.github.xenfork.freeworld.world.World;
+import io.github.xenfork.freeworld.world.chunk.Chunk;
 
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.LinkedBlockingDeque;
@@ -33,7 +33,6 @@ public final class WorldRenderer implements AutoCloseable {
     private final GameRenderer gameRenderer;
     private final World world;
     private final ExecutorService executor;
-    private final ClientChunk chunk;
 
     public WorldRenderer(Freeworld client, GameRenderer gameRenderer, World world) {
         this.client = client;
@@ -41,13 +40,11 @@ public final class WorldRenderer implements AutoCloseable {
         this.world = world;
         final int processors = Runtime.getRuntime().availableProcessors();
         this.executor = new ThreadPoolExecutor(processors,
-            processors + 1,
+            processors,
             0L,
             TimeUnit.MILLISECONDS,
             new LinkedBlockingDeque<>(),
             new ThreadPoolExecutor.DiscardPolicy());
-        chunk = new ClientChunk(world, 0, 0, 0);
-        chunk.generateTerrain();
     }
 
     public void compileChunks() {
@@ -58,12 +55,14 @@ public final class WorldRenderer implements AutoCloseable {
         final BlockRenderer blockRenderer = gameRenderer.blockRenderer();
         final Tessellator t = Tessellator.getInstance();
         t.begin(GLDrawMode.TRIANGLES);
-        for (Direction direction : Direction.LIST) {
-            for (int x = chunk.fromX(), x1 = chunk.toX(); x < x1; x++) {
-                for (int y = chunk.fromY(), y1 = chunk.toY(); y < y1; y++) {
-                    for (int z = chunk.fromZ(), z1 = chunk.toZ(); z < z1; z++) {
-                        if (chunk.getBlockType(x + direction.axisX(), y + direction.axisY(), z + direction.axisZ()).air()) {
-                            blockRenderer.renderBlockFace(gl, t, chunk.getBlockType(x, y, z), x, y, z, direction);
+        for (Chunk chunk : world.chunks) {
+            for (Direction direction : Direction.LIST) {
+                for (int x = chunk.fromX(), x1 = chunk.toX(); x < x1; x++) {
+                    for (int y = chunk.fromY(), y1 = chunk.toY(); y < y1; y++) {
+                        for (int z = chunk.fromZ(), z1 = chunk.toZ(); z < z1; z++) {
+                            if (chunk.getBlockType(x + direction.axisX(), y + direction.axisY(), z + direction.axisZ()).air()) {
+                                blockRenderer.renderBlockFace(gl, t, chunk.getBlockType(x, y, z), x, y, z, direction);
+                            }
                         }
                     }
                 }

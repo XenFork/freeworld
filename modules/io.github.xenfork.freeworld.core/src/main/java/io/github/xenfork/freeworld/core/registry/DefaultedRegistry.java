@@ -22,7 +22,8 @@ public class DefaultedRegistry<T> extends MappedRegistry<T> {
     private final Supplier<T> defaultValueSupplier;
     private T defaultValue;
 
-    public DefaultedRegistry(Supplier<T> defaultValueSupplier) {
+    public DefaultedRegistry(Identifier registryName, Supplier<T> defaultValueSupplier) {
+        super(registryName);
         this.defaultValueSupplier = defaultValueSupplier;
     }
 

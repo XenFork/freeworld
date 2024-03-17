@@ -34,6 +34,8 @@ public interface Registry<T> extends Iterable<Map.Entry<Identifier, T>> {
         return register(registry, Identifier.of(id), entry);
     }
 
+    Identifier registryName();
+
     /**
      * {@return the entry associated with the given identifier}
      *

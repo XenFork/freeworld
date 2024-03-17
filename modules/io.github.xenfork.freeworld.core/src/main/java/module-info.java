@@ -21,10 +21,13 @@ module io.github.xenfork.freeworld.core {
     exports io.github.xenfork.freeworld.world;
     exports io.github.xenfork.freeworld.world.block;
     exports io.github.xenfork.freeworld.world.chunk;
+    exports io.github.xenfork.freeworld.world.entity;
+    exports io.github.xenfork.freeworld.world.entity.component;
 
     requires ch.qos.logback.core;
     requires ch.qos.logback.classic;
     requires transitive com.google.gson;
+    requires transitive org.joml;
     requires transitive org.slf4j;
     requires static org.jetbrains.annotations;
 

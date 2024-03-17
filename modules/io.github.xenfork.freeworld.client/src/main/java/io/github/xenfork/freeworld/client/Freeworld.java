@@ -18,6 +18,8 @@ import io.github.xenfork.freeworld.util.Logging;
 import io.github.xenfork.freeworld.util.Timer;
 import io.github.xenfork.freeworld.world.World;
 import io.github.xenfork.freeworld.world.block.BlockTypes;
+import io.github.xenfork.freeworld.world.entity.Entity;
+import io.github.xenfork.freeworld.world.entity.EntityTypes;
 import org.slf4j.Logger;
 import overrun.marshal.Unmarshal;
 import overrungl.glfw.GLFW;
@@ -30,7 +32,7 @@ import overrungl.util.value.Pair;
 
 import java.lang.foreign.MemorySegment;
 import java.lang.invoke.MethodHandles;
-import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.UUID;
 
 /**
  * Client logic
@@ -43,7 +45,6 @@ public final class Freeworld implements AutoCloseable {
     private static final Logger logger = Logging.caller();
     private static final int INIT_WINDOW_WIDTH = 854;
     private static final int INIT_WINDOW_HEIGHT = 480;
-    private final AtomicBoolean windowOpen = new AtomicBoolean();
     private final GLFW glfw;
     private GLFlags glFlags;
     private GLStateMgr gl;
@@ -58,6 +59,7 @@ public final class Freeworld implements AutoCloseable {
     private double cursorDeltaY;
     private GameRenderer gameRenderer;
     private World world;
+    private Entity player;
 
     private Freeworld() {
         this.glfw = GLFW.INSTANCE;
@@ -99,10 +101,13 @@ public final class Freeworld implements AutoCloseable {
 
         BlockTypes.bootstrap();
         BuiltinRegistries.BLOCK_TYPE.freeze();
+        EntityTypes.bootstrap();
+        BuiltinRegistries.ENTITY_TYPE.freeze();
 
         camera.setPosition(1.5, 16.0, 1.5);
 
         world = new World("New world");
+        player = new Entity(world, UUID.randomUUID(), EntityTypes.PLAYER);
 
         initGL();
         run();
@@ -160,11 +165,11 @@ public final class Freeworld implements AutoCloseable {
             }
             gameRenderer.render(gl, timer.partialTick());
         }
-        windowOpen.setOpaque(false);
     }
 
     @Override
     public void close() {
+        gameRenderer.close(gl);
         if (!Unmarshal.isNullPointer(window)) {
             GLFWCallbacks.free(window);
             glfw.destroyWindow(window);

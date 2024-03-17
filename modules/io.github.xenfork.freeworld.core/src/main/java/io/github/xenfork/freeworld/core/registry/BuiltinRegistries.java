@@ -10,15 +10,18 @@
 
 package io.github.xenfork.freeworld.core.registry;
 
+import io.github.xenfork.freeworld.core.Identifier;
 import io.github.xenfork.freeworld.world.block.BlockType;
 import io.github.xenfork.freeworld.world.block.BlockTypes;
+import io.github.xenfork.freeworld.world.entity.EntityType;
 
 /**
  * @author squid233
  * @since 0.1.0
  */
 public final class BuiltinRegistries {
-    public static final DefaultedRegistry<BlockType> BLOCK_TYPE = new DefaultedRegistry<>(() -> BlockTypes.AIR);
+    public static final DefaultedRegistry<BlockType> BLOCK_TYPE = new DefaultedRegistry<>(Identifier.ofBuiltin("block_type"), () -> BlockTypes.AIR);
+    public static final MappedRegistry<EntityType> ENTITY_TYPE = new MappedRegistry<>(Identifier.ofBuiltin("entity_type"));
 
     private BuiltinRegistries() {
     }
