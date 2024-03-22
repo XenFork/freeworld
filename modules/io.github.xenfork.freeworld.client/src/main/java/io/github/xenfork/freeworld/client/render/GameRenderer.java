@@ -133,16 +133,16 @@ public final class GameRenderer implements GLResource {
         positionColorProgram.uploadUniforms(gl);
         tessellator.begin(GLDrawMode.TRIANGLES);
         tessellator.color(1.0f, 1.0f, 1.0f);
-        tessellator.index(gl, 0, 1, 2, 2, 3, 0);
-        tessellator.position(-8, 1, 0).emit(gl);
-        tessellator.position(-8, -1, 0).emit(gl);
-        tessellator.position(8, -1, 0).emit(gl);
-        tessellator.position(8, 1, 0).emit(gl);
-        tessellator.index(gl, 0, 1, 2, 2, 3, 0);
-        tessellator.position(1, 8, 0).emit(gl);
-        tessellator.position(1, -8, 0).emit(gl);
-        tessellator.position(-1, -8, 0).emit(gl);
-        tessellator.position(-1, 8, 0).emit(gl);
+        tessellator.indices(0, 1, 2, 2, 3, 0);
+        tessellator.position(-8, 1, 0).emit();
+        tessellator.position(-8, -1, 0).emit();
+        tessellator.position(8, -1, 0).emit();
+        tessellator.position(8, 1, 0).emit();
+        tessellator.indices(0, 1, 2, 2, 3, 0);
+        tessellator.position(1, 8, 0).emit();
+        tessellator.position(1, -8, 0).emit();
+        tessellator.position(-1, -8, 0).emit();
+        tessellator.position(-1, 8, 0).emit();
         tessellator.end(gl);
     }
 

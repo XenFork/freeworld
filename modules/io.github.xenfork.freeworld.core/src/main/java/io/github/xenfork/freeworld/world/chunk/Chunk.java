@@ -61,22 +61,28 @@ public class Chunk {
         for (int bx = 0; bx < width; bx++) {
             for (int bz = 0; bz < depth; bz++) {
                 for (int by = 0; by < 8; by++) {
-                    setBlockState(bx, by, bz, BlockTypes.STONE);
+                    setBlockType(bx, by, bz, BlockTypes.STONE);
                 }
                 for (int by = 8; by < 11; by++) {
-                    setBlockState(bx, by, bz, BlockTypes.DIRT);
+                    setBlockType(bx, by, bz, BlockTypes.DIRT);
                 }
-                setBlockState(bx, 11, bz, BlockTypes.GRASS_BLOCK);
+                setBlockType(bx, 11, bz, BlockTypes.GRASS_BLOCK);
             }
         }
     }
 
-    public void setBlockState(int x, int y, int z, BlockType blockType) {
-        blocks[(y * depth + z) * width + x] = blockType;
+    public boolean isInBound(int x, int y, int z) {
+        return x >= 0 && x < width && y >= 0 && y < height && z >= 0 && z < depth;
+    }
+
+    public void setBlockType(int x, int y, int z, BlockType blockType) {
+        if (isInBound(x, y, z)) {
+            blocks[(y * depth + z) * width + x] = blockType;
+        }
     }
 
     public BlockType getBlockType(int x, int y, int z) {
-        if (x >= 0 && x < width && y >= 0 && y < height && z >= 0 && z < depth) {
+        if (isInBound(x, y, z)) {
             return blocks[(y * depth + z) * width + x];
         }
         return BlockTypes.AIR;

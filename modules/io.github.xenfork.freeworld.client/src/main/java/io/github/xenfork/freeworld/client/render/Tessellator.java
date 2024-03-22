@@ -10,23 +10,17 @@
 
 package io.github.xenfork.freeworld.client.render;
 
+import io.github.xenfork.freeworld.client.render.builder.DefaultVertexBuilder;
+import io.github.xenfork.freeworld.client.render.builder.VertexBuilder;
 import io.github.xenfork.freeworld.client.render.gl.GLDrawMode;
 import io.github.xenfork.freeworld.client.render.gl.GLResource;
 import io.github.xenfork.freeworld.client.render.gl.GLStateMgr;
-import io.github.xenfork.freeworld.client.render.model.VertexFormat;
 import io.github.xenfork.freeworld.client.render.model.VertexLayout;
 import io.github.xenfork.freeworld.client.render.model.VertexLayouts;
 import overrungl.opengl.GL10C;
 import overrungl.opengl.GL15C;
 
-import java.lang.foreign.Arena;
-import java.lang.foreign.MemoryLayout.PathElement;
 import java.lang.foreign.MemorySegment;
-import java.lang.foreign.StructLayout;
-import java.lang.foreign.ValueLayout;
-import java.lang.invoke.VarHandle;
-
-import static io.github.xenfork.freeworld.client.util.Conversions.colorToInt;
 
 /**
  * A tessellator that allows rendering things dynamically.
@@ -34,139 +28,68 @@ import static io.github.xenfork.freeworld.client.util.Conversions.colorToInt;
  * @author squid233
  * @since 0.1.0
  */
-public final class Tessellator implements GLResource {
+public final class Tessellator implements GLResource, VertexBuilder {
     private static final int MAX_VERTEX_COUNT = 60000;
     private static final int MAX_INDEX_COUNT = 90000;
     private static final VertexLayout VERTEX_LAYOUT = VertexLayouts.POSITION_COLOR_TEX;
-    private static final StructLayout LAYOUT = VERTEX_LAYOUT.layout();
-    private static final String POSITION_NAME = VertexFormat.POSITION.name();
-    private static final String COLOR_NAME = VertexFormat.COLOR.name();
-    private static final String UV_NAME = VertexFormat.UV.name();
-    private static final VarHandle X = LAYOUT.arrayElementVarHandle(
-        PathElement.groupElement(POSITION_NAME),
-        PathElement.sequenceElement(0L)
-    );
-    private static final VarHandle Y = LAYOUT.arrayElementVarHandle(
-        PathElement.groupElement(POSITION_NAME),
-        PathElement.sequenceElement(1L)
-    );
-    private static final VarHandle Z = LAYOUT.arrayElementVarHandle(
-        PathElement.groupElement(POSITION_NAME),
-        PathElement.sequenceElement(2L)
-    );
-    private static final VarHandle R = LAYOUT.arrayElementVarHandle(
-        PathElement.groupElement(COLOR_NAME),
-        PathElement.sequenceElement(0L)
-    );
-    private static final VarHandle G = LAYOUT.arrayElementVarHandle(
-        PathElement.groupElement(COLOR_NAME),
-        PathElement.sequenceElement(1L)
-    );
-    private static final VarHandle B = LAYOUT.arrayElementVarHandle(
-        PathElement.groupElement(COLOR_NAME),
-        PathElement.sequenceElement(2L)
-    );
-    private static final VarHandle A = LAYOUT.arrayElementVarHandle(
-        PathElement.groupElement(COLOR_NAME),
-        PathElement.sequenceElement(3L)
-    );
-    private static final VarHandle U = LAYOUT.arrayElementVarHandle(
-        PathElement.groupElement(UV_NAME),
-        PathElement.sequenceElement(0L)
-    );
-    private static final VarHandle V = LAYOUT.arrayElementVarHandle(
-        PathElement.groupElement(UV_NAME),
-        PathElement.sequenceElement(1L)
-    );
-    private final Arena arena;
-    private final MemorySegment buffer;
-    private final MemorySegment indexBuffer;
-    private int vertexCount = 0;
-    private int indexCount = 0;
+    private final VertexBuilder vertexBuilder = new DefaultVertexBuilder(VERTEX_LAYOUT, MAX_VERTEX_COUNT, MAX_INDEX_COUNT);
     private boolean drawing = false;
     private GLDrawMode drawMode = GLDrawMode.TRIANGLES;
     private int vao = 0;
     private int vbo = 0;
     private int ebo = 0;
-    private float x = 0f;
-    private float y = 0f;
-    private float z = 0f;
-    private int red = 0;
-    private int green = 0;
-    private int blue = 0;
-    private int alpha = 0xff;
-    private float u = 0f;
-    private float v = 0f;
 
-    public Tessellator() {
-        this.arena = Arena.ofConfined();
-        this.buffer = arena.allocate(LAYOUT, MAX_VERTEX_COUNT);
-        this.indexBuffer = arena.allocate(ValueLayout.JAVA_INT, MAX_INDEX_COUNT);
-    }
-
+    @Override
     public Tessellator position(float x, float y, float z) {
-        this.x = x;
-        this.y = y;
-        this.z = z;
+        vertexBuilder.position(x, y, z);
         return this;
     }
 
+    @Override
     public Tessellator color(int red, int green, int blue, int alpha) {
-        this.red = red;
-        this.green = green;
-        this.blue = blue;
-        this.alpha = alpha;
+        vertexBuilder.color(red, green, blue, alpha);
         return this;
     }
 
+    @Override
     public Tessellator color(float red, float green, float blue, float alpha) {
-        return color(colorToInt(red), colorToInt(green), colorToInt(blue), colorToInt(alpha));
-    }
-
-    public Tessellator color(int red, int green, int blue) {
-        return color(red, green, blue, 0xff);
-    }
-
-    public Tessellator color(float red, float green, float blue) {
-        return color(red, green, blue, 1f);
-    }
-
-    public Tessellator texCoord(float u, float v) {
-        this.u = u;
-        this.v = v;
+        vertexBuilder.color(red, green, blue, alpha);
         return this;
     }
 
-    public void emit(GLStateMgr gl) {
-        // check vertex count
-        if ((vertexCount + 1) > MAX_VERTEX_COUNT) {
-            flush(gl);
-        }
-        final long longVertexCount = vertexCount;
-        X.set(buffer, 0L, longVertexCount, x);
-        Y.set(buffer, 0L, longVertexCount, y);
-        Z.set(buffer, 0L, longVertexCount, z);
-        R.set(buffer, 0L, longVertexCount, (byte) (red & 0xff));
-        G.set(buffer, 0L, longVertexCount, (byte) (green & 0xff));
-        B.set(buffer, 0L, longVertexCount, (byte) (blue & 0xff));
-        A.set(buffer, 0L, longVertexCount, (byte) (alpha & 0xff));
-        U.set(buffer, 0L, longVertexCount, u);
-        V.set(buffer, 0L, longVertexCount, v);
-        vertexCount++;
+    @Override
+    public Tessellator color(int red, int green, int blue) {
+        vertexBuilder.color(red, green, blue);
+        return this;
     }
 
-    public void indexWithOffset(GLStateMgr gl, int offset, int... indices) {
-        if (indexCount + indices.length > MAX_INDEX_COUNT) {
-            flush(gl);
-        }
-        for (int i = 0; i < indices.length; i++) {
-            indexBuffer.setAtIndex(ValueLayout.JAVA_INT, indexCount + i, indices[i] + offset);
-        }
-        indexCount += indices.length;
+    @Override
+    public Tessellator color(float red, float green, float blue) {
+        vertexBuilder.color(red, green, blue);
+        return this;
     }
 
-    public void index(GLStateMgr gl, int... indices) {
-        indexWithOffset(gl, vertexCount, indices);
+    @Override
+    public Tessellator texCoord(float u, float v) {
+        vertexBuilder.texCoord(u, v);
+        return this;
+    }
+
+    @Override
+    public void emit() {
+        vertexBuilder.emit();
+    }
+
+    @Override
+    public Tessellator indicesWithOffset(int offset, int... indices) {
+        vertexBuilder.indicesWithOffset(offset, indices);
+        return this;
+    }
+
+    @Override
+    public Tessellator indices(int... indices) {
+        vertexBuilder.indices(indices);
+        return this;
     }
 
     public void flush(GLStateMgr gl) {
@@ -177,31 +100,30 @@ public final class Tessellator implements GLResource {
         if (vbo == 0) vbo = gl.genBuffers();
         if (ebo == 0) ebo = gl.genBuffers();
 
+        final MemorySegment vertexData = vertexBuilder.vertexDataSlice();
+        final MemorySegment indexData = vertexBuilder.indexDataSlice();
+        final int indexCount = vertexBuilder.indexCount();
         gl.setVertexArrayBinding(vao);
         gl.setArrayBufferBinding(vbo);
-        if (firstFlush) {
-            gl.bufferData(GL15C.ARRAY_BUFFER, buffer, GL15C.STREAM_DRAW);
+        if (firstFlush || vertexBuilder.shouldReallocateVertexData()) {
+            gl.bufferData(GL15C.ARRAY_BUFFER, vertexData, GL15C.STREAM_DRAW);
             VERTEX_LAYOUT.enableAttribs(gl);
             VERTEX_LAYOUT.specifyAttribPointers(gl);
         } else {
-            gl.bufferSubData(GL15C.ARRAY_BUFFER, 0L, LAYOUT.scale(0L, vertexCount), buffer);
+            gl.bufferSubData(GL15C.ARRAY_BUFFER, 0L, vertexData);
         }
         gl.bindBuffer(GL15C.ELEMENT_ARRAY_BUFFER, ebo);
-        if (firstFlush) {
-            gl.bufferData(GL15C.ELEMENT_ARRAY_BUFFER, indexBuffer, GL15C.STREAM_DRAW);
+        if (firstFlush || vertexBuilder.shouldReallocateIndexData()) {
+            gl.bufferData(GL15C.ELEMENT_ARRAY_BUFFER, indexData, GL15C.STREAM_DRAW);
         } else {
-            gl.bufferSubData(GL15C.ELEMENT_ARRAY_BUFFER, 0L, ValueLayout.JAVA_INT.scale(0L, indexCount), indexBuffer);
+            gl.bufferSubData(GL15C.ELEMENT_ARRAY_BUFFER, 0L, indexData);
         }
         gl.drawElements(drawMode.value(), indexCount, GL10C.UNSIGNED_INT, MemorySegment.NULL);
-
-        vertexCount = 0;
-        indexCount = 0;
     }
 
     public void begin(GLDrawMode drawMode) {
         if (drawing) throw new IllegalStateException("Do not call Tessellator.begin while drawing");
-        vertexCount = 0;
-        indexCount = 0;
+        vertexBuilder.reset();
         drawing = true;
         this.drawMode = drawMode;
     }
@@ -213,8 +135,47 @@ public final class Tessellator implements GLResource {
     }
 
     @Override
+    public void reset() {
+        vertexBuilder.reset();
+    }
+
+    @Override
+    public int vertexCount() {
+        return vertexBuilder.vertexCount();
+    }
+
+    @Override
+    public int indexCount() {
+        return vertexBuilder.indexCount();
+    }
+
+    @Override
+    public MemorySegment vertexData() {
+        return vertexBuilder.vertexData();
+    }
+
+    @Override
+    public MemorySegment indexData() {
+        return vertexBuilder.indexData();
+    }
+
+    @Override
+    public MemorySegment vertexDataSlice() {
+        return vertexBuilder.vertexDataSlice();
+    }
+
+    @Override
+    public boolean shouldReallocateVertexData() {
+        return vertexBuilder.shouldReallocateVertexData();
+    }
+
+    @Override
+    public boolean shouldReallocateIndexData() {
+        return vertexBuilder.shouldReallocateIndexData();
+    }
+
+    @Override
     public void close(GLStateMgr gl) {
-        arena.close();
         gl.deleteVertexArrays(vao);
         gl.deleteBuffers(vbo, ebo);
     }

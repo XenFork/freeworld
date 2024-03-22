@@ -18,6 +18,7 @@ module io.github.xenfork.freeworld.client {
     exports io.github.xenfork.freeworld.client;
     exports io.github.xenfork.freeworld.client.main;
     exports io.github.xenfork.freeworld.client.render;
+    exports io.github.xenfork.freeworld.client.render.builder;
     exports io.github.xenfork.freeworld.client.render.gl;
     exports io.github.xenfork.freeworld.client.render.model;
     exports io.github.xenfork.freeworld.client.render.texture;

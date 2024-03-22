@@ -21,7 +21,7 @@ import io.github.xenfork.freeworld.world.chunk.Chunk;
 import io.github.xenfork.freeworld.world.chunk.ChunkPos;
 
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.LinkedBlockingDeque;
+import java.util.concurrent.PriorityBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
@@ -44,7 +44,7 @@ public final class WorldRenderer implements AutoCloseable {
             processors,
             0L,
             TimeUnit.MILLISECONDS,
-            new LinkedBlockingDeque<>(),
+            new PriorityBlockingQueue<>(),
             new ThreadPoolExecutor.DiscardPolicy());
     }
 
@@ -63,8 +63,11 @@ public final class WorldRenderer implements AutoCloseable {
                 for (int x = 0; x < Chunk.SIZE; x++) {
                     for (int y = 0; y < Chunk.SIZE; y++) {
                         for (int z = 0; z < Chunk.SIZE; z++) {
-                            if (chunk.getBlockType(x + direction.axisX(), y + direction.axisY(), z + direction.axisZ()).air()) {
-                                blockRenderer.renderBlockFace(gl,
+                            final int nx = x + direction.axisX();
+                            final int ny = y + direction.axisY();
+                            final int nz = z + direction.axisZ();
+                            if (chunk.isInBound(nx, ny, nz) && chunk.getBlockType(nx, ny, nz).air()) {
+                                blockRenderer.renderBlockFace(
                                     tessellator,
                                     chunk.getBlockType(x, y, z),
                                     ChunkPos.relativeToAbsolute(cx, x),

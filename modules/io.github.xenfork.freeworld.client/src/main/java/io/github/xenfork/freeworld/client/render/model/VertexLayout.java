@@ -15,10 +15,7 @@ import io.github.xenfork.freeworld.client.render.gl.GLStateMgr;
 import java.lang.foreign.MemoryLayout;
 import java.lang.foreign.MemorySegment;
 import java.lang.foreign.StructLayout;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * @author squid233
@@ -30,12 +27,12 @@ public final class VertexLayout {
     private final StructLayout layout;
 
     public VertexLayout(List<VertexFormat> formats) {
-        this.formats = formats;
-        this.attribLocationMap = HashMap.newHashMap(formats.size());
-        final List<MemoryLayout> elements = new ArrayList<>(formats.size());
+        this.formats = List.copyOf(formats);
+        this.attribLocationMap = HashMap.newHashMap(this.formats.size());
+        final List<MemoryLayout> elements = new ArrayList<>(this.formats.size());
 
         int i = 0;
-        for (var format : formats) {
+        for (var format : this.formats) {
             final String name = format.name();
             this.attribLocationMap.put(name, i);
             elements.add(format.layout().withName(name));
@@ -77,7 +74,32 @@ public final class VertexLayout {
         return attribLocationMap.get(name);
     }
 
+    public List<VertexFormat> formats() {
+        return formats;
+    }
+
     public StructLayout layout() {
         return layout;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof VertexLayout that)) return false;
+        return Objects.equals(formats, that.formats) && Objects.equals(attribLocationMap, that.attribLocationMap) && Objects.equals(layout, that.layout);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(formats, attribLocationMap, layout);
+    }
+
+    @Override
+    public String toString() {
+        return new StringJoiner(", ", VertexLayout.class.getSimpleName() + "[", "]")
+            .add("formats=" + formats)
+            .add("attribLocationMap=" + attribLocationMap)
+            .add("layout=" + layout)
+            .toString();
     }
 }
