@@ -12,6 +12,7 @@ package io.github.xenfork.freeworld.client.render.world;
 
 import io.github.xenfork.freeworld.client.render.GameRenderer;
 import io.github.xenfork.freeworld.client.render.builder.DefaultVertexBuilder;
+import io.github.xenfork.freeworld.client.render.builder.VertexBuilder;
 import io.github.xenfork.freeworld.util.Direction;
 import io.github.xenfork.freeworld.world.chunk.Chunk;
 import io.github.xenfork.freeworld.world.chunk.ChunkPos;
@@ -36,49 +37,67 @@ public final class ChunkCompileTask implements Callable<ChunkVertexData> {
         this.chunk = chunk;
     }
 
+    private record DelegateArena<T extends VertexBuilder>(
+        Arena arena,
+        VertexBuilderPool<T> pool,
+        T builder
+    ) implements Arena {
+        @Override
+        public MemorySegment allocate(long byteSize, long byteAlignment) {
+            return arena.allocate(byteSize, byteAlignment);
+        }
+
+        @Override
+        public MemorySegment.Scope scope() {
+            return arena.scope();
+        }
+
+        @Override
+        public void close() {
+            arena.close();
+            pool.release(builder);
+        }
+    }
+
     @Override
     public ChunkVertexData call() {
         final var pool = worldRenderer.vertexBuilderPool();
         final DefaultVertexBuilder builder = pool.acquire();
-        try {
-            final int cx = chunk.x();
-            final int cy = chunk.y();
-            final int cz = chunk.z();
-            for (Direction direction : Direction.LIST) {
-                for (int x = 0; x < Chunk.SIZE; x++) {
-                    for (int y = 0; y < Chunk.SIZE; y++) {
-                        for (int z = 0; z < Chunk.SIZE; z++) {
-                            final int nx = x + direction.axisX();
-                            final int ny = y + direction.axisY();
-                            final int nz = z + direction.axisZ();
-                            if (chunk.isInBound(nx, ny, nz) && chunk.getBlockType(nx, ny, nz).air()) {
-                                gameRenderer.blockRenderer().renderBlockFace(
-                                    builder,
-                                    chunk.getBlockType(x, y, z),
-                                    ChunkPos.relativeToAbsolute(cx, x),
-                                    ChunkPos.relativeToAbsolute(cy, y),
-                                    ChunkPos.relativeToAbsolute(cz, z),
-                                    direction);
-                            }
+        final int cx = chunk.x();
+        final int cy = chunk.y();
+        final int cz = chunk.z();
+        for (Direction direction : Direction.LIST) {
+            for (int x = 0; x < Chunk.SIZE; x++) {
+                for (int y = 0; y < Chunk.SIZE; y++) {
+                    for (int z = 0; z < Chunk.SIZE; z++) {
+                        final int nx = x + direction.axisX();
+                        final int ny = y + direction.axisY();
+                        final int nz = z + direction.axisZ();
+                        if (chunk.isInBound(nx, ny, nz) && chunk.getBlockType(nx, ny, nz).air()) {
+                            gameRenderer.blockRenderer().renderBlockFace(
+                                builder,
+                                chunk.getBlockType(x, y, z),
+                                ChunkPos.relativeToAbsolute(cx, x),
+                                ChunkPos.relativeToAbsolute(cy, y),
+                                ChunkPos.relativeToAbsolute(cz, z),
+                                direction);
                         }
                     }
                 }
             }
-
-            final Arena arena = Arena.ofShared();
-            final MemorySegment vertexDataSlice = builder.vertexDataSlice();
-            final MemorySegment indexDataSlice = builder.indexDataSlice();
-            return new ChunkVertexData(
-                builder.vertexLayout(),
-                builder.indexCount(),
-                arena,
-                arena.allocateFrom(ValueLayout.JAVA_BYTE, vertexDataSlice, ValueLayout.JAVA_BYTE, 0L, vertexDataSlice.byteSize()),
-                arena.allocateFrom(ValueLayout.JAVA_BYTE, indexDataSlice, ValueLayout.JAVA_BYTE, 0L, indexDataSlice.byteSize()),
-                builder.shouldReallocateVertexData(),
-                builder.shouldReallocateIndexData()
-            );
-        } finally {
-            pool.release(builder);
         }
+
+        final Arena arena = new DelegateArena<>(Arena.ofShared(), pool, builder);
+        final MemorySegment vertexDataSlice = builder.vertexDataSlice();
+        final MemorySegment indexDataSlice = builder.indexDataSlice();
+        return new ChunkVertexData(
+            builder.vertexLayout(),
+            builder.indexCount(),
+            arena,
+            arena.allocateFrom(ValueLayout.JAVA_BYTE, vertexDataSlice, ValueLayout.JAVA_BYTE, 0L, vertexDataSlice.byteSize()),
+            arena.allocateFrom(ValueLayout.JAVA_BYTE, indexDataSlice, ValueLayout.JAVA_BYTE, 0L, indexDataSlice.byteSize()),
+            builder.shouldReallocateVertexData(),
+            builder.shouldReallocateIndexData()
+        );
     }
 }

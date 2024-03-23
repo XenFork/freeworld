@@ -15,6 +15,7 @@ import io.github.xenfork.freeworld.world.block.BlockType;
 import io.github.xenfork.freeworld.world.block.BlockTypes;
 
 import java.util.Arrays;
+import java.util.StringJoiner;
 
 /**
  * @author baka4n
@@ -138,6 +139,11 @@ public class Chunk {
 
     @Override
     public String toString() {
-        return STR."Chunk[world=\{world},x=\{x},y=\{y},z=\{z}]";
+        return new StringJoiner(", ", Chunk.class.getSimpleName() + "[", "]")
+            .add("world=" + world)
+            .add("x=" + x)
+            .add("y=" + y)
+            .add("z=" + z)
+            .toString();
     }
 }

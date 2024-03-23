@@ -25,9 +25,9 @@ import java.util.UUID;
  * @since 0.1.0
  */
 public final class World {
-    private final int width = 64;
+    private final int width = 256;
     private final int height = 64;
-    private final int depth = 64;
+    private final int depth = 256;
     public final int xChunks = width / Chunk.SIZE;
     public final int yChunks = height / Chunk.SIZE;
     public final int zChunks = depth / Chunk.SIZE;

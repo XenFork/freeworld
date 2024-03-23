@@ -18,7 +18,9 @@ import io.github.xenfork.freeworld.client.render.model.VertexLayouts;
 import io.github.xenfork.freeworld.client.world.chunk.ClientChunk;
 import io.github.xenfork.freeworld.world.World;
 import org.jetbrains.annotations.NotNull;
+import org.joml.*;
 
+import java.lang.Runtime;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -30,8 +32,14 @@ public final class WorldRenderer implements GLResource {
     private final GameRenderer gameRenderer;
     private final World world;
     private final ExecutorService executor;
-    private final VertexBuilderPool<DefaultVertexBuilder> vertexBuilderPool = new VertexBuilderPool<>(() -> new DefaultVertexBuilder(VertexLayouts.POSITION_COLOR_TEX, 30000, 60000));
+    private final VertexBuilderPool<DefaultVertexBuilder> vertexBuilderPool = new VertexBuilderPool<>(WorldRenderer::createVertexBuilder);
     private final ClientChunk[] chunks;
+    private final FrustumIntersection frustumIntersection = new FrustumIntersection();
+    private final FrustumRayBuilder frustumRayBuilder = new FrustumRayBuilder();
+    private final Vector3f frustumRayOrigin = new Vector3f();
+    private final Vector3f frustumRayDir = new Vector3f();
+    private final Vector2f frustumIntersectionResult = new Vector2f();
+    private final Vector2f blockIntersectionResult = new Vector2f();
 
     public WorldRenderer(GameRenderer gameRenderer, World world) {
         this.gameRenderer = gameRenderer;
@@ -55,24 +63,64 @@ public final class WorldRenderer implements GLResource {
         for (int x = 0; x < world.xChunks; x++) {
             for (int y = 0; y < world.yChunks; y++) {
                 for (int z = 0; z < world.zChunks; z++) {
-                    this.chunks[(y * world.zChunks + z) * world.xChunks + x] = new ClientChunk(world, x, y, z);
+                    this.chunks[(y * world.zChunks + z) * world.xChunks + x] = new ClientChunk(world, x, y, z, world.getChunk(x, y, z));
                 }
             }
         }
     }
 
+    private static DefaultVertexBuilder createVertexBuilder() {
+        return new DefaultVertexBuilder(VertexLayouts.POSITION_COLOR_TEX, 30000, 60000);
+    }
+
     public void compileChunks() {
         for (ClientChunk chunk : chunks) {
             if (chunk.shouldRecompile.get() && !chunk.submitted.get()) {
-                chunk.future.set(executor.submit(new ChunkCompileTask(gameRenderer, this, world.getChunk(chunk.x(), chunk.y(), chunk.z()))));
+                chunk.future.set(executor.submit(new ChunkCompileTask(gameRenderer, this, chunk.chunk())));
                 chunk.submitted.set(true);
             }
         }
     }
 
     public void renderChunks(GLStateMgr gl) {
+        final Matrix4f matrix = gameRenderer.projectionViewMatrix();
+        frustumIntersection.set(matrix);
+        frustumRayBuilder.set(matrix);
+        frustumRayBuilder.origin(frustumRayOrigin);
+        frustumRayBuilder.dir(0.5f, 0.5f, frustumRayDir);
+        float nearestChunkDistance = Float.POSITIVE_INFINITY;
+        ClientChunk nearestChunk = null;
         for (ClientChunk chunk : chunks) {
-            chunk.render(gl);
+            if (frustumIntersection.testAab(
+                chunk.fromX(),
+                chunk.fromY(),
+                chunk.fromZ(),
+                chunk.toX(),
+                chunk.toY(),
+                chunk.toZ()
+            )) {
+                chunk.render(gl);
+                if (Intersectionf.intersectRayAab(
+                    frustumRayOrigin.x(),
+                    frustumRayOrigin.y(),
+                    frustumRayOrigin.z(),
+                    frustumRayDir.x(),
+                    frustumRayDir.y(),
+                    frustumRayDir.z(),
+                    chunk.fromX(),
+                    chunk.fromY(),
+                    chunk.fromZ(),
+                    chunk.toX(),
+                    chunk.toY(),
+                    chunk.toZ(),
+                    frustumIntersectionResult
+                ) && frustumIntersectionResult.x() < nearestChunkDistance) {
+                    nearestChunkDistance = frustumIntersectionResult.x();
+                    nearestChunk = chunk;
+                }
+            }
+        }
+        if (nearestChunk != null) {
         }
     }
 

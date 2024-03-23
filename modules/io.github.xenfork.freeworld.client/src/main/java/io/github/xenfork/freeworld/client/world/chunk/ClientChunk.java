@@ -30,6 +30,7 @@ import java.util.concurrent.atomic.AtomicReference;
  * @since 0.1.0
  */
 public final class ClientChunk extends Chunk implements GLResource {
+    private final Chunk chunk;
     public final AtomicReference<Future<ChunkVertexData>> future = new AtomicReference<>();
     public final AtomicBoolean submitted = new AtomicBoolean();
     public final AtomicBoolean shouldRecompile = new AtomicBoolean(true);
@@ -38,8 +39,9 @@ public final class ClientChunk extends Chunk implements GLResource {
     private int vbo = 0;
     private int ebo = 0;
 
-    public ClientChunk(World world, int x, int y, int z) {
+    public ClientChunk(World world, int x, int y, int z, Chunk chunk) {
         super(world, x, y, z);
+        this.chunk = chunk;
     }
 
     public void render(GLStateMgr gl) {
@@ -70,12 +72,12 @@ public final class ClientChunk extends Chunk implements GLResource {
                         gl.bufferSubData(GL15C.ELEMENT_ARRAY_BUFFER, 0L, indexData);
                     }
                 }
+                shouldRecompile.set(false);
+                submitted.set(false);
+                future.set(null);
             } catch (InterruptedException | ExecutionException e) {
                 throw new RuntimeException(e);
             }
-            shouldRecompile.set(false);
-            submitted.set(false);
-            future.set(null);
         }
         if (vao != 0) {
             gl.setVertexArrayBinding(vao);
@@ -87,5 +89,9 @@ public final class ClientChunk extends Chunk implements GLResource {
     public void close(GLStateMgr gl) {
         gl.deleteVertexArrays(vao);
         gl.deleteBuffers(vbo, ebo);
+    }
+
+    public Chunk chunk() {
+        return chunk;
     }
 }

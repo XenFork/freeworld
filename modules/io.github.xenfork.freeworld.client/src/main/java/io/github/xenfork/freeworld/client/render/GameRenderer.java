@@ -40,8 +40,8 @@ public final class GameRenderer implements GLResource {
     private final Freeworld client;
     private GLProgram positionColorProgram;
     private GLProgram positionColorTexProgram;
-    private final Matrix4f projectionView = new Matrix4f();
-    private final Matrix4f matrix = new Matrix4f();
+    private final Matrix4f projectionViewMatrix = new Matrix4f();
+    private final Matrix4f modelMatrix = new Matrix4f();
     public static final Identifier TEX_DIRT = Identifier.ofBuiltin("texture/block/dirt.png");
     public static final Identifier TEX_GRASS_BLOCK = Identifier.ofBuiltin("texture/block/grass_block.png");
     public static final Identifier TEX_STONE = Identifier.ofBuiltin("texture/block/stone.png");
@@ -95,8 +95,7 @@ public final class GameRenderer implements GLResource {
         gl.enableDepthTest();
         gl.setDepthFunc(GL10C.LEQUAL);
         texture.bind(gl);
-        positionColorTexProgram.use(gl);
-        projectionView.setPerspective(
+        projectionViewMatrix.setPerspective(
             (float) Math.toRadians(70.0),
             (float) client.framebufferWidth() / client.framebufferHeight(),
             0.01f,
@@ -106,10 +105,11 @@ public final class GameRenderer implements GLResource {
         camera.moveToEntity(client.player());
         camera.updateLerp(partialTick);
         camera.updateViewMatrix();
-        projectionView.mul(camera.viewMatrix());
-        matrix.identity();
-        positionColorTexProgram.getUniform(GLProgram.UNIFORM_PROJECTION_VIEW_MATRIX).set(projectionView);
-        positionColorTexProgram.getUniform(GLProgram.UNIFORM_MODEL_MATRIX).set(matrix);
+        projectionViewMatrix.mul(camera.viewMatrix());
+        modelMatrix.identity();
+        positionColorTexProgram.use(gl);
+        positionColorTexProgram.getUniform(GLProgram.UNIFORM_PROJECTION_VIEW_MATRIX).set(projectionViewMatrix);
+        positionColorTexProgram.getUniform(GLProgram.UNIFORM_MODEL_MATRIX).set(modelMatrix);
         positionColorTexProgram.uploadUniforms(gl);
         worldRenderer.compileChunks();
         worldRenderer.renderChunks(gl);
@@ -127,10 +127,10 @@ public final class GameRenderer implements GLResource {
         gl.disableDepthTest();
         gl.setTextureBinding2D(0);
         positionColorProgram.use(gl);
-        projectionView.setOrtho(0.0f, width, 0.0f, height, -100.0f, 100.0f);
-        matrix.translation(width * 0.5f, height * 0.5f, 0.0f);
-        positionColorProgram.getUniform(GLProgram.UNIFORM_PROJECTION_VIEW_MATRIX).set(projectionView);
-        positionColorProgram.getUniform(GLProgram.UNIFORM_MODEL_MATRIX).set(matrix);
+        projectionViewMatrix.setOrtho(0.0f, width, 0.0f, height, -100.0f, 100.0f);
+        modelMatrix.translation(width * 0.5f, height * 0.5f, 0.0f);
+        positionColorProgram.getUniform(GLProgram.UNIFORM_PROJECTION_VIEW_MATRIX).set(projectionViewMatrix);
+        positionColorProgram.getUniform(GLProgram.UNIFORM_MODEL_MATRIX).set(modelMatrix);
         positionColorProgram.uploadUniforms(gl);
         tessellator.begin(GLDrawMode.TRIANGLES);
         tessellator.color(1.0f, 1.0f, 1.0f);
@@ -174,5 +174,13 @@ public final class GameRenderer implements GLResource {
 
     public BlockRenderer blockRenderer() {
         return blockRenderer;
+    }
+
+    public Matrix4f projectionViewMatrix() {
+        return projectionViewMatrix;
+    }
+
+    public Matrix4f modelMatrix() {
+        return modelMatrix;
     }
 }
