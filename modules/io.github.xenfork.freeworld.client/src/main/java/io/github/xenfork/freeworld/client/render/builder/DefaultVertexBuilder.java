@@ -221,4 +221,8 @@ public final class DefaultVertexBuilder implements VertexBuilder {
     public boolean shouldReallocateIndexData() {
         return shouldReallocateIndexData;
     }
+
+    public VertexLayout vertexLayout() {
+        return vertexLayout;
+    }
 }

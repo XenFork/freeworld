@@ -28,12 +28,12 @@ public final class World {
     private final int width = 64;
     private final int height = 64;
     private final int depth = 64;
-    private final int xChunks = width / Chunk.SIZE;
-    private final int yChunks = height / Chunk.SIZE;
-    private final int zChunks = depth / Chunk.SIZE;
+    public final int xChunks = width / Chunk.SIZE;
+    public final int yChunks = height / Chunk.SIZE;
+    public final int zChunks = depth / Chunk.SIZE;
     public final Chunk[] chunks = new Chunk[xChunks * yChunks * zChunks];
     public final List<Entity> entities = new ArrayList<>();
-    public final MotionSystem motionSystem = new MotionSystem();
+    private final MotionSystem motionSystem = new MotionSystem();
 
     public World(String name) {
         for (int x = 0; x < xChunks; x++) {
@@ -58,6 +58,10 @@ public final class World {
         }
         entities.add(entity);
         return entity;
+    }
+
+    public Chunk getChunk(int x, int y, int z) {
+        return chunks[(y * zChunks + z) * xChunks + x];
     }
 
     public Chunk createChunk(int x, int y, int z) {

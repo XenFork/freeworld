@@ -10,14 +10,12 @@
 
 package io.github.xenfork.freeworld.client.render.gl;
 
-import overrungl.opengl.GL;
-
 /**
  * @author squid233
  * @since 0.1.0
  */
 public enum GLDrawMode {
-    TRIANGLES(GL.TRIANGLES, 3);
+    TRIANGLES(GLStateMgr.TRIANGLES, 3);
 
     private final int value;
     private final int count;

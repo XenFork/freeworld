@@ -10,33 +10,30 @@
 
 package io.github.xenfork.freeworld.client.render.world;
 
-import io.github.xenfork.freeworld.client.Freeworld;
 import io.github.xenfork.freeworld.client.render.GameRenderer;
-import io.github.xenfork.freeworld.client.render.Tessellator;
-import io.github.xenfork.freeworld.client.render.gl.GLDrawMode;
+import io.github.xenfork.freeworld.client.render.builder.DefaultVertexBuilder;
+import io.github.xenfork.freeworld.client.render.gl.GLResource;
 import io.github.xenfork.freeworld.client.render.gl.GLStateMgr;
-import io.github.xenfork.freeworld.util.Direction;
+import io.github.xenfork.freeworld.client.render.model.VertexLayouts;
+import io.github.xenfork.freeworld.client.world.chunk.ClientChunk;
 import io.github.xenfork.freeworld.world.World;
-import io.github.xenfork.freeworld.world.chunk.Chunk;
-import io.github.xenfork.freeworld.world.chunk.ChunkPos;
+import org.jetbrains.annotations.NotNull;
 
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.PriorityBlockingQueue;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * @author squid233
  * @since 0.1.0
  */
-public final class WorldRenderer implements AutoCloseable {
-    private final Freeworld client;
+public final class WorldRenderer implements GLResource {
     private final GameRenderer gameRenderer;
     private final World world;
     private final ExecutorService executor;
+    private final VertexBuilderPool<DefaultVertexBuilder> vertexBuilderPool = new VertexBuilderPool<>(() -> new DefaultVertexBuilder(VertexLayouts.POSITION_COLOR_TEX, 30000, 60000));
+    private final ClientChunk[] chunks;
 
-    public WorldRenderer(Freeworld client, GameRenderer gameRenderer, World world) {
-        this.client = client;
+    public WorldRenderer(GameRenderer gameRenderer, World world) {
         this.gameRenderer = gameRenderer;
         this.world = world;
         final int processors = Runtime.getRuntime().availableProcessors();
@@ -44,47 +41,50 @@ public final class WorldRenderer implements AutoCloseable {
             processors,
             0L,
             TimeUnit.MILLISECONDS,
-            new PriorityBlockingQueue<>(),
+            new LinkedBlockingDeque<>(),
+            new ThreadFactory() {
+                private final AtomicInteger threadNumber = new AtomicInteger(1);
+
+                @Override
+                public Thread newThread(@NotNull Runnable r) {
+                    return new Thread(r, STR."ChunkCompiler-thread-\{threadNumber.getAndIncrement()}");
+                }
+            },
             new ThreadPoolExecutor.DiscardPolicy());
-    }
-
-    public void compileChunks() {
-    }
-
-    public void render(GLStateMgr gl, Tessellator tessellator) {
-//        final Vector3dc position = client.camera().position();
-        final BlockRenderer blockRenderer = gameRenderer.blockRenderer();
-        tessellator.begin(GLDrawMode.TRIANGLES);
-        for (Chunk chunk : world.chunks) {
-            final int cx = chunk.x();
-            final int cy = chunk.y();
-            final int cz = chunk.z();
-            for (Direction direction : Direction.LIST) {
-                for (int x = 0; x < Chunk.SIZE; x++) {
-                    for (int y = 0; y < Chunk.SIZE; y++) {
-                        for (int z = 0; z < Chunk.SIZE; z++) {
-                            final int nx = x + direction.axisX();
-                            final int ny = y + direction.axisY();
-                            final int nz = z + direction.axisZ();
-                            if (chunk.isInBound(nx, ny, nz) && chunk.getBlockType(nx, ny, nz).air()) {
-                                blockRenderer.renderBlockFace(
-                                    tessellator,
-                                    chunk.getBlockType(x, y, z),
-                                    ChunkPos.relativeToAbsolute(cx, x),
-                                    ChunkPos.relativeToAbsolute(cy, y),
-                                    ChunkPos.relativeToAbsolute(cz, z),
-                                    direction);
-                            }
-                        }
-                    }
+        this.chunks = new ClientChunk[world.xChunks * world.yChunks * world.zChunks];
+        for (int x = 0; x < world.xChunks; x++) {
+            for (int y = 0; y < world.yChunks; y++) {
+                for (int z = 0; z < world.zChunks; z++) {
+                    this.chunks[(y * world.zChunks + z) * world.xChunks + x] = new ClientChunk(world, x, y, z);
                 }
             }
         }
-        tessellator.end(gl);
+    }
+
+    public void compileChunks() {
+        for (ClientChunk chunk : chunks) {
+            if (chunk.shouldRecompile.get() && !chunk.submitted.get()) {
+                chunk.future.set(executor.submit(new ChunkCompileTask(gameRenderer, this, world.getChunk(chunk.x(), chunk.y(), chunk.z()))));
+                chunk.submitted.set(true);
+            }
+        }
+    }
+
+    public void renderChunks(GLStateMgr gl) {
+        for (ClientChunk chunk : chunks) {
+            chunk.render(gl);
+        }
+    }
+
+    public VertexBuilderPool<DefaultVertexBuilder> vertexBuilderPool() {
+        return vertexBuilderPool;
     }
 
     @Override
-    public void close() {
+    public void close(GLStateMgr gl) {
         executor.close();
+        for (ClientChunk chunk : chunks) {
+            chunk.close(gl);
+        }
     }
 }

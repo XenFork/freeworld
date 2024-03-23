@@ -69,7 +69,7 @@ public final class GameRenderer implements GLResource {
         logger.info("Created {}x{}x{} {}", texture.width(), texture.height(), texture.mipmapLevel(), TextureManager.BLOCK_ATLAS);
 
         blockRenderer = new BlockRenderer(this);
-        worldRenderer = new WorldRenderer(client, this, client.world());
+        worldRenderer = new WorldRenderer(this, client.world());
 
         tessellator = new Tessellator();
     }
@@ -111,7 +111,8 @@ public final class GameRenderer implements GLResource {
         positionColorTexProgram.getUniform(GLProgram.UNIFORM_PROJECTION_VIEW_MATRIX).set(projectionView);
         positionColorTexProgram.getUniform(GLProgram.UNIFORM_MODEL_MATRIX).set(matrix);
         positionColorTexProgram.uploadUniforms(gl);
-        worldRenderer.render(gl, tessellator);
+        worldRenderer.compileChunks();
+        worldRenderer.renderChunks(gl);
 
         renderGui(gl, partialTick);
     }
@@ -151,6 +152,7 @@ public final class GameRenderer implements GLResource {
         logger.info("Closing game renderer");
 
         if (textureManager != null) textureManager.close(gl);
+        if (worldRenderer != null) worldRenderer.close(gl);
 
         if (positionColorProgram != null) positionColorProgram.close(gl);
         if (positionColorTexProgram != null) positionColorTexProgram.close(gl);
