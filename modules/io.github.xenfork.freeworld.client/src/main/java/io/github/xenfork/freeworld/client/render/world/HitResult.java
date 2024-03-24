@@ -8,18 +8,19 @@
  * version 2.1 of the License, or (at your option) any later version.
  */
 
-package io.github.xenfork.freeworld.world.chunk;
+package io.github.xenfork.freeworld.client.render.world;
+
+import io.github.xenfork.freeworld.world.block.BlockType;
 
 /**
  * @author squid233
  * @since 0.1.0
  */
-public record ChunkPos(int x, int y, int z) {
-    public static int relativeToAbsolute(int chunkPos, int relativePos) {
-        return chunkPos * Chunk.SIZE + relativePos;
-    }
-
-    public static int absoluteToRelative(int absolutePos) {
-        return Math.floorMod(absolutePos, Chunk.SIZE);
-    }
+public record HitResult(
+    BlockType blockType,
+    int x,
+    int y,
+    int z,
+    boolean missed
+) {
 }

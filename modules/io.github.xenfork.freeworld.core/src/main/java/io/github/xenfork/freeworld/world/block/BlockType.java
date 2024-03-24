@@ -10,15 +10,19 @@
 
 package io.github.xenfork.freeworld.world.block;
 
+import io.github.xenfork.freeworld.core.math.AABBox;
+
 /**
  * @author squid233
  * @since 0.1.0
  */
 public final class BlockType {
     private final boolean air;
+    private final AABBox outlineShape;
 
-    private BlockType(boolean air) {
+    private BlockType(boolean air, AABBox outlineShape) {
         this.air = air;
+        this.outlineShape = outlineShape;
     }
 
     public static Builder builder() {
@@ -31,18 +35,28 @@ public final class BlockType {
      */
     public static final class Builder {
         private boolean air = false;
+        private AABBox outlineShape = AABBox.FULL_CUBE;
 
         public Builder air() {
             this.air = true;
             return this;
         }
 
+        public Builder outlineShape(AABBox outlineShape) {
+            this.outlineShape = outlineShape;
+            return this;
+        }
+
         public BlockType build() {
-            return new BlockType(air);
+            return new BlockType(air, outlineShape);
         }
     }
 
     public boolean air() {
         return air;
+    }
+
+    public AABBox outlineShape() {
+        return outlineShape;
     }
 }

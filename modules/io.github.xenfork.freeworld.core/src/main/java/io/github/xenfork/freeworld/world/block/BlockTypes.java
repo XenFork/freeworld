@@ -11,6 +11,7 @@
 package io.github.xenfork.freeworld.world.block;
 
 import io.github.xenfork.freeworld.core.Identifier;
+import io.github.xenfork.freeworld.core.math.AABBox;
 import io.github.xenfork.freeworld.core.registry.BuiltinRegistries;
 import io.github.xenfork.freeworld.core.registry.Registry;
 
@@ -20,7 +21,7 @@ import io.github.xenfork.freeworld.core.registry.Registry;
  */
 public final class BlockTypes {
     public static final BlockType.Builder BUILDER_EMPTY = BlockType.builder();
-    public static final BlockType.Builder BUILDER_AIR = BlockType.builder().air();
+    public static final BlockType.Builder BUILDER_AIR = BlockType.builder().air().outlineShape(AABBox.EMPTY);
     public static final BlockType AIR = register("air", 0, BUILDER_AIR.build());
     public static final BlockType GRASS_BLOCK = register("grass_block", 1, BUILDER_EMPTY.build());
     public static final BlockType DIRT = register("dirt", 2, BUILDER_EMPTY.build());

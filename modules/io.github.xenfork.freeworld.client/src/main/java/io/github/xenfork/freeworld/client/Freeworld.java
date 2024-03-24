@@ -163,7 +163,7 @@ public final class Freeworld implements AutoCloseable {
 
     private void tick() {
         camera.preUpdate();
-        final double speed = 0.3;
+        final double speed = glfw.getKey(window, GLFW.KEY_LEFT_CONTROL) == GLFW.PRESS ? 1.0 : 0.5;
         double xo = 0.0;
         double yo = 0.0;
         double zo = 0.0;
@@ -174,6 +174,7 @@ public final class Freeworld implements AutoCloseable {
         if (glfw.getKey(window, GLFW.KEY_LEFT_SHIFT) == GLFW.PRESS) yo -= 1.0;
         if (glfw.getKey(window, GLFW.KEY_SPACE) == GLFW.PRESS) yo += 1.0;
         player.acceleration().acceleration().set(xo, yo, zo).mul(speed);
+        player.velocity().velocity().zero();
         world.tick();
     }
 

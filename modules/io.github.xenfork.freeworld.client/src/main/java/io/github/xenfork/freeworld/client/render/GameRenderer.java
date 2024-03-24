@@ -20,8 +20,10 @@ import io.github.xenfork.freeworld.client.render.model.VertexLayouts;
 import io.github.xenfork.freeworld.client.render.texture.TextureAtlas;
 import io.github.xenfork.freeworld.client.render.texture.TextureManager;
 import io.github.xenfork.freeworld.client.render.world.BlockRenderer;
+import io.github.xenfork.freeworld.client.render.world.HitResult;
 import io.github.xenfork.freeworld.client.render.world.WorldRenderer;
 import io.github.xenfork.freeworld.core.Identifier;
+import io.github.xenfork.freeworld.core.math.AABBox;
 import io.github.xenfork.freeworld.util.Logging;
 import org.joml.Matrix4f;
 import org.slf4j.Logger;
@@ -113,6 +115,42 @@ public final class GameRenderer implements GLResource {
         positionColorTexProgram.uploadUniforms(gl);
         worldRenderer.compileChunks();
         worldRenderer.renderChunks(gl);
+
+        final HitResult hitResult = worldRenderer.hitResult();
+        if (!hitResult.missed()) {
+            final AABBox box = hitResult.blockType().outlineShape().move(hitResult.x(), hitResult.y(), hitResult.z());
+            final float minX = (float) box.minX();
+            final float minY = (float) box.minY();
+            final float minZ = (float) box.minZ();
+            final float maxX = (float) box.maxX();
+            final float maxY = (float) box.maxY();
+            final float maxZ = (float) box.maxZ();
+            final float offset = 0.001f;
+            gl.setTextureBinding2D(0);
+            positionColorProgram.use(gl);
+            positionColorProgram.getUniform(GLProgram.UNIFORM_PROJECTION_VIEW_MATRIX).set(projectionViewMatrix);
+            positionColorProgram.getUniform(GLProgram.UNIFORM_MODEL_MATRIX).set(modelMatrix);
+            positionColorProgram.uploadUniforms(gl);
+            tessellator.begin(GLDrawMode.LINES);
+            tessellator.color(0, 0, 0);
+            // -x
+            tessellator.indices(0, 1, 0, 2, 1, 3, 2, 3);
+            // +x
+            tessellator.indices(4, 5, 4, 6, 5, 7, 6, 7);
+            // -z
+            tessellator.indices(0, 4, 2, 6);
+            // +z
+            tessellator.indices(1, 5, 3, 7);
+            tessellator.position(minX - offset, minY - offset, minZ - offset).emit();
+            tessellator.position(minX - offset, minY - offset, maxZ + offset).emit();
+            tessellator.position(minX - offset, maxY + offset, minZ - offset).emit();
+            tessellator.position(minX - offset, maxY + offset, maxZ + offset).emit();
+            tessellator.position(maxX + offset, minY - offset, minZ - offset).emit();
+            tessellator.position(maxX + offset, minY - offset, maxZ + offset).emit();
+            tessellator.position(maxX + offset, maxY + offset, minZ - offset).emit();
+            tessellator.position(maxX + offset, maxY + offset, maxZ + offset).emit();
+            tessellator.end(gl);
+        }
 
         renderGui(gl, partialTick);
     }

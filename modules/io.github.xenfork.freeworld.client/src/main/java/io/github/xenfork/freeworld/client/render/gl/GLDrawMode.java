@@ -15,6 +15,7 @@ package io.github.xenfork.freeworld.client.render.gl;
  * @since 0.1.0
  */
 public enum GLDrawMode {
+    LINES(GLStateMgr.LINES, 2),
     TRIANGLES(GLStateMgr.TRIANGLES, 3);
 
     private final int value;

@@ -16,7 +16,10 @@ import io.github.xenfork.freeworld.client.render.gl.GLResource;
 import io.github.xenfork.freeworld.client.render.gl.GLStateMgr;
 import io.github.xenfork.freeworld.client.render.model.VertexLayouts;
 import io.github.xenfork.freeworld.client.world.chunk.ClientChunk;
+import io.github.xenfork.freeworld.core.math.AABBox;
 import io.github.xenfork.freeworld.world.World;
+import io.github.xenfork.freeworld.world.block.BlockType;
+import io.github.xenfork.freeworld.world.chunk.ChunkPos;
 import org.jetbrains.annotations.NotNull;
 import org.joml.*;
 
@@ -39,7 +42,8 @@ public final class WorldRenderer implements GLResource {
     private final Vector3f frustumRayOrigin = new Vector3f();
     private final Vector3f frustumRayDir = new Vector3f();
     private final Vector2f frustumIntersectionResult = new Vector2f();
-    private final Vector2f blockIntersectionResult = new Vector2f();
+    private final Vector2d blockIntersectionResult = new Vector2d();
+    private HitResult hitResult = new HitResult(null, 0, 0, 0, true);
 
     public WorldRenderer(GameRenderer gameRenderer, World world) {
         this.gameRenderer = gameRenderer;
@@ -88,6 +92,7 @@ public final class WorldRenderer implements GLResource {
         frustumRayBuilder.set(matrix);
         frustumRayBuilder.origin(frustumRayOrigin);
         frustumRayBuilder.dir(0.5f, 0.5f, frustumRayDir);
+        frustumIntersectionResult.zero();
         float nearestChunkDistance = Float.POSITIVE_INFINITY;
         ClientChunk nearestChunk = null;
         for (ClientChunk chunk : chunks) {
@@ -120,12 +125,59 @@ public final class WorldRenderer implements GLResource {
                 }
             }
         }
+        // TODO: 2024/3/24 squid233: This is buggy
         if (nearestChunk != null) {
+            double nearestBlockDistance = Float.POSITIVE_INFINITY;
+            BlockType nearestBlock = null;
+            int nearestX = 0;
+            int nearestY = 0;
+            int nearestZ = 0;
+            for (int x = nearestChunk.fromX(); x < nearestChunk.toX(); x++) {
+                for (int y = nearestChunk.fromY(); y < nearestChunk.toY(); y++) {
+                    for (int z = nearestChunk.fromZ(); z < nearestChunk.toZ(); z++) {
+                        final BlockType blockType = nearestChunk.chunk().getBlockType(
+                            ChunkPos.absoluteToRelative(x),
+                            ChunkPos.absoluteToRelative(y),
+                            ChunkPos.absoluteToRelative(z)
+                        );
+                        if (blockType.air()) {
+                            continue;
+                        }
+                        final AABBox box = blockType.outlineShape().move(x, y, z);
+                        if (Intersectiond.intersectRayAab(
+                            frustumRayOrigin.x(),
+                            frustumRayOrigin.y(),
+                            frustumRayOrigin.z(),
+                            frustumRayDir.x(),
+                            frustumRayDir.y(),
+                            frustumRayDir.z(),
+                            box.minX(),
+                            box.minY(),
+                            box.minZ(),
+                            box.maxX(),
+                            box.maxY(),
+                            box.maxZ(),
+                            blockIntersectionResult
+                        ) && blockIntersectionResult.x() < nearestBlockDistance) {
+                            nearestBlockDistance = blockIntersectionResult.x();
+                            nearestBlock = blockType;
+                            nearestX = x;
+                            nearestY = y;
+                            nearestZ = z;
+                        }
+                    }
+                }
+            }
+            hitResult = new HitResult(nearestBlock, nearestX, nearestY, nearestZ, nearestBlock == null);
         }
     }
 
     public VertexBuilderPool<DefaultVertexBuilder> vertexBuilderPool() {
         return vertexBuilderPool;
+    }
+
+    public HitResult hitResult() {
+        return hitResult;
     }
 
     @Override

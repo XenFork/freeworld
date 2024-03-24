@@ -15,6 +15,7 @@
  */
 module io.github.xenfork.freeworld.core {
     exports io.github.xenfork.freeworld.core;
+    exports io.github.xenfork.freeworld.core.math;
     exports io.github.xenfork.freeworld.core.registry;
     exports io.github.xenfork.freeworld.file;
     exports io.github.xenfork.freeworld.util;
