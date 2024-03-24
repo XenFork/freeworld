@@ -22,4 +22,8 @@ public record ChunkPos(int x, int y, int z) {
     public static int absoluteToRelative(int absolutePos) {
         return Math.floorMod(absolutePos, Chunk.SIZE);
     }
+
+    public static int absoluteToChunk(int absolutePos) {
+        return Math.floorDiv(absolutePos, Chunk.SIZE);
+    }
 }

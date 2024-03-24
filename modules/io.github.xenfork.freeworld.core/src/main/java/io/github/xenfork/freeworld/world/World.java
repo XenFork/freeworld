@@ -67,4 +67,16 @@ public final class World {
     public Chunk createChunk(int x, int y, int z) {
         return new Chunk(this, x, y, z);
     }
+
+    public int width() {
+        return width;
+    }
+
+    public int height() {
+        return height;
+    }
+
+    public int depth() {
+        return depth;
+    }
 }

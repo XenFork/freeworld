@@ -19,10 +19,12 @@ import io.github.xenfork.freeworld.client.world.chunk.ClientChunk;
 import io.github.xenfork.freeworld.core.math.AABBox;
 import io.github.xenfork.freeworld.world.World;
 import io.github.xenfork.freeworld.world.block.BlockType;
+import io.github.xenfork.freeworld.world.chunk.Chunk;
 import io.github.xenfork.freeworld.world.chunk.ChunkPos;
 import org.jetbrains.annotations.NotNull;
 import org.joml.*;
 
+import java.lang.Math;
 import java.lang.Runtime;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -41,9 +43,7 @@ public final class WorldRenderer implements GLResource {
     private final FrustumRayBuilder frustumRayBuilder = new FrustumRayBuilder();
     private final Vector3f frustumRayOrigin = new Vector3f();
     private final Vector3f frustumRayDir = new Vector3f();
-    private final Vector2f frustumIntersectionResult = new Vector2f();
     private final Vector2d blockIntersectionResult = new Vector2d();
-    private HitResult hitResult = new HitResult(null, 0, 0, 0, true);
 
     public WorldRenderer(GameRenderer gameRenderer, World world) {
         this.gameRenderer = gameRenderer;
@@ -87,14 +87,6 @@ public final class WorldRenderer implements GLResource {
     }
 
     public void renderChunks(GLStateMgr gl) {
-        final Matrix4f matrix = gameRenderer.projectionViewMatrix();
-        frustumIntersection.set(matrix);
-        frustumRayBuilder.set(matrix);
-        frustumRayBuilder.origin(frustumRayOrigin);
-        frustumRayBuilder.dir(0.5f, 0.5f, frustumRayDir);
-        frustumIntersectionResult.zero();
-        float nearestChunkDistance = Float.POSITIVE_INFINITY;
-        ClientChunk nearestChunk = null;
         for (ClientChunk chunk : chunks) {
             if (frustumIntersection.testAab(
                 chunk.fromX(),
@@ -105,37 +97,47 @@ public final class WorldRenderer implements GLResource {
                 chunk.toZ()
             )) {
                 chunk.render(gl);
-                if (Intersectionf.intersectRayAab(
-                    frustumRayOrigin.x(),
-                    frustumRayOrigin.y(),
-                    frustumRayOrigin.z(),
-                    frustumRayDir.x(),
-                    frustumRayDir.y(),
-                    frustumRayDir.z(),
-                    chunk.fromX(),
-                    chunk.fromY(),
-                    chunk.fromZ(),
-                    chunk.toX(),
-                    chunk.toY(),
-                    chunk.toZ(),
-                    frustumIntersectionResult
-                ) && frustumIntersectionResult.x() < nearestChunkDistance) {
-                    nearestChunkDistance = frustumIntersectionResult.x();
-                    nearestChunk = chunk;
-                }
             }
         }
-        // TODO: 2024/3/24 squid233: This is buggy
-        if (nearestChunk != null) {
-            double nearestBlockDistance = Float.POSITIVE_INFINITY;
-            BlockType nearestBlock = null;
-            int nearestX = 0;
-            int nearestY = 0;
-            int nearestZ = 0;
-            for (int x = nearestChunk.fromX(); x < nearestChunk.toX(); x++) {
-                for (int y = nearestChunk.fromY(); y < nearestChunk.toY(); y++) {
-                    for (int z = nearestChunk.fromZ(); z < nearestChunk.toZ(); z++) {
-                        final BlockType blockType = nearestChunk.chunk().getBlockType(
+    }
+
+    public HitResult selectBlock() {
+        final Matrix4f matrix = gameRenderer.projectionViewMatrix();
+        frustumIntersection.set(matrix);
+        frustumRayBuilder.set(matrix);
+        frustumRayBuilder.origin(frustumRayOrigin);
+        frustumRayBuilder.dir(0.5f, 0.5f, frustumRayDir);
+        final float ox = frustumRayOrigin.x();
+        final float oy = frustumRayOrigin.y();
+        final float oz = frustumRayOrigin.z();
+
+        double nearestBlockDistance = Float.POSITIVE_INFINITY;
+        BlockType nearestBlock = null;
+        int nearestX = 0;
+        int nearestY = 0;
+        int nearestZ = 0;
+
+        final float radius = 5.0f;
+        final float radiusSquared = radius * radius;
+        final int x0 = Math.clamp((int) Math.floor(ox - radius), 0, world.width());
+        final int y0 = Math.clamp((int) Math.floor(oy - radius), 0, world.height());
+        final int z0 = Math.clamp((int) Math.floor(oz - radius), 0, world.depth());
+        final int x1 = Math.clamp((int) Math.ceil(ox + radius), 0, world.width());
+        final int y1 = Math.clamp((int) Math.ceil(oy + radius), 0, world.height());
+        final int z1 = Math.clamp((int) Math.ceil(oz + radius), 0, world.depth());
+        for (int x = x0; x <= x1; x++) {
+            final float xSquared = (x + 0.5f - ox) * (x + 0.5f - ox);
+            for (int y = y0; y <= y1; y++) {
+                final float ySquared = (y + 0.5f - oy) * (y + 0.5f - oy);
+                for (int z = z0; z <= z1; z++) {
+                    final float zSquared = (z + 0.5f - oz) * (z + 0.5f - oz);
+                    if ((xSquared + ySquared + zSquared) <= radiusSquared) {
+                        final Chunk chunk = world.getChunk(
+                            ChunkPos.absoluteToChunk(x),
+                            ChunkPos.absoluteToChunk(y),
+                            ChunkPos.absoluteToChunk(z)
+                        );
+                        final BlockType blockType = chunk.getBlockType(
                             ChunkPos.absoluteToRelative(x),
                             ChunkPos.absoluteToRelative(y),
                             ChunkPos.absoluteToRelative(z)
@@ -145,9 +147,9 @@ public final class WorldRenderer implements GLResource {
                         }
                         final AABBox box = blockType.outlineShape().move(x, y, z);
                         if (Intersectiond.intersectRayAab(
-                            frustumRayOrigin.x(),
-                            frustumRayOrigin.y(),
-                            frustumRayOrigin.z(),
+                            ox,
+                            oy,
+                            oz,
                             frustumRayDir.x(),
                             frustumRayDir.y(),
                             frustumRayDir.z(),
@@ -168,16 +170,13 @@ public final class WorldRenderer implements GLResource {
                     }
                 }
             }
-            hitResult = new HitResult(nearestBlock, nearestX, nearestY, nearestZ, nearestBlock == null);
         }
+
+        return new HitResult(nearestBlock, nearestX, nearestY, nearestZ, nearestBlock == null);
     }
 
     public VertexBuilderPool<DefaultVertexBuilder> vertexBuilderPool() {
         return vertexBuilderPool;
-    }
-
-    public HitResult hitResult() {
-        return hitResult;
     }
 
     @Override

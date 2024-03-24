@@ -116,7 +116,7 @@ public final class GameRenderer implements GLResource {
         worldRenderer.compileChunks();
         worldRenderer.renderChunks(gl);
 
-        final HitResult hitResult = worldRenderer.hitResult();
+        final HitResult hitResult = worldRenderer.selectBlock();
         if (!hitResult.missed()) {
             final AABBox box = hitResult.blockType().outlineShape().move(hitResult.x(), hitResult.y(), hitResult.z());
             final float minX = (float) box.minX();
@@ -125,7 +125,7 @@ public final class GameRenderer implements GLResource {
             final float maxX = (float) box.maxX();
             final float maxY = (float) box.maxY();
             final float maxZ = (float) box.maxZ();
-            final float offset = 0.001f;
+            final float offset = 0.005f;
             gl.setTextureBinding2D(0);
             positionColorProgram.use(gl);
             positionColorProgram.getUniform(GLProgram.UNIFORM_PROJECTION_VIEW_MATRIX).set(projectionViewMatrix);
