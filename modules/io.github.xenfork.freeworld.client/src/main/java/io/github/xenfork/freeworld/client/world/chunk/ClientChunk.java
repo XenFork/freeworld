@@ -18,7 +18,6 @@ import io.github.xenfork.freeworld.world.World;
 import io.github.xenfork.freeworld.world.chunk.Chunk;
 import overrungl.opengl.GL15C;
 
-import java.lang.foreign.Arena;
 import java.lang.foreign.MemorySegment;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
@@ -47,34 +46,39 @@ public final class ClientChunk extends Chunk implements GLResource {
     public void render(GLStateMgr gl) {
         if (shouldRecompile.get() && submitted.get()) {
             try {
-                final ChunkVertexData data = future.get().get();
-                try (Arena _ = data.arena()) {
-                    final MemorySegment vertexData = data.vertexData();
-                    final MemorySegment indexData = data.indexData();
-                    indexCount = data.indexCount();
-                    if (vao == 0) vao = gl.genVertexArrays();
-                    if (vbo == 0) vbo = gl.genBuffers();
-                    if (ebo == 0) ebo = gl.genBuffers();
-                    gl.setVertexArrayBinding(vao);
-                    gl.setArrayBufferBinding(vbo);
-                    if (data.shouldReallocateVertexData()) {
-                        gl.bufferData(GL15C.ARRAY_BUFFER, vertexData, GL15C.DYNAMIC_DRAW);
-                        final VertexLayout layout = data.vertexLayout();
-                        layout.enableAttribs(gl);
-                        layout.specifyAttribPointers(gl);
-                    } else {
-                        gl.bufferSubData(GL15C.ARRAY_BUFFER, 0L, vertexData);
+                final Future<ChunkVertexData> dataFuture = future.get();
+                if (dataFuture.isDone()) {
+                    final ChunkVertexData data = dataFuture.get();
+                    try {
+                        final MemorySegment vertexData = data.vertexData();
+                        final MemorySegment indexData = data.indexData();
+                        indexCount = data.indexCount();
+                        if (vao == 0) vao = gl.genVertexArrays();
+                        if (vbo == 0) vbo = gl.genBuffers();
+                        if (ebo == 0) ebo = gl.genBuffers();
+                        gl.setVertexArrayBinding(vao);
+                        gl.setArrayBufferBinding(vbo);
+                        if (data.shouldReallocateVertexData()) {
+                            gl.bufferData(GL15C.ARRAY_BUFFER, vertexData, GL15C.DYNAMIC_DRAW);
+                            final VertexLayout layout = data.vertexLayout();
+                            layout.enableAttribs(gl);
+                            layout.specifyAttribPointers(gl);
+                        } else {
+                            gl.bufferSubData(GL15C.ARRAY_BUFFER, 0L, vertexData);
+                        }
+                        gl.bindBuffer(GL15C.ELEMENT_ARRAY_BUFFER, ebo);
+                        if (data.shouldReallocateIndexData()) {
+                            gl.bufferData(GL15C.ELEMENT_ARRAY_BUFFER, indexData, GL15C.DYNAMIC_DRAW);
+                        } else {
+                            gl.bufferSubData(GL15C.ELEMENT_ARRAY_BUFFER, 0L, indexData);
+                        }
+                    } finally {
+                        data.arena().close();
                     }
-                    gl.bindBuffer(GL15C.ELEMENT_ARRAY_BUFFER, ebo);
-                    if (data.shouldReallocateIndexData()) {
-                        gl.bufferData(GL15C.ELEMENT_ARRAY_BUFFER, indexData, GL15C.DYNAMIC_DRAW);
-                    } else {
-                        gl.bufferSubData(GL15C.ELEMENT_ARRAY_BUFFER, 0L, indexData);
-                    }
+                    shouldRecompile.set(false);
+                    submitted.set(false);
+                    future.set(null);
                 }
-                shouldRecompile.set(false);
-                submitted.set(false);
-                future.set(null);
             } catch (InterruptedException | ExecutionException e) {
                 throw new RuntimeException(e);
             }

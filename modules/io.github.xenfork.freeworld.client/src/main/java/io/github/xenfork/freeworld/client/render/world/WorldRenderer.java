@@ -74,19 +74,20 @@ public final class WorldRenderer implements GLResource {
     }
 
     private static DefaultVertexBuilder createVertexBuilder() {
-        return new DefaultVertexBuilder(VertexLayouts.POSITION_COLOR_TEX, 30000, 60000);
+        return new DefaultVertexBuilder(VertexLayouts.POSITION_COLOR_TEX, 30000, 45000);
     }
 
     public void compileChunks() {
         for (ClientChunk chunk : chunks) {
             if (chunk.shouldRecompile.get() && !chunk.submitted.get()) {
-                chunk.future.set(executor.submit(new ChunkCompileTask(gameRenderer, this, chunk.chunk())));
+                chunk.future.set(executor.submit(new ChunkCompileTask(gameRenderer, this, chunk)));
                 chunk.submitted.set(true);
             }
         }
     }
 
     public void renderChunks(GLStateMgr gl) {
+        frustumIntersection.set(gameRenderer.projectionViewMatrix());
         for (ClientChunk chunk : chunks) {
             if (frustumIntersection.testAab(
                 chunk.fromX(),
@@ -102,9 +103,7 @@ public final class WorldRenderer implements GLResource {
     }
 
     public HitResult selectBlock() {
-        final Matrix4f matrix = gameRenderer.projectionViewMatrix();
-        frustumIntersection.set(matrix);
-        frustumRayBuilder.set(matrix);
+        frustumRayBuilder.set(gameRenderer.projectionViewMatrix());
         frustumRayBuilder.origin(frustumRayOrigin);
         frustumRayBuilder.dir(0.5f, 0.5f, frustumRayDir);
         final float ox = frustumRayOrigin.x();
@@ -119,19 +118,20 @@ public final class WorldRenderer implements GLResource {
 
         final float radius = 5.0f;
         final float radiusSquared = radius * radius;
-        final int x0 = Math.clamp((int) Math.floor(ox - radius), 0, world.width());
-        final int y0 = Math.clamp((int) Math.floor(oy - radius), 0, world.height());
-        final int z0 = Math.clamp((int) Math.floor(oz - radius), 0, world.depth());
-        final int x1 = Math.clamp((int) Math.ceil(ox + radius), 0, world.width());
-        final int y1 = Math.clamp((int) Math.ceil(oy + radius), 0, world.height());
-        final int z1 = Math.clamp((int) Math.ceil(oz + radius), 0, world.depth());
+        final int x0 = Math.clamp((int) Math.floor(ox - radius) - 1, 0, world.width());
+        final int y0 = Math.clamp((int) Math.floor(oy - radius) - 1, 0, world.height());
+        final int z0 = Math.clamp((int) Math.floor(oz - radius) - 1, 0, world.depth());
+        final int x1 = Math.clamp((int) Math.ceil(ox + radius) + 1, 0, world.width());
+        final int y1 = Math.clamp((int) Math.ceil(oy + radius) + 1, 0, world.height());
+        final int z1 = Math.clamp((int) Math.ceil(oz + radius) + 1, 0, world.depth());
         for (int x = x0; x <= x1; x++) {
-            final float xSquared = (x + 0.5f - ox) * (x + 0.5f - ox);
+            final float vx = x + 0.5f - ox;
+            final float xSquared = vx * vx;
             for (int y = y0; y <= y1; y++) {
-                final float ySquared = (y + 0.5f - oy) * (y + 0.5f - oy);
                 for (int z = z0; z <= z1; z++) {
-                    final float zSquared = (z + 0.5f - oz) * (z + 0.5f - oz);
-                    if ((xSquared + ySquared + zSquared) <= radiusSquared) {
+                    final float vz = z + 0.5f - oz;
+                    final float zSquared = vz * vz;
+                    if ((xSquared + zSquared) <= radiusSquared) {
                         final Chunk chunk = world.getChunk(
                             ChunkPos.absoluteToChunk(x),
                             ChunkPos.absoluteToChunk(y),

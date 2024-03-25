@@ -12,7 +12,7 @@ package io.github.xenfork.freeworld.client.render.world;
 
 import io.github.xenfork.freeworld.client.render.GameRenderer;
 import io.github.xenfork.freeworld.client.render.builder.DefaultVertexBuilder;
-import io.github.xenfork.freeworld.client.render.builder.VertexBuilder;
+import io.github.xenfork.freeworld.client.world.chunk.ClientChunk;
 import io.github.xenfork.freeworld.util.Direction;
 import io.github.xenfork.freeworld.world.chunk.Chunk;
 import io.github.xenfork.freeworld.world.chunk.ChunkPos;
@@ -29,40 +29,20 @@ import java.util.concurrent.Callable;
 public final class ChunkCompileTask implements Callable<ChunkVertexData> {
     private final GameRenderer gameRenderer;
     private final WorldRenderer worldRenderer;
-    private final Chunk chunk;
+    private final ClientChunk chunk;
 
-    public ChunkCompileTask(GameRenderer gameRenderer, WorldRenderer worldRenderer, Chunk chunk) {
+    public ChunkCompileTask(GameRenderer gameRenderer, WorldRenderer worldRenderer, ClientChunk chunk) {
         this.gameRenderer = gameRenderer;
         this.worldRenderer = worldRenderer;
         this.chunk = chunk;
-    }
-
-    private record DelegateArena<T extends VertexBuilder>(
-        Arena arena,
-        VertexBuilderPool<T> pool,
-        T builder
-    ) implements Arena {
-        @Override
-        public MemorySegment allocate(long byteSize, long byteAlignment) {
-            return arena.allocate(byteSize, byteAlignment);
-        }
-
-        @Override
-        public MemorySegment.Scope scope() {
-            return arena.scope();
-        }
-
-        @Override
-        public void close() {
-            arena.close();
-            pool.release(builder);
-        }
     }
 
     @Override
     public ChunkVertexData call() {
         final var pool = worldRenderer.vertexBuilderPool();
         final DefaultVertexBuilder builder = pool.acquire();
+        builder.reset();
+        final Chunk chunk = this.chunk.chunk();
         final int cx = chunk.x();
         final int cy = chunk.y();
         final int cz = chunk.z();
@@ -80,17 +60,18 @@ public final class ChunkCompileTask implements Callable<ChunkVertexData> {
                                 ChunkPos.relativeToAbsolute(cx, x),
                                 ChunkPos.relativeToAbsolute(cy, y),
                                 ChunkPos.relativeToAbsolute(cz, z),
-                                direction);
+                                direction
+                            );
                         }
                     }
                 }
             }
         }
 
-        final Arena arena = new DelegateArena<>(Arena.ofShared(), pool, builder);
+        final Arena arena = Arena.ofShared();
         final MemorySegment vertexDataSlice = builder.vertexDataSlice();
         final MemorySegment indexDataSlice = builder.indexDataSlice();
-        return new ChunkVertexData(
+        final ChunkVertexData data = new ChunkVertexData(
             builder.vertexLayout(),
             builder.indexCount(),
             arena,
@@ -99,5 +80,7 @@ public final class ChunkCompileTask implements Callable<ChunkVertexData> {
             builder.shouldReallocateVertexData(),
             builder.shouldReallocateIndexData()
         );
+        pool.release(builder);
+        return data;
     }
 }
