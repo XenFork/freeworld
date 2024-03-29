@@ -89,6 +89,13 @@ public class Chunk {
         return BlockTypes.AIR;
     }
 
+    public void markDirty() {
+    }
+
+    public void copyFrom(Chunk chunk) {
+        System.arraycopy(chunk.blocks, 0, blocks, 0, blocks.length);
+    }
+
     public int x() {
         return x;
     }

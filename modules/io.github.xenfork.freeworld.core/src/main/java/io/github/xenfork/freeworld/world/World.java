@@ -10,7 +10,9 @@
 
 package io.github.xenfork.freeworld.world;
 
+import io.github.xenfork.freeworld.world.block.BlockType;
 import io.github.xenfork.freeworld.world.chunk.Chunk;
+import io.github.xenfork.freeworld.world.chunk.ChunkPos;
 import io.github.xenfork.freeworld.world.entity.Entity;
 import io.github.xenfork.freeworld.world.entity.EntityType;
 import io.github.xenfork.freeworld.world.entity.component.PositionComponent;
@@ -62,6 +64,33 @@ public final class World {
 
     public Chunk getChunk(int x, int y, int z) {
         return chunks[(y * zChunks + z) * xChunks + x];
+    }
+
+    public Chunk getChunkByAbsolutePos(int x, int y, int z) {
+        return getChunk(
+            ChunkPos.absoluteToChunk(x),
+            ChunkPos.absoluteToChunk(y),
+            ChunkPos.absoluteToChunk(z)
+        );
+    }
+
+    public BlockType getBlockType(int x, int y, int z) {
+        return getChunkByAbsolutePos(x, y, z).getBlockType(
+            ChunkPos.absoluteToRelative(x),
+            ChunkPos.absoluteToRelative(y),
+            ChunkPos.absoluteToRelative(z)
+        );
+    }
+
+    public void setBlockType(int x, int y, int z, BlockType blockType) {
+        final Chunk chunk = getChunkByAbsolutePos(x, y, z);
+        chunk.setBlockType(
+            ChunkPos.absoluteToRelative(x),
+            ChunkPos.absoluteToRelative(y),
+            ChunkPos.absoluteToRelative(z),
+            blockType
+        );
+        chunk.markDirty();
     }
 
     public Chunk createChunk(int x, int y, int z) {

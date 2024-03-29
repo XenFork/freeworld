@@ -42,7 +42,6 @@ public final class ChunkCompileTask implements Callable<ChunkVertexData> {
         final var pool = worldRenderer.vertexBuilderPool();
         final DefaultVertexBuilder builder = pool.acquire();
         builder.reset();
-        final Chunk chunk = this.chunk.chunk();
         final int cx = chunk.x();
         final int cy = chunk.y();
         final int cz = chunk.z();

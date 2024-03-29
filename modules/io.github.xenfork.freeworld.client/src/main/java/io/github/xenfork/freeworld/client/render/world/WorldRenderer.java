@@ -19,8 +19,6 @@ import io.github.xenfork.freeworld.client.world.chunk.ClientChunk;
 import io.github.xenfork.freeworld.core.math.AABBox;
 import io.github.xenfork.freeworld.world.World;
 import io.github.xenfork.freeworld.world.block.BlockType;
-import io.github.xenfork.freeworld.world.chunk.Chunk;
-import io.github.xenfork.freeworld.world.chunk.ChunkPos;
 import org.jetbrains.annotations.NotNull;
 import org.joml.*;
 
@@ -67,7 +65,9 @@ public final class WorldRenderer implements GLResource {
         for (int x = 0; x < world.xChunks; x++) {
             for (int y = 0; y < world.yChunks; y++) {
                 for (int z = 0; z < world.zChunks; z++) {
-                    this.chunks[(y * world.zChunks + z) * world.xChunks + x] = new ClientChunk(world, x, y, z, world.getChunk(x, y, z));
+                    final ClientChunk chunk = new ClientChunk(world, x, y, z);
+                    this.chunks[(y * world.zChunks + z) * world.xChunks + x] = chunk;
+                    chunk.copyFrom(world.getChunk(x, y, z));
                 }
             }
         }
@@ -79,9 +79,9 @@ public final class WorldRenderer implements GLResource {
 
     public void compileChunks() {
         for (ClientChunk chunk : chunks) {
-            if (chunk.shouldRecompile.get() && !chunk.submitted.get()) {
-                chunk.future.set(executor.submit(new ChunkCompileTask(gameRenderer, this, chunk)));
-                chunk.submitted.set(true);
+            if (chunk.shouldRecompile && !chunk.submitted) {
+                chunk.future = executor.submit(new ChunkCompileTask(gameRenderer, this, chunk));
+                chunk.submitted = true;
             }
         }
     }
@@ -132,16 +132,7 @@ public final class WorldRenderer implements GLResource {
                     final float vz = z + 0.5f - oz;
                     final float zSquared = vz * vz;
                     if ((xSquared + zSquared) <= radiusSquared) {
-                        final Chunk chunk = world.getChunk(
-                            ChunkPos.absoluteToChunk(x),
-                            ChunkPos.absoluteToChunk(y),
-                            ChunkPos.absoluteToChunk(z)
-                        );
-                        final BlockType blockType = chunk.getBlockType(
-                            ChunkPos.absoluteToRelative(x),
-                            ChunkPos.absoluteToRelative(y),
-                            ChunkPos.absoluteToRelative(z)
-                        );
+                        final BlockType blockType = world.getBlockType(x, y, z);
                         if (blockType.air()) {
                             continue;
                         }

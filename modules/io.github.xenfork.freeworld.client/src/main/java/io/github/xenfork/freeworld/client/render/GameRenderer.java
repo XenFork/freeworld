@@ -52,6 +52,7 @@ public final class GameRenderer implements GLResource {
     private BlockRenderer blockRenderer;
     private WorldRenderer worldRenderer;
     private Tessellator tessellator;
+    private HitResult hitResult = new HitResult(null, 0, 0, 0, true);
 
     public GameRenderer(Freeworld client) {
         this.client = client;
@@ -116,7 +117,7 @@ public final class GameRenderer implements GLResource {
         worldRenderer.compileChunks();
         worldRenderer.renderChunks(gl);
 
-        final HitResult hitResult = worldRenderer.selectBlock();
+        hitResult = worldRenderer.selectBlock();
         if (!hitResult.missed()) {
             final AABBox box = hitResult.blockType().outlineShape().move(hitResult.x(), hitResult.y(), hitResult.z());
             final float minX = (float) box.minX();
@@ -220,5 +221,9 @@ public final class GameRenderer implements GLResource {
 
     public Matrix4f modelMatrix() {
         return modelMatrix;
+    }
+
+    public HitResult hitResult() {
+        return hitResult;
     }
 }

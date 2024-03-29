@@ -13,6 +13,7 @@ package io.github.xenfork.freeworld.client;
 import io.github.xenfork.freeworld.client.render.Camera;
 import io.github.xenfork.freeworld.client.render.GameRenderer;
 import io.github.xenfork.freeworld.client.render.gl.GLStateMgr;
+import io.github.xenfork.freeworld.client.render.world.HitResult;
 import io.github.xenfork.freeworld.core.registry.BuiltinRegistries;
 import io.github.xenfork.freeworld.util.Logging;
 import io.github.xenfork.freeworld.util.Timer;
@@ -62,6 +63,7 @@ public final class Freeworld implements AutoCloseable {
     private GameRenderer gameRenderer;
     private World world;
     private Entity player;
+    private int blockDestroyTimer = 0;
 
     private Freeworld() {
         this.glfw = GLFW.INSTANCE;
@@ -176,6 +178,16 @@ public final class Freeworld implements AutoCloseable {
         player.acceleration().acceleration().set(xo, yo, zo).mul(speed);
         player.velocity().velocity().zero();
         world.tick();
+
+        if (blockDestroyTimer >= 3) {
+            final HitResult hitResult = gameRenderer.hitResult();
+            if (!hitResult.missed() &&
+                glfw.getMouseButton(window, GLFW.MOUSE_BUTTON_LEFT) == GLFW.PRESS) {
+                world.setBlockType(hitResult.x(), hitResult.y(), hitResult.z(), BlockTypes.AIR);
+                blockDestroyTimer = 0;
+            }
+        }
+        blockDestroyTimer++;
     }
 
     private void initGL() {

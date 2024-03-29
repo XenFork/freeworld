@@ -21,34 +21,29 @@ import overrungl.opengl.GL15C;
 import java.lang.foreign.MemorySegment;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * @author squid233
  * @since 0.1.0
  */
 public final class ClientChunk extends Chunk implements GLResource {
-    private final Chunk chunk;
-    public final AtomicReference<Future<ChunkVertexData>> future = new AtomicReference<>();
-    public final AtomicBoolean submitted = new AtomicBoolean();
-    public final AtomicBoolean shouldRecompile = new AtomicBoolean(true);
+    public Future<ChunkVertexData> future = null;
+    public boolean submitted = false;
+    public boolean shouldRecompile = true;
     private int indexCount = 0;
     private int vao = 0;
     private int vbo = 0;
     private int ebo = 0;
 
-    public ClientChunk(World world, int x, int y, int z, Chunk chunk) {
+    public ClientChunk(World world, int x, int y, int z) {
         super(world, x, y, z);
-        this.chunk = chunk;
     }
 
     public void render(GLStateMgr gl) {
-        if (shouldRecompile.get() && submitted.get()) {
+        if (shouldRecompile && submitted) {
             try {
-                final Future<ChunkVertexData> dataFuture = future.get();
-                if (dataFuture.isDone()) {
-                    final ChunkVertexData data = dataFuture.get();
+                if (future.isDone()) {
+                    final ChunkVertexData data = future.get();
                     try {
                         final MemorySegment vertexData = data.vertexData();
                         final MemorySegment indexData = data.indexData();
@@ -75,9 +70,9 @@ public final class ClientChunk extends Chunk implements GLResource {
                     } finally {
                         data.arena().close();
                     }
-                    shouldRecompile.set(false);
-                    submitted.set(false);
-                    future.set(null);
+                    shouldRecompile = false;
+                    submitted = false;
+                    future = null;
                 }
             } catch (InterruptedException | ExecutionException e) {
                 throw new RuntimeException(e);
@@ -93,9 +88,5 @@ public final class ClientChunk extends Chunk implements GLResource {
     public void close(GLStateMgr gl) {
         gl.deleteVertexArrays(vao);
         gl.deleteBuffers(vbo, ebo);
-    }
-
-    public Chunk chunk() {
-        return chunk;
     }
 }
