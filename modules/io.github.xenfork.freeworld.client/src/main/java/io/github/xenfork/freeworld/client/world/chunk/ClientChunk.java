@@ -85,6 +85,12 @@ public final class ClientChunk extends Chunk implements GLResource {
     }
 
     @Override
+    public void markDirty() {
+        super.markDirty();
+        shouldRecompile = true;
+    }
+
+    @Override
     public void close(GLStateMgr gl) {
         gl.deleteVertexArrays(vao);
         gl.deleteBuffers(vbo, ebo);

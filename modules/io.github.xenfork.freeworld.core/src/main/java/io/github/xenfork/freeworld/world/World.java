@@ -11,6 +11,7 @@
 package io.github.xenfork.freeworld.world;
 
 import io.github.xenfork.freeworld.world.block.BlockType;
+import io.github.xenfork.freeworld.world.block.BlockTypes;
 import io.github.xenfork.freeworld.world.chunk.Chunk;
 import io.github.xenfork.freeworld.world.chunk.ChunkPos;
 import io.github.xenfork.freeworld.world.entity.Entity;
@@ -36,6 +37,7 @@ public final class World {
     public final Chunk[] chunks = new Chunk[xChunks * yChunks * zChunks];
     public final List<Entity> entities = new ArrayList<>();
     private final MotionSystem motionSystem = new MotionSystem();
+    private final List<WorldListener> listeners = new ArrayList<>();
 
     public World(String name) {
         for (int x = 0; x < xChunks; x++) {
@@ -47,6 +49,10 @@ public final class World {
                 }
             }
         }
+    }
+
+    public void addListener(WorldListener listener) {
+        listeners.add(listener);
     }
 
     public void tick() {
@@ -63,7 +69,10 @@ public final class World {
     }
 
     public Chunk getChunk(int x, int y, int z) {
-        return chunks[(y * zChunks + z) * xChunks + x];
+        if (x >= 0 && x < xChunks && y >= 0 && y < yChunks && z >= 0 && z < zChunks) {
+            return chunks[(y * zChunks + z) * xChunks + x];
+        }
+        return null;
     }
 
     public Chunk getChunkByAbsolutePos(int x, int y, int z) {
@@ -75,22 +84,30 @@ public final class World {
     }
 
     public BlockType getBlockType(int x, int y, int z) {
-        return getChunkByAbsolutePos(x, y, z).getBlockType(
-            ChunkPos.absoluteToRelative(x),
-            ChunkPos.absoluteToRelative(y),
-            ChunkPos.absoluteToRelative(z)
-        );
+        final Chunk chunk = getChunkByAbsolutePos(x, y, z);
+        if (chunk != null) {
+            return chunk.getBlockType(
+                ChunkPos.absoluteToRelative(x),
+                ChunkPos.absoluteToRelative(y),
+                ChunkPos.absoluteToRelative(z)
+            );
+        }
+        return BlockTypes.AIR;
     }
 
     public void setBlockType(int x, int y, int z, BlockType blockType) {
         final Chunk chunk = getChunkByAbsolutePos(x, y, z);
-        chunk.setBlockType(
-            ChunkPos.absoluteToRelative(x),
-            ChunkPos.absoluteToRelative(y),
-            ChunkPos.absoluteToRelative(z),
-            blockType
-        );
-        chunk.markDirty();
+        if (chunk != null) {
+            chunk.setBlockType(
+                ChunkPos.absoluteToRelative(x),
+                ChunkPos.absoluteToRelative(y),
+                ChunkPos.absoluteToRelative(z),
+                blockType
+            );
+            for (WorldListener listener : listeners) {
+                listener.onBlockChanged(x, y, z);
+            }
+        }
     }
 
     public Chunk createChunk(int x, int y, int z) {

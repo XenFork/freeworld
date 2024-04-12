@@ -17,8 +17,12 @@ import io.github.xenfork.freeworld.client.render.gl.GLStateMgr;
 import io.github.xenfork.freeworld.client.render.model.VertexLayouts;
 import io.github.xenfork.freeworld.client.world.chunk.ClientChunk;
 import io.github.xenfork.freeworld.core.math.AABBox;
+import io.github.xenfork.freeworld.util.Direction;
 import io.github.xenfork.freeworld.world.World;
+import io.github.xenfork.freeworld.world.WorldListener;
 import io.github.xenfork.freeworld.world.block.BlockType;
+import io.github.xenfork.freeworld.world.chunk.Chunk;
+import io.github.xenfork.freeworld.world.chunk.ChunkPos;
 import org.jetbrains.annotations.NotNull;
 import org.joml.*;
 
@@ -31,7 +35,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  * @author squid233
  * @since 0.1.0
  */
-public final class WorldRenderer implements GLResource {
+public final class WorldRenderer implements GLResource, WorldListener {
     private final GameRenderer gameRenderer;
     private final World world;
     private final ExecutorService executor;
@@ -46,6 +50,8 @@ public final class WorldRenderer implements GLResource {
     public WorldRenderer(GameRenderer gameRenderer, World world) {
         this.gameRenderer = gameRenderer;
         this.world = world;
+        world.addListener(this);
+
         final int processors = Runtime.getRuntime().availableProcessors();
         this.executor = new ThreadPoolExecutor(processors,
             processors,
@@ -65,9 +71,7 @@ public final class WorldRenderer implements GLResource {
         for (int x = 0; x < world.xChunks; x++) {
             for (int y = 0; y < world.yChunks; y++) {
                 for (int z = 0; z < world.zChunks; z++) {
-                    final ClientChunk chunk = new ClientChunk(world, x, y, z);
-                    this.chunks[(y * world.zChunks + z) * world.xChunks + x] = chunk;
-                    chunk.copyFrom(world.getChunk(x, y, z));
+                    this.chunks[(y * world.zChunks + z) * world.xChunks + x] = new ClientChunk(world, x, y, z);
                 }
             }
         }
@@ -80,6 +84,10 @@ public final class WorldRenderer implements GLResource {
     public void compileChunks() {
         for (ClientChunk chunk : chunks) {
             if (chunk.shouldRecompile && !chunk.submitted) {
+                final Chunk chunk1 = world.getChunk(chunk.x(), chunk.y(), chunk.z());
+                if (chunk1 != null) {
+                    chunk.copyFrom(chunk1);
+                }
                 chunk.future = executor.submit(new ChunkCompileTask(gameRenderer, this, chunk));
                 chunk.submitted = true;
             }
@@ -164,6 +172,39 @@ public final class WorldRenderer implements GLResource {
         }
 
         return new HitResult(nearestBlock, nearestX, nearestY, nearestZ, nearestBlock == null);
+    }
+
+    @Override
+    public void onBlockChanged(int x, int y, int z) {
+        final ClientChunk chunk = getChunkByAbsolutePos(x, y, z);
+        if (chunk != null) {
+            chunk.markDirty();
+        }
+        for (Direction direction : Direction.LIST) {
+            final ClientChunk chunk1 = getChunkByAbsolutePos(
+                x + direction.axisX(),
+                y + direction.axisY(),
+                z + direction.axisZ()
+            );
+            if (chunk1 != null) {
+                chunk1.markDirty();
+            }
+        }
+    }
+
+    private ClientChunk getChunk(int x, int y, int z) {
+        if (x >= 0 && x < world.xChunks && y >= 0 && y < world.yChunks && z >= 0 && z < world.zChunks) {
+            return chunks[(y * world.zChunks + z) * world.xChunks + x];
+        }
+        return null;
+    }
+
+    private ClientChunk getChunkByAbsolutePos(int x, int y, int z) {
+        return getChunk(
+            ChunkPos.absoluteToChunk(x),
+            ChunkPos.absoluteToChunk(y),
+            ChunkPos.absoluteToChunk(z)
+        );
     }
 
     public VertexBuilderPool<DefaultVertexBuilder> vertexBuilderPool() {
