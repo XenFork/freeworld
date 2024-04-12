@@ -10,6 +10,7 @@
 
 package io.github.xenfork.freeworld.client.render.world;
 
+import io.github.xenfork.freeworld.util.Direction;
 import io.github.xenfork.freeworld.world.block.BlockType;
 
 /**
@@ -17,10 +18,11 @@ import io.github.xenfork.freeworld.world.block.BlockType;
  * @since 0.1.0
  */
 public record HitResult(
+    boolean missed,
     BlockType blockType,
     int x,
     int y,
     int z,
-    boolean missed
+    Direction face
 ) {
 }

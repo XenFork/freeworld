@@ -24,6 +24,7 @@ import io.github.xenfork.freeworld.client.render.world.HitResult;
 import io.github.xenfork.freeworld.client.render.world.WorldRenderer;
 import io.github.xenfork.freeworld.core.Identifier;
 import io.github.xenfork.freeworld.core.math.AABBox;
+import io.github.xenfork.freeworld.util.Direction;
 import io.github.xenfork.freeworld.util.Logging;
 import org.joml.Matrix4f;
 import org.slf4j.Logger;
@@ -52,7 +53,7 @@ public final class GameRenderer implements GLResource {
     private BlockRenderer blockRenderer;
     private WorldRenderer worldRenderer;
     private Tessellator tessellator;
-    private HitResult hitResult = new HitResult(null, 0, 0, 0, true);
+    private HitResult hitResult = new HitResult(true, null, 0, 0, 0, Direction.SOUTH);
 
     public GameRenderer(Freeworld client) {
         this.client = client;

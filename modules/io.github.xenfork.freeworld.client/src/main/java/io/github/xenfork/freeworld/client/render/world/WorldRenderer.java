@@ -145,6 +145,7 @@ public final class WorldRenderer implements GLResource, WorldListener {
         int nearestX = 0;
         int nearestY = 0;
         int nearestZ = 0;
+        Direction face = Direction.SOUTH;
 
         final float radius = 5.0f;
         final float radiusSquared = radius * radius;
@@ -187,13 +188,173 @@ public final class WorldRenderer implements GLResource, WorldListener {
                             nearestX = x;
                             nearestY = y;
                             nearestZ = z;
+                            face = detectFace(
+                                ox,
+                                oy,
+                                oz,
+                                frustumRayDir.x(),
+                                frustumRayDir.y(),
+                                frustumRayDir.z(),
+                                box
+                            );
                         }
                     }
                 }
             }
         }
 
-        return new HitResult(nearestBlock, nearestX, nearestY, nearestZ, nearestBlock == null);
+        // TODO: 2024/4/12 squid233: detect face
+        return new HitResult(nearestBlock == null, nearestBlock, nearestX, nearestY, nearestZ, face);
+    }
+
+    private Direction detectFace(
+        double originX,
+        double originY,
+        double originZ,
+        double dirX,
+        double dirY,
+        double dirZ,
+        AABBox box
+    ) {
+        double t = -1.0;
+        Direction direction = Direction.SOUTH;
+        for (Direction dir : Direction.LIST) {
+            final double v = rayFace(dir, originX, originY, originZ, dirX, dirY, dirZ, box);
+            if (v > t) {
+                t = v;
+                direction = dir;
+            }
+        }
+        return direction;
+    }
+
+    private double rayFace(
+        Direction direction,
+        double originX,
+        double originY,
+        double originZ,
+        double dirX,
+        double dirY,
+        double dirZ,
+        AABBox box
+    ) {
+        final double epsilon = 0.001;
+        final double minX = box.minX();
+        final double minY = box.minY();
+        final double minZ = box.minZ();
+        final double maxX = box.maxX();
+        final double maxY = box.maxY();
+        final double maxZ = box.maxZ();
+        return switch (direction) {
+            case WEST -> Math.max(
+                Intersectiond.intersectRayTriangleFront(
+                    originX, originY, originZ,
+                    dirX, dirY, dirZ,
+                    minX, maxY, minZ,
+                    minX, minY, minZ,
+                    minX, minY, maxZ,
+                    epsilon
+                ),
+                Intersectiond.intersectRayTriangleFront(
+                    originX, originY, originZ,
+                    dirX, dirY, dirZ,
+                    minX, minY, maxZ,
+                    minX, maxY, maxZ,
+                    minX, maxY, minZ,
+                    epsilon
+                )
+            );
+            case EAST -> Math.max(
+                Intersectiond.intersectRayTriangleFront(
+                    originX, originY, originZ,
+                    dirX, dirY, dirZ,
+                    maxX, maxY, maxZ,
+                    maxX, minY, maxZ,
+                    maxX, minY, minZ,
+                    epsilon
+                ),
+                Intersectiond.intersectRayTriangleFront(
+                    originX, originY, originZ,
+                    dirX, dirY, dirZ,
+                    maxX, minY, minZ,
+                    maxX, maxY, minZ,
+                    maxX, maxY, maxZ,
+                    epsilon
+                )
+            );
+            case DOWN -> Math.max(
+                Intersectiond.intersectRayTriangleFront(
+                    originX, originY, originZ,
+                    dirX, dirY, dirZ,
+                    minX, minY, maxZ,
+                    minX, minY, minZ,
+                    maxX, minY, minZ,
+                    epsilon
+                ),
+                Intersectiond.intersectRayTriangleFront(
+                    originX, originY, originZ,
+                    dirX, dirY, dirZ,
+                    maxX, minY, minZ,
+                    maxX, minY, maxZ,
+                    minX, minY, maxZ,
+                    epsilon
+                )
+            );
+            case UP -> Math.max(
+                Intersectiond.intersectRayTriangleFront(
+                    originX, originY, originZ,
+                    dirX, dirY, dirZ,
+                    minX, maxY, minZ,
+                    minX, maxY, maxZ,
+                    maxX, maxY, maxZ,
+                    epsilon
+                ),
+                Intersectiond.intersectRayTriangleFront(
+                    originX, originY, originZ,
+                    dirX, dirY, dirZ,
+                    maxX, maxY, maxZ,
+                    maxX, maxY, minZ,
+                    minX, maxY, minZ,
+                    epsilon
+                )
+            );
+            case NORTH -> Math.max(
+                Intersectiond.intersectRayTriangleFront(
+                    originX, originY, originZ,
+                    dirX, dirY, dirZ,
+                    maxX, maxY, minZ,
+                    maxX, minY, minZ,
+                    minX, minY, minZ,
+                    epsilon
+                ),
+                Intersectiond.intersectRayTriangleFront(
+                    originX, originY, originZ,
+                    dirX, dirY, dirZ,
+                    minX, minY, minZ,
+                    minX, maxY, minZ,
+                    maxX, maxY, minZ,
+                    epsilon
+                )
+            );
+            case SOUTH -> Math.max(
+                Intersectiond.intersectRayTriangleFront(
+                    originX, originY, originZ,
+                    dirX, dirY, dirZ,
+                    minX, maxY, maxZ,
+                    minX, minY, maxZ,
+                    maxX, minY, maxZ,
+                    epsilon
+                ),
+                Intersectiond.intersectRayTriangleFront(
+                    originX, originY, originZ,
+                    dirX, dirY, dirZ,
+                    maxX, minY, maxZ,
+                    maxX, maxY, maxZ,
+                    minX, maxY, maxZ,
+                    epsilon
+                )
+            );
+        };
     }
 
     @Override

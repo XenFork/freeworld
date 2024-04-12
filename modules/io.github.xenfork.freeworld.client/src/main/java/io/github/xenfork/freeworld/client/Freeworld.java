@@ -15,9 +15,11 @@ import io.github.xenfork.freeworld.client.render.GameRenderer;
 import io.github.xenfork.freeworld.client.render.gl.GLStateMgr;
 import io.github.xenfork.freeworld.client.render.world.HitResult;
 import io.github.xenfork.freeworld.core.registry.BuiltinRegistries;
+import io.github.xenfork.freeworld.util.Direction;
 import io.github.xenfork.freeworld.util.Logging;
 import io.github.xenfork.freeworld.util.Timer;
 import io.github.xenfork.freeworld.world.World;
+import io.github.xenfork.freeworld.world.block.BlockType;
 import io.github.xenfork.freeworld.world.block.BlockTypes;
 import io.github.xenfork.freeworld.world.entity.Entity;
 import io.github.xenfork.freeworld.world.entity.EntityTypes;
@@ -64,6 +66,8 @@ public final class Freeworld implements AutoCloseable {
     private World world;
     private Entity player;
     private int blockDestroyTimer = 0;
+    private int blockPlaceTimer = 0;
+    private int selectBlock = 0;
 
     private Freeworld() {
         this.glfw = GLFW.INSTANCE;
@@ -132,6 +136,13 @@ public final class Freeworld implements AutoCloseable {
                     }
                 }
             }
+            case GLFW.PRESS -> {
+                switch (key) {
+                    case GLFW.KEY_1 -> selectBlock = 0;
+                    case GLFW.KEY_2 -> selectBlock = 1;
+                    case GLFW.KEY_3 -> selectBlock = 2;
+                }
+            }
         }
     }
 
@@ -187,7 +198,30 @@ public final class Freeworld implements AutoCloseable {
                 blockDestroyTimer = 0;
             }
         }
+        if (blockPlaceTimer >= 3) {
+            final HitResult hitResult = gameRenderer.hitResult();
+            if (!hitResult.missed() &&
+                glfw.getMouseButton(window, GLFW.MOUSE_BUTTON_RIGHT) == GLFW.PRESS) {
+                final Direction face = hitResult.face();
+                final BlockType type = switch (selectBlock) {
+                    case 0 -> BlockTypes.STONE;
+                    case 1 -> BlockTypes.DIRT;
+                    case 2 -> BlockTypes.GRASS_BLOCK;
+                    default -> BlockTypes.AIR;
+                };
+                if (!type.air()) {
+                    world.setBlockType(
+                        hitResult.x() + face.axisX(),
+                        hitResult.y() + face.axisY(),
+                        hitResult.z() + face.axisZ(),
+                        type
+                    );
+                }
+                blockPlaceTimer = 0;
+            }
+        }
         blockDestroyTimer++;
+        blockPlaceTimer++;
     }
 
     private void initGL() {
