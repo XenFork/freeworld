@@ -32,5 +32,6 @@ module io.github.xenfork.freeworld.client {
     requires overrungl.glfw;
     requires overrungl.opengl;
     requires overrungl.stb;
+    requires org.apache.commons.pool2;
     requires static org.jetbrains.annotations;
 }

@@ -23,6 +23,10 @@ import io.github.xenfork.freeworld.world.WorldListener;
 import io.github.xenfork.freeworld.world.block.BlockType;
 import io.github.xenfork.freeworld.world.chunk.Chunk;
 import io.github.xenfork.freeworld.world.chunk.ChunkPos;
+import org.apache.commons.pool2.BasePooledObjectFactory;
+import org.apache.commons.pool2.PooledObject;
+import org.apache.commons.pool2.impl.DefaultPooledObject;
+import org.apache.commons.pool2.impl.GenericObjectPool;
 import org.jetbrains.annotations.NotNull;
 import org.joml.*;
 
@@ -39,7 +43,22 @@ public final class WorldRenderer implements GLResource, WorldListener {
     private final GameRenderer gameRenderer;
     private final World world;
     private final ExecutorService executor;
-    private final VertexBuilderPool<DefaultVertexBuilder> vertexBuilderPool = new VertexBuilderPool<>(WorldRenderer::createVertexBuilder);
+    private final GenericObjectPool<DefaultVertexBuilder> vertexBuilderPool = new GenericObjectPool<>(new BasePooledObjectFactory<>() {
+        @Override
+        public DefaultVertexBuilder create() {
+            return createVertexBuilder();
+        }
+
+        @Override
+        public void activateObject(PooledObject<DefaultVertexBuilder> p) {
+            p.getObject().reset();
+        }
+
+        @Override
+        public PooledObject<DefaultVertexBuilder> wrap(DefaultVertexBuilder obj) {
+            return new DefaultPooledObject<>(obj);
+        }
+    });
     private final ClientChunk[] chunks;
     private final FrustumIntersection frustumIntersection = new FrustumIntersection();
     private final FrustumRayBuilder frustumRayBuilder = new FrustumRayBuilder();
@@ -83,13 +102,16 @@ public final class WorldRenderer implements GLResource, WorldListener {
 
     public void compileChunks() {
         for (ClientChunk chunk : chunks) {
-            if (chunk.shouldRecompile && !chunk.submitted) {
+            if (chunk.dirty) {
+                if (chunk.future != null && chunk.future.state() == Future.State.RUNNING) {
+                    chunk.future.cancel(false);
+                }
                 final Chunk chunk1 = world.getChunk(chunk.x(), chunk.y(), chunk.z());
                 if (chunk1 != null) {
                     chunk.copyFrom(chunk1);
                 }
                 chunk.future = executor.submit(new ChunkCompileTask(gameRenderer, this, chunk));
-                chunk.submitted = true;
+                chunk.dirty = false;
             }
         }
     }
@@ -207,13 +229,14 @@ public final class WorldRenderer implements GLResource, WorldListener {
         );
     }
 
-    public VertexBuilderPool<DefaultVertexBuilder> vertexBuilderPool() {
+    public GenericObjectPool<DefaultVertexBuilder> vertexBuilderPool() {
         return vertexBuilderPool;
     }
 
     @Override
     public void close(GLStateMgr gl) {
         executor.close();
+        vertexBuilderPool.close();
         for (ClientChunk chunk : chunks) {
             chunk.close(gl);
         }

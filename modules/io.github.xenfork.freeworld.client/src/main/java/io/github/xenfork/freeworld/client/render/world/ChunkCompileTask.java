@@ -38,9 +38,9 @@ public final class ChunkCompileTask implements Callable<ChunkVertexData> {
     }
 
     @Override
-    public ChunkVertexData call() {
+    public ChunkVertexData call() throws Exception {
         final var pool = worldRenderer.vertexBuilderPool();
-        final DefaultVertexBuilder builder = pool.acquire();
+        final DefaultVertexBuilder builder = pool.borrowObject();
         builder.reset();
         final int cx = chunk.x();
         final int cy = chunk.y();
@@ -79,7 +79,7 @@ public final class ChunkCompileTask implements Callable<ChunkVertexData> {
             builder.shouldReallocateVertexData(),
             builder.shouldReallocateIndexData()
         );
-        pool.release(builder);
+        pool.returnObject(builder);
         return data;
     }
 }

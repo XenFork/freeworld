@@ -8,7 +8,7 @@
  * version 2.1 of the License, or (at your option) any later version.
  */
 
-// last updated: 2024/3/16
+// last updated: 2024/3/30
 
 plugins {
     `java-platform`
@@ -84,6 +84,7 @@ val coreVersion: String by rootProject
 val clientVersion: String by rootProject
 
 val annotationsVersion: String by rootProject
+val commonsPoolVersion: String by rootProject
 val gsonVersion: String by rootProject
 val jomlVersion: String by rootProject
 val logbackVersion: String by rootProject
@@ -135,6 +136,7 @@ subprojects {
         implementation("org.joml:joml:$jomlVersion")
         implementation("ch.qos.logback:logback-classic:$logbackVersion")
         implementation("com.google.code.gson:gson:$gsonVersion")
+        implementation("org.apache.commons:commons-pool2:$commonsPoolVersion")
     }
 }
 

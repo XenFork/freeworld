@@ -28,8 +28,10 @@ import java.util.concurrent.Future;
  */
 public final class ClientChunk extends Chunk implements GLResource {
     public Future<ChunkVertexData> future = null;
-    public boolean submitted = false;
-    public boolean shouldRecompile = true;
+    /**
+     * Is this chunk changed?
+     */
+    public boolean dirty = true;
     private int indexCount = 0;
     private int vao = 0;
     private int vbo = 0;
@@ -40,43 +42,39 @@ public final class ClientChunk extends Chunk implements GLResource {
     }
 
     public void render(GLStateMgr gl) {
-        if (shouldRecompile && submitted) {
-            try {
-                if (future.isDone()) {
-                    final ChunkVertexData data = future.get();
-                    try {
-                        final MemorySegment vertexData = data.vertexData();
-                        final MemorySegment indexData = data.indexData();
-                        indexCount = data.indexCount();
-                        if (vao == 0) vao = gl.genVertexArrays();
-                        if (vbo == 0) vbo = gl.genBuffers();
-                        if (ebo == 0) ebo = gl.genBuffers();
-                        gl.setVertexArrayBinding(vao);
-                        gl.setArrayBufferBinding(vbo);
-                        if (data.shouldReallocateVertexData()) {
-                            gl.bufferData(GL15C.ARRAY_BUFFER, vertexData, GL15C.DYNAMIC_DRAW);
-                            final VertexLayout layout = data.vertexLayout();
-                            layout.enableAttribs(gl);
-                            layout.specifyAttribPointers(gl);
-                        } else {
-                            gl.bufferSubData(GL15C.ARRAY_BUFFER, 0L, vertexData);
-                        }
-                        gl.bindBuffer(GL15C.ELEMENT_ARRAY_BUFFER, ebo);
-                        if (data.shouldReallocateIndexData()) {
-                            gl.bufferData(GL15C.ELEMENT_ARRAY_BUFFER, indexData, GL15C.DYNAMIC_DRAW);
-                        } else {
-                            gl.bufferSubData(GL15C.ELEMENT_ARRAY_BUFFER, 0L, indexData);
-                        }
-                    } finally {
-                        data.arena().close();
+        try {
+            if (future != null && future.state() == Future.State.SUCCESS) {
+                final ChunkVertexData data = future.get();
+                try {
+                    final MemorySegment vertexData = data.vertexData();
+                    final MemorySegment indexData = data.indexData();
+                    indexCount = data.indexCount();
+                    if (vao == 0) vao = gl.genVertexArrays();
+                    if (vbo == 0) vbo = gl.genBuffers();
+                    if (ebo == 0) ebo = gl.genBuffers();
+                    gl.setVertexArrayBinding(vao);
+                    gl.setArrayBufferBinding(vbo);
+                    if (data.shouldReallocateVertexData()) {
+                        gl.bufferData(GL15C.ARRAY_BUFFER, vertexData, GL15C.DYNAMIC_DRAW);
+                        final VertexLayout layout = data.vertexLayout();
+                        layout.enableAttribs(gl);
+                        layout.specifyAttribPointers(gl);
+                    } else {
+                        gl.bufferSubData(GL15C.ARRAY_BUFFER, 0L, vertexData);
                     }
-                    shouldRecompile = false;
-                    submitted = false;
-                    future = null;
+                    gl.bindBuffer(GL15C.ELEMENT_ARRAY_BUFFER, ebo);
+                    if (data.shouldReallocateIndexData()) {
+                        gl.bufferData(GL15C.ELEMENT_ARRAY_BUFFER, indexData, GL15C.DYNAMIC_DRAW);
+                    } else {
+                        gl.bufferSubData(GL15C.ELEMENT_ARRAY_BUFFER, 0L, indexData);
+                    }
+                } finally {
+                    data.arena().close();
                 }
-            } catch (InterruptedException | ExecutionException e) {
-                throw new RuntimeException(e);
+                future = null;
             }
+        } catch (InterruptedException | ExecutionException e) {
+            throw new RuntimeException(e);
         }
         if (vao != 0) {
             gl.setVertexArrayBinding(vao);
@@ -87,7 +85,7 @@ public final class ClientChunk extends Chunk implements GLResource {
     @Override
     public void markDirty() {
         super.markDirty();
-        shouldRecompile = true;
+        dirty = true;
     }
 
     @Override
