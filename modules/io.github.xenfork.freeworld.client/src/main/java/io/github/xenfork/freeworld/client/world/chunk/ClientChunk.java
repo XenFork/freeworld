@@ -90,6 +90,13 @@ public final class ClientChunk extends Chunk implements GLResource {
 
     @Override
     public void close(GLStateMgr gl) {
+        if (future != null && future.state() == Future.State.SUCCESS) {
+            try {
+                future.get().arena().close();
+            } catch (InterruptedException | ExecutionException e) {
+                throw new RuntimeException(e);
+            }
+        }
         gl.deleteVertexArrays(vao);
         gl.deleteBuffers(vbo, ebo);
     }

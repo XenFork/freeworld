@@ -52,7 +52,7 @@ public final class ChunkCompileTask implements Callable<ChunkVertexData> {
                         final int nx = x + direction.axisX();
                         final int ny = y + direction.axisY();
                         final int nz = z + direction.axisZ();
-                        if (chunk.isInBound(nx, ny, nz) && chunk.getBlockType(nx, ny, nz).air()) {
+                        if (chunk.getBlockType(nx, ny, nz).air()) {
                             gameRenderer.blockRenderer().renderBlockFace(
                                 builder,
                                 chunk.getBlockType(x, y, z),
