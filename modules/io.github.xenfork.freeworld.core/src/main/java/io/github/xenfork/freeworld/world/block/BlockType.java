@@ -10,65 +10,36 @@
 
 package io.github.xenfork.freeworld.world.block;
 
+import io.github.xenfork.freeworld.core.Identifier;
 import io.github.xenfork.freeworld.core.math.AABBox;
 
 /**
  * @author squid233
  * @since 0.1.0
  */
-public final class BlockType {
-    private final boolean air;
-    private final AABBox outlineShape;
-    private final AABBox collisionShape;
-
-    private BlockType(boolean air, AABBox outlineShape, AABBox collisionShape) {
-        this.air = air;
-        this.outlineShape = outlineShape;
-        this.collisionShape = collisionShape;
+public record BlockType(
+    boolean air,
+    AABBox outlineShape,
+    AABBox collisionShape,
+    Identifier textureId
+) {
+    public BlockType() {
+        this(false, AABBox.FULL_CUBE, AABBox.FULL_CUBE, Identifier.ofBuiltin(""));
     }
 
-    public static Builder builder() {
-        return new Builder();
+    public BlockType withAir(boolean air) {
+        return new BlockType(air, outlineShape, collisionShape, textureId);
     }
 
-    /**
-     * @author squid233
-     * @since 0.1.0
-     */
-    public static final class Builder {
-        private boolean air = false;
-        private AABBox outlineShape = AABBox.FULL_CUBE;
-        private AABBox collisionShape = AABBox.FULL_CUBE;
-
-        public Builder air() {
-            this.air = true;
-            return this;
-        }
-
-        public Builder outlineShape(AABBox outlineShape) {
-            this.outlineShape = outlineShape;
-            return this;
-        }
-
-        public Builder collisionShape(AABBox collisionShape) {
-            this.collisionShape = collisionShape;
-            return this;
-        }
-
-        public BlockType build() {
-            return new BlockType(air, outlineShape, collisionShape);
-        }
+    public BlockType withOutlineShape(AABBox outlineShape) {
+        return new BlockType(air, outlineShape, collisionShape, textureId);
     }
 
-    public boolean air() {
-        return air;
+    public BlockType withCollisionShape(AABBox collisionShape) {
+        return new BlockType(air, outlineShape, collisionShape, textureId);
     }
 
-    public AABBox outlineShape() {
-        return outlineShape;
-    }
-
-    public AABBox collisionShape() {
-        return collisionShape;
+    public BlockType withTextureId(Identifier textureId) {
+        return new BlockType(air, outlineShape, collisionShape, textureId);
     }
 }

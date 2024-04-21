@@ -52,8 +52,4 @@ public class DefaultedRegistry<T> extends MappedRegistry<T> {
         return id != null ? id : super.getId(getDefaultValue());
     }
 
-    @Override
-    public int getRawId(T entry) {
-        return entryToRawIdMap.containsKey(entry) ? entryToRawIdMap.get(entry) : entryToRawIdMap.get(getDefaultValue());
-    }
 }

@@ -16,7 +16,6 @@ import io.github.xenfork.freeworld.client.render.texture.TextureAtlas;
 import io.github.xenfork.freeworld.client.render.texture.TextureManager;
 import io.github.xenfork.freeworld.client.render.texture.TextureRegion;
 import io.github.xenfork.freeworld.core.Identifier;
-import io.github.xenfork.freeworld.core.registry.BuiltinRegistries;
 import io.github.xenfork.freeworld.util.Direction;
 import io.github.xenfork.freeworld.world.block.BlockType;
 
@@ -37,7 +36,7 @@ public final class BlockRenderer {
         }
 
         final TextureAtlas texture = (TextureAtlas) gameRenderer.textureManager().getTexture(TextureManager.BLOCK_ATLAS);
-        final TextureRegion region = texture.getRegion(BuiltinRegistries.BLOCK_TYPE.getId(blockType).toResourceId("texture/block", Identifier.EXT_PNG));
+        final TextureRegion region = texture.getRegion(blockType.textureId().toResourceId("texture/block", Identifier.EXT_PNG));
         if (region == null) {
             return;
         }

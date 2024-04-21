@@ -19,15 +19,5 @@ import java.util.function.Supplier;
  * @author squid233
  * @since 0.1.0
  */
-@SuppressWarnings("ClassCanBeRecord")
-public final class EntityType {
-    private final List<Supplier<EntityComponent>> defaultComponents;
-
-    public EntityType(List<Supplier<EntityComponent>> defaultComponents) {
-        this.defaultComponents = defaultComponents;
-    }
-
-    public List<Supplier<EntityComponent>> defaultComponents() {
-        return defaultComponents;
-    }
+public record EntityType(List<Supplier<EntityComponent>> defaultComponents) {
 }

@@ -46,6 +46,4 @@ public interface Registry<T> extends Iterable<Map.Entry<Identifier, T>> {
     T getByRawId(int rawId);
 
     Identifier getId(T entry);
-
-    int getRawId(T entry);
 }

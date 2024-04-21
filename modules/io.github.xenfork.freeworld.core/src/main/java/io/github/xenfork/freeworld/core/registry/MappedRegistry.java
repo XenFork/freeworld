@@ -33,7 +33,7 @@ public class MappedRegistry<T> implements MutableRegistry<T> {
     private final Map<Identifier, T> idToEntryMap = HashMap.newHashMap(DEFAULT_CAPACITY);
     private final Map<T, Identifier> entryToIdMap = HashMap.newHashMap(DEFAULT_CAPACITY);
     private final Map<Integer, T> rawIdToEntryMap = HashMap.newHashMap(DEFAULT_CAPACITY);
-    protected final Map<T, Integer> entryToRawIdMap = HashMap.newHashMap(DEFAULT_CAPACITY);
+    private final Map<Identifier, Integer> idToRawIdMap=HashMap.newHashMap(DEFAULT_CAPACITY);
     private int nextId = -1;
     private boolean frozen = false;
 
@@ -52,16 +52,12 @@ public class MappedRegistry<T> implements MutableRegistry<T> {
             logger.error("Attempts to write in registry while frozen; ignoring.");
             return entry;
         }
-        if (entryToIdMap.containsKey(entry)) {
-            throw new IllegalStateException(STR."Overwriting an existing entry with same identity. identifier=\{identifier}, rawId=\{rawId}, value=\{entry}");
-        }
         if (idToEntryMap.containsKey(identifier)) {
-            logger.warn("Attempts to overwrite an existing key {}; this might be an programming error. Please use remove first", identifier);
+            logger.warn("Attempts to overwrite an existing key {}; this might be an programming error. Please remove it first", identifier);
         }
         idToEntryMap.put(identifier, entry);
-        entryToIdMap.put(entry, identifier);
         rawIdToEntryMap.put(rawId, entry);
-        entryToRawIdMap.put(entry, rawId);
+        idToRawIdMap.put(identifier,rawId);
         if (rawId > nextId) {
             nextId = rawId;
         }
@@ -77,7 +73,7 @@ public class MappedRegistry<T> implements MutableRegistry<T> {
     @Override
     public T remove(Identifier identifier) {
         if (frozen) {
-            logger.error("Attempts to write in registry while frozen; ignoring.");
+            logger.error("Attempts to remove entry while frozen; ignoring.");
             return null;
         }
         if (!idToEntryMap.containsKey(identifier)) {
@@ -85,8 +81,7 @@ public class MappedRegistry<T> implements MutableRegistry<T> {
             return null;
         }
         final T oldValue = idToEntryMap.remove(identifier);
-        entryToIdMap.remove(oldValue);
-        final Integer oldRawId = entryToRawIdMap.remove(oldValue);
+        final Integer oldRawId = idToRawIdMap.remove(identifier);
         rawIdToEntryMap.remove(oldRawId);
         return oldValue;
     }
@@ -121,11 +116,6 @@ public class MappedRegistry<T> implements MutableRegistry<T> {
     @Override
     public Identifier getId(T entry) {
         return entryToIdMap.get(entry);
-    }
-
-    @Override
-    public int getRawId(T entry) {
-        return entryToRawIdMap.get(entry);
     }
 
     @NotNull
