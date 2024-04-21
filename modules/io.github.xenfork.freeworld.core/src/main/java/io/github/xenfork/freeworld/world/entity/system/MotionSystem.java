@@ -45,7 +45,7 @@ public final class MotionSystem implements EntitySystem {
                 velocity.add(acceleration);
                 MathUtil.moveRelative(velocity.x(), velocity.y(), velocity.z(), rotation.y(), movement);
 
-                AABBox boundingBox = null;
+                AABBox boundingBox;
                 if (entity.hasComponent(BoundingBoxComponent.ID)) {
                     boundingBox = entity.boundingBox().value();
 
@@ -73,8 +73,15 @@ public final class MotionSystem implements EntitySystem {
                         }
                     }
 
+                    final double originMovementY = movement.y();
                     for (AABBox box : boxes) {
                         movement.y = box.clipYCollide(boundingBox, movement.y());
+                    }
+                    if (originMovementY != movement.y && originMovementY < 0.0) {
+                        velocity.y = 0.0;
+                        entity.addComponent(OnGroundComponent.INSTANCE);
+                    } else {
+                        entity.removeComponent(OnGroundComponent.ID);
                     }
                     position.y += movement.y();
                     boundingBox = computeBox(boundingBox, position);
@@ -95,7 +102,8 @@ public final class MotionSystem implements EntitySystem {
                     position.add(movement);
                 }
 
-                velocity.mul(0.5);
+                velocity.y -= 0.08;
+                velocity.mul(0.8, 0.98, 0.8);
             }
         }
     }

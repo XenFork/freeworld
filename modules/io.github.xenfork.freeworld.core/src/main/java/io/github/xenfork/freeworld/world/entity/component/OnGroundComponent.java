@@ -16,16 +16,12 @@ import io.github.xenfork.freeworld.core.Identifier;
  * @author squid233
  * @since 0.1.0
  */
-public sealed interface EntityComponent permits
-    AccelerationComponent,
-    BoundingBoxComponent,
-    EyeHeightComponent,
-    OnGroundComponent,
-    PositionComponent,
-    RotationXYComponent,
-    VelocityComponent {
-    /**
-     * {@return a unique identifier of this component}
-     */
-    Identifier componentId();
+public final class OnGroundComponent implements EntityComponent {
+    public static final Identifier ID = Identifier.ofBuiltin("on_ground");
+    public static final OnGroundComponent INSTANCE = new OnGroundComponent();
+
+    @Override
+    public Identifier componentId() {
+        return ID;
+    }
 }

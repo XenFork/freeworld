@@ -23,6 +23,7 @@ import io.github.xenfork.freeworld.world.block.BlockType;
 import io.github.xenfork.freeworld.world.block.BlockTypes;
 import io.github.xenfork.freeworld.world.entity.Entity;
 import io.github.xenfork.freeworld.world.entity.EntityTypes;
+import io.github.xenfork.freeworld.world.entity.component.OnGroundComponent;
 import org.joml.Vector2d;
 import org.slf4j.Logger;
 import overrun.marshal.Unmarshal;
@@ -176,18 +177,19 @@ public final class Freeworld implements AutoCloseable {
 
     private void tick() {
         camera.preUpdate();
-        final double speed = glfw.getKey(window, GLFW.KEY_LEFT_CONTROL) == GLFW.PRESS ? 1.0 : 0.5;
+        final boolean onGround = player.hasComponent(OnGroundComponent.ID);
+        double speed = onGround ? 0.1 : 0.07;
+        if (glfw.getKey(window, GLFW.KEY_LEFT_CONTROL) == GLFW.PRESS) speed *= 2.0;
         double xo = 0.0;
-        double yo = 0.0;
         double zo = 0.0;
         if (glfw.getKey(window, GLFW.KEY_W) == GLFW.PRESS) zo -= 1.0;
         if (glfw.getKey(window, GLFW.KEY_S) == GLFW.PRESS) zo += 1.0;
         if (glfw.getKey(window, GLFW.KEY_A) == GLFW.PRESS) xo -= 1.0;
         if (glfw.getKey(window, GLFW.KEY_D) == GLFW.PRESS) xo += 1.0;
-        if (glfw.getKey(window, GLFW.KEY_LEFT_SHIFT) == GLFW.PRESS) yo -= 1.0;
-        if (glfw.getKey(window, GLFW.KEY_SPACE) == GLFW.PRESS) yo += 1.0;
-        player.acceleration().value().set(xo, yo, zo).mul(speed);
-        player.velocity().value().zero();
+        if (onGround && glfw.getKey(window, GLFW.KEY_SPACE) == GLFW.PRESS) {
+            player.velocity().value().y = 0.5;
+        }
+        player.acceleration().value().set(xo, 0.0, zo).mul(speed);
         world.tick();
 
         if (blockDestroyTimer >= 2) {

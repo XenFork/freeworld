@@ -51,6 +51,10 @@ public final class Entity {
         componentMap.put(component.componentId(), component);
     }
 
+    public void removeComponent(Identifier id) {
+        componentMap.remove(id);
+    }
+
     @SuppressWarnings("unchecked")
     public <T extends EntityComponent> T getComponent(Identifier id) {
         return (T) componentMap.get(id);
