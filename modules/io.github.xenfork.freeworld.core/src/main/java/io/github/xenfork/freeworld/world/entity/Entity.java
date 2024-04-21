@@ -47,6 +47,10 @@ public final class Entity {
         componentMap.put(id, component);
     }
 
+    public void setComponent(EntityComponent component) {
+        componentMap.put(component.componentId(), component);
+    }
+
     @SuppressWarnings("unchecked")
     public <T extends EntityComponent> T getComponent(Identifier id) {
         return (T) componentMap.get(id);
@@ -58,6 +62,14 @@ public final class Entity {
 
     public AccelerationComponent acceleration() {
         return getComponent(AccelerationComponent.ID);
+    }
+
+    public BoundingBoxComponent boundingBox() {
+        return getComponent(BoundingBoxComponent.ID);
+    }
+
+    public EyeHeightComponent eyeHeight() {
+        return getComponent(EyeHeightComponent.ID);
     }
 
     public PositionComponent position() {

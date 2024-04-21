@@ -17,7 +17,7 @@ import org.joml.Vector2d;
  * @author squid233
  * @since 0.1.0
  */
-public record RotationXYComponent(Vector2d rotation) implements EntityComponent {
+public record RotationXYComponent(Vector2d value) implements EntityComponent {
     public static final Identifier ID = Identifier.ofBuiltin("rotation");
 
     public RotationXYComponent() {

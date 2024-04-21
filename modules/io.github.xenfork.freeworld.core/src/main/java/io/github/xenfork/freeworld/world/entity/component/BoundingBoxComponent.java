@@ -11,14 +11,17 @@
 package io.github.xenfork.freeworld.world.entity.component;
 
 import io.github.xenfork.freeworld.core.Identifier;
+import io.github.xenfork.freeworld.core.math.AABBox;
 
 /**
  * @author squid233
  * @since 0.1.0
  */
-public sealed interface EntityComponent permits BoundingBoxComponent, AccelerationComponent, EyeHeightComponent, PositionComponent, RotationXYComponent, VelocityComponent {
-    /**
-     * {@return a unique identifier of this component}
-     */
-    Identifier componentId();
+public record BoundingBoxComponent(AABBox value) implements EntityComponent {
+    public static final Identifier ID = Identifier.ofBuiltin("bounding_box");
+
+    @Override
+    public Identifier componentId() {
+        return ID;
+    }
 }

@@ -11,6 +11,7 @@
 package io.github.xenfork.freeworld.client.render;
 
 import io.github.xenfork.freeworld.world.entity.Entity;
+import io.github.xenfork.freeworld.world.entity.component.EyeHeightComponent;
 import io.github.xenfork.freeworld.world.entity.component.PositionComponent;
 import io.github.xenfork.freeworld.world.entity.component.RotationXYComponent;
 import io.github.xenfork.freeworld.world.entity.system.EntitySystem;
@@ -30,9 +31,12 @@ public final class Camera {
     private final Matrix4f viewMatrix = new Matrix4f();
 
     public void moveToEntity(Entity entity) {
-        if (EntitySystem.filter(entity, PositionComponent.ID, RotationXYComponent.ID)) {
-            position.set(entity.position().position());
-            rotation.set(entity.rotation().rotation());
+        if (EntitySystem.hasAllComponents(entity, PositionComponent.ID, RotationXYComponent.ID)) {
+            position.set(entity.position().value());
+            if (entity.hasComponent(EyeHeightComponent.ID)) {
+                position.y += entity.eyeHeight().value();
+            }
+            rotation.set(entity.rotation().value());
         }
     }
 

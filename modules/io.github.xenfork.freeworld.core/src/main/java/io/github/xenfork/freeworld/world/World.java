@@ -35,7 +35,7 @@ public final class World {
     public final int yChunks = height / Chunk.SIZE;
     public final int zChunks = depth / Chunk.SIZE;
     public final Chunk[] chunks = new Chunk[xChunks * yChunks * zChunks];
-    public final List<Entity> entities = new ArrayList<>();
+    private final List<Entity> entities = new ArrayList<>();
     private final MotionSystem motionSystem = new MotionSystem();
     private final List<WorldListener> listeners = new ArrayList<>();
 
@@ -56,13 +56,13 @@ public final class World {
     }
 
     public void tick() {
-        motionSystem.process(entities);
+        motionSystem.process(this, entities);
     }
 
     public Entity createEntity(EntityType type, double x, double y, double z) {
         final Entity entity = new Entity(this, UUID.randomUUID(), type);
         if (entity.hasComponent(PositionComponent.ID)) {
-            entity.position().position().set(x, y, z);
+            entity.position().value().set(x, y, z);
         }
         entities.add(entity);
         return entity;
@@ -108,6 +108,10 @@ public final class World {
                 listener.onBlockChanged(x, y, z);
             }
         }
+    }
+
+    public boolean isInBound(int x, int y, int z) {
+        return x >= 0 && x < width && y >= 0 && y < height && z >= 0 && z < depth;
     }
 
     public Chunk createChunk(int x, int y, int z) {

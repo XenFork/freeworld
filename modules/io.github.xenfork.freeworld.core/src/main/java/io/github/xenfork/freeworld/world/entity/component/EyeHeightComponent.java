@@ -16,9 +16,15 @@ import io.github.xenfork.freeworld.core.Identifier;
  * @author squid233
  * @since 0.1.0
  */
-public sealed interface EntityComponent permits BoundingBoxComponent, AccelerationComponent, EyeHeightComponent, PositionComponent, RotationXYComponent, VelocityComponent {
-    /**
-     * {@return a unique identifier of this component}
-     */
-    Identifier componentId();
+public record EyeHeightComponent(double value) implements EntityComponent {
+    public static final Identifier ID = Identifier.ofBuiltin("eye_height");
+
+    public EyeHeightComponent() {
+        this(0.5);
+    }
+
+    @Override
+    public Identifier componentId() {
+        return ID;
+    }
 }

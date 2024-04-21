@@ -158,7 +158,7 @@ public final class Freeworld implements AutoCloseable {
         if (disableCursor) {
             final double pitch = -cursorDeltaY * MOUSE_SENSITIVITY;
             final double yaw = -cursorDeltaX * MOUSE_SENSITIVITY;
-            final Vector2d rotation = player.rotation().rotation();
+            final Vector2d rotation = player.rotation().value();
             final double updateX = Math.clamp(rotation.x() + pitch, -90.0, 90.0);
             double updateY = rotation.y() + yaw;
 
@@ -186,11 +186,11 @@ public final class Freeworld implements AutoCloseable {
         if (glfw.getKey(window, GLFW.KEY_D) == GLFW.PRESS) xo += 1.0;
         if (glfw.getKey(window, GLFW.KEY_LEFT_SHIFT) == GLFW.PRESS) yo -= 1.0;
         if (glfw.getKey(window, GLFW.KEY_SPACE) == GLFW.PRESS) yo += 1.0;
-        player.acceleration().acceleration().set(xo, yo, zo).mul(speed);
-        player.velocity().velocity().zero();
+        player.acceleration().value().set(xo, yo, zo).mul(speed);
+        player.velocity().value().zero();
         world.tick();
 
-        if (blockDestroyTimer >= 3) {
+        if (blockDestroyTimer >= 2) {
             final HitResult hitResult = gameRenderer.hitResult();
             if (!hitResult.missed() &&
                 glfw.getMouseButton(window, GLFW.MOUSE_BUTTON_LEFT) == GLFW.PRESS) {
@@ -198,7 +198,7 @@ public final class Freeworld implements AutoCloseable {
                 blockDestroyTimer = 0;
             }
         }
-        if (blockPlaceTimer >= 3) {
+        if (blockPlaceTimer >= 2) {
             final HitResult hitResult = gameRenderer.hitResult();
             if (!hitResult.missed() &&
                 glfw.getMouseButton(window, GLFW.MOUSE_BUTTON_RIGHT) == GLFW.PRESS) {

@@ -26,6 +26,7 @@ import io.github.xenfork.freeworld.core.Identifier;
 import io.github.xenfork.freeworld.core.math.AABBox;
 import io.github.xenfork.freeworld.util.Direction;
 import io.github.xenfork.freeworld.util.Logging;
+import io.github.xenfork.freeworld.world.entity.Entity;
 import org.joml.Matrix4f;
 import org.slf4j.Logger;
 import overrungl.opengl.GL10C;
@@ -106,7 +107,8 @@ public final class GameRenderer implements GLResource {
             1000.0f
         );
         final Camera camera = client.camera();
-        camera.moveToEntity(client.player());
+        final Entity player = client.player();
+        camera.moveToEntity(player);
         camera.updateLerp(partialTick);
         camera.updateViewMatrix();
         projectionViewMatrix.mul(camera.viewMatrix());
@@ -118,7 +120,7 @@ public final class GameRenderer implements GLResource {
         worldRenderer.compileChunks();
         worldRenderer.renderChunks(gl);
 
-        hitResult = worldRenderer.selectBlock();
+        hitResult = worldRenderer.selectBlock(player);
         if (!hitResult.missed()) {
             final AABBox box = hitResult.blockType().outlineShape().move(hitResult.x(), hitResult.y(), hitResult.z());
             final float minX = (float) box.minX();

@@ -17,7 +17,7 @@ import org.joml.Vector3d;
  * @author squid233
  * @since 0.1.0
  */
-public record VelocityComponent(Vector3d velocity) implements EntityComponent {
+public record VelocityComponent(Vector3d value) implements EntityComponent {
     public static final Identifier ID = Identifier.ofBuiltin("velocity");
 
     public VelocityComponent() {

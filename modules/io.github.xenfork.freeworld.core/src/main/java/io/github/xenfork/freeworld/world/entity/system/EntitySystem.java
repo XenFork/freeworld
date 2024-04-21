@@ -11,6 +11,7 @@
 package io.github.xenfork.freeworld.world.entity.system;
 
 import io.github.xenfork.freeworld.core.Identifier;
+import io.github.xenfork.freeworld.world.World;
 import io.github.xenfork.freeworld.world.entity.Entity;
 
 import java.util.List;
@@ -20,16 +21,16 @@ import java.util.List;
  * @since 0.1.0
  */
 public interface EntitySystem {
-    void process(List<Entity> entities);
+    void process(World world, List<Entity> entities);
 
-    static boolean filter(Entity entity, Identifier... componentIds) {
+    static boolean hasAllComponents(Entity entity, Identifier... componentIds) {
         if (entity == null) return false;
 
         for (Identifier id : componentIds) {
-            if (entity.hasComponent(id)) {
-                return true;
+            if (!entity.hasComponent(id)) {
+                return false;
             }
         }
-        return false;
+        return true;
     }
 }

@@ -11,12 +11,10 @@
 package io.github.xenfork.freeworld.world.entity;
 
 import io.github.xenfork.freeworld.core.Identifier;
+import io.github.xenfork.freeworld.core.math.AABBox;
 import io.github.xenfork.freeworld.core.registry.BuiltinRegistries;
 import io.github.xenfork.freeworld.core.registry.Registry;
-import io.github.xenfork.freeworld.world.entity.component.AccelerationComponent;
-import io.github.xenfork.freeworld.world.entity.component.PositionComponent;
-import io.github.xenfork.freeworld.world.entity.component.RotationXYComponent;
-import io.github.xenfork.freeworld.world.entity.component.VelocityComponent;
+import io.github.xenfork.freeworld.world.entity.component.*;
 
 import java.util.List;
 
@@ -25,9 +23,13 @@ import java.util.List;
  * @since 0.1.0
  */
 public final class EntityTypes {
-    public static final EntityType PLAYER = register(0, "player",
+    public static final BoundingBoxComponent PLAYER_BOUNDING_BOX = new BoundingBoxComponent(new AABBox(0.0, 0.0, 0.0, 0.6, 1.8, 0.6));
+    public static final EyeHeightComponent PLAYER_EYE_HEIGHT = new EyeHeightComponent(1.71);
+    public static final EntityType PLAYER = register(1, "player",
         new EntityType(List.of(
             AccelerationComponent::new,
+            () -> PLAYER_BOUNDING_BOX,
+            () -> PLAYER_EYE_HEIGHT,
             PositionComponent::new,
             RotationXYComponent::new,
             VelocityComponent::new

@@ -23,6 +23,8 @@ import io.github.xenfork.freeworld.world.WorldListener;
 import io.github.xenfork.freeworld.world.block.BlockType;
 import io.github.xenfork.freeworld.world.chunk.Chunk;
 import io.github.xenfork.freeworld.world.chunk.ChunkPos;
+import io.github.xenfork.freeworld.world.entity.Entity;
+import io.github.xenfork.freeworld.world.entity.component.BoundingBoxComponent;
 import org.apache.commons.pool2.BasePooledObjectFactory;
 import org.apache.commons.pool2.PooledObject;
 import org.apache.commons.pool2.impl.DefaultPooledObject;
@@ -132,7 +134,7 @@ public final class WorldRenderer implements GLResource, WorldListener {
         }
     }
 
-    public HitResult selectBlock() {
+    public HitResult selectBlock(Entity player) {
         frustumRayBuilder.set(gameRenderer.projectionViewMatrix());
         frustumRayBuilder.origin(frustumRayOrigin);
         frustumRayBuilder.dir(0.5f, 0.5f, frustumRayDir);
@@ -149,17 +151,23 @@ public final class WorldRenderer implements GLResource, WorldListener {
 
         final float radius = 5.0f;
         final float radiusSquared = radius * radius;
-        final int x0 = Math.clamp((int) Math.floor(ox - radius) - 1, 0, world.width());
-        final int y0 = Math.clamp((int) Math.floor(oy - radius) - 1, 0, world.height());
-        final int z0 = Math.clamp((int) Math.floor(oz - radius) - 1, 0, world.depth());
-        final int x1 = Math.clamp((int) Math.ceil(ox + radius) + 1, 0, world.width());
-        final int y1 = Math.clamp((int) Math.ceil(oy + radius) + 1, 0, world.height());
-        final int z1 = Math.clamp((int) Math.ceil(oz + radius) + 1, 0, world.depth());
+        final AABBox range = player.<BoundingBoxComponent>getComponent(BoundingBoxComponent.ID)
+            .value()
+            .grow(radius, radius, radius);
+        final int x0 = (int) Math.floor(range.minX());
+        final int y0 = (int) Math.floor(range.minY());
+        final int z0 = (int) Math.floor(range.minZ());
+        final int x1 = (int) Math.ceil(range.maxX());
+        final int y1 = (int) Math.ceil(range.maxY());
+        final int z1 = (int) Math.ceil(range.maxZ());
         for (int x = x0; x <= x1; x++) {
             final float vx = x + 0.5f - ox;
             final float xSquared = vx * vx;
             for (int y = y0; y <= y1; y++) {
                 for (int z = z0; z <= z1; z++) {
+                    if (!world.isInBound(x, y, z)) {
+                        continue;
+                    }
                     final float vz = z + 0.5f - oz;
                     final float zSquared = vz * vz;
                     if ((xSquared + zSquared) <= radiusSquared) {
@@ -203,7 +211,6 @@ public final class WorldRenderer implements GLResource, WorldListener {
             }
         }
 
-        // TODO: 2024/4/12 squid233: detect face
         return new HitResult(nearestBlock == null, nearestBlock, nearestX, nearestY, nearestZ, face);
     }
 

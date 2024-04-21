@@ -19,10 +19,12 @@ import io.github.xenfork.freeworld.core.math.AABBox;
 public final class BlockType {
     private final boolean air;
     private final AABBox outlineShape;
+    private final AABBox collisionShape;
 
-    private BlockType(boolean air, AABBox outlineShape) {
+    private BlockType(boolean air, AABBox outlineShape, AABBox collisionShape) {
         this.air = air;
         this.outlineShape = outlineShape;
+        this.collisionShape = collisionShape;
     }
 
     public static Builder builder() {
@@ -36,6 +38,7 @@ public final class BlockType {
     public static final class Builder {
         private boolean air = false;
         private AABBox outlineShape = AABBox.FULL_CUBE;
+        private AABBox collisionShape = AABBox.FULL_CUBE;
 
         public Builder air() {
             this.air = true;
@@ -47,8 +50,13 @@ public final class BlockType {
             return this;
         }
 
+        public Builder collisionShape(AABBox collisionShape) {
+            this.collisionShape = collisionShape;
+            return this;
+        }
+
         public BlockType build() {
-            return new BlockType(air, outlineShape);
+            return new BlockType(air, outlineShape, collisionShape);
         }
     }
 
@@ -58,5 +66,9 @@ public final class BlockType {
 
     public AABBox outlineShape() {
         return outlineShape;
+    }
+
+    public AABBox collisionShape() {
+        return collisionShape;
     }
 }
