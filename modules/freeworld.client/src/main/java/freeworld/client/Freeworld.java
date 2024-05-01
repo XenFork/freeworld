@@ -191,8 +191,7 @@ public final class Freeworld implements AutoCloseable {
         if (onGround && glfw.getKey(window, GLFW.KEY_SPACE) == GLFW.PRESS) {
             player.velocity().value().y = 0.5;
         }
-        MathUtil.moveRelative(xo, 0.0, zo, player.rotation().value().y(), player.acceleration().value())
-            .mul(speed);
+        MathUtil.moveRelative(xo, 0.0, zo, player.rotation().value().y(), speed, player.acceleration().value());
         world.tick();
 
         if (blockDestroyTimer >= 2) {

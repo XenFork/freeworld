@@ -33,6 +33,10 @@ import org.joml.*;
 
 import java.lang.Math;
 import java.lang.Runtime;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -41,6 +45,9 @@ import java.util.concurrent.atomic.AtomicInteger;
  * @since 0.1.0
  */
 public final class WorldRenderer implements GLResource, WorldListener {
+    public static final int RENDER_RADIUS = 5;
+    public static final int RENDER_CHUNK_COUNT_CBRT = RENDER_RADIUS * 2 + 1;
+    public static final int RENDER_CHUNK_COUNT = RENDER_CHUNK_COUNT_CBRT * RENDER_CHUNK_COUNT_CBRT * RENDER_CHUNK_COUNT_CBRT;
     private final GameRenderer gameRenderer;
     private final World world;
     private final ExecutorService executor;
@@ -60,7 +67,7 @@ public final class WorldRenderer implements GLResource, WorldListener {
             return new DefaultPooledObject<>(obj);
         }
     });
-    private final ClientChunk[] chunks;
+    private final Map<ChunkPos, ClientChunk> chunks = HashMap.newHashMap(RENDER_CHUNK_COUNT);
     private final FrustumIntersection frustumIntersection = new FrustumIntersection();
     private final FrustumRayBuilder frustumRayBuilder = new FrustumRayBuilder();
     private final Vector3f frustumRayOrigin = new Vector3f();
@@ -87,22 +94,34 @@ public final class WorldRenderer implements GLResource, WorldListener {
                 }
             },
             new ThreadPoolExecutor.DiscardPolicy());
-        this.chunks = new ClientChunk[5 * 5 * 5];
-        for (int x = 0; x < 5; x++) {
-            for (int y = 0; y < 5; y++) {
-                for (int z = 0; z < 5; z++) {
-                    this.chunks[(y * 5 + z) * 5 + x] = new ClientChunk(world, x, y, z);
-                }
-            }
-        }
     }
 
     private static DefaultVertexBuilder createVertexBuilder() {
         return new DefaultVertexBuilder(VertexLayouts.POSITION_COLOR_TEX, 30000, 45000);
     }
 
-    public void compileChunks() {
-        for (ClientChunk chunk : chunks) {
+    public List<ClientChunk> renderingChunks(Entity player) {
+        final int renderBlockRadius = RENDER_RADIUS * Chunk.SIZE;
+        final AABBox box = player.boundingBox().value().grow(renderBlockRadius, renderBlockRadius, renderBlockRadius);
+        final int minX = ChunkPos.absoluteToChunk((int) Math.floor(box.minX()));
+        final int minY = ChunkPos.absoluteToChunk((int) Math.floor(box.minY()));
+        final int minZ = ChunkPos.absoluteToChunk((int) Math.floor(box.minZ()));
+        final int maxX = ChunkPos.absoluteToChunk((int) Math.ceil(box.maxX())) + 1;
+        final int maxY = ChunkPos.absoluteToChunk((int) Math.ceil(box.maxY())) + 1;
+        final int maxZ = ChunkPos.absoluteToChunk((int) Math.ceil(box.maxZ())) + 1;
+        final List<ClientChunk> chunks = new ArrayList<>((maxX - minX) * (maxY - minY) * (maxZ - minZ));
+        for (int x = minX; x < maxX; x++) {
+            for (int y = minY; y < maxY; y++) {
+                for (int z = minZ; z < maxZ; z++) {
+                    chunks.add(getChunkOrCreate(x, y, z));
+                }
+            }
+        }
+        return chunks;
+    }
+
+    public void compileChunks(List<ClientChunk> renderingChunks) {
+        for (ClientChunk chunk : renderingChunks) {
             if (chunk.dirty) {
                 if (chunk.future != null && chunk.future.state() == Future.State.RUNNING) {
                     chunk.future.cancel(false);
@@ -117,9 +136,9 @@ public final class WorldRenderer implements GLResource, WorldListener {
         }
     }
 
-    public void renderChunks(GLStateMgr gl) {
+    public void renderChunks(GLStateMgr gl, List<ClientChunk> renderingChunks) {
         frustumIntersection.set(gameRenderer.projectionViewMatrix());
-        for (ClientChunk chunk : chunks) {
+        for (ClientChunk chunk : renderingChunks) {
             if (frustumIntersection.testAab(
                 chunk.fromX(),
                 chunk.fromY(),
@@ -382,10 +401,12 @@ public final class WorldRenderer implements GLResource, WorldListener {
     }
 
     private ClientChunk getChunk(int x, int y, int z) {
-        if (x >= 0 && x < 5 && y >= 0 && y < 5 && z >= 0 && z < 5) {
-            return chunks[(y * 5 + z) * 5 + x];
-        }
-        return null;
+        return chunks.get(new ChunkPos(x, y, z));
+    }
+
+    private ClientChunk getChunkOrCreate(int x, int y, int z) {
+        return chunks.computeIfAbsent(new ChunkPos(x, y, z),
+            chunkPos -> new ClientChunk(world, chunkPos.x(), chunkPos.y(), chunkPos.z()));
     }
 
     private ClientChunk getChunkByAbsolutePos(int x, int y, int z) {
@@ -404,7 +425,7 @@ public final class WorldRenderer implements GLResource, WorldListener {
     public void close(GLStateMgr gl) {
         executor.close();
         vertexBuilderPool.close();
-        for (ClientChunk chunk : chunks) {
+        for (ClientChunk chunk : chunks.values()) {
             chunk.close(gl);
         }
     }

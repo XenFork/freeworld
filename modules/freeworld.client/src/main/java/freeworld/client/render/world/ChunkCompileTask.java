@@ -41,45 +41,51 @@ public final class ChunkCompileTask implements Callable<ChunkVertexData> {
     public ChunkVertexData call() throws Exception {
         final var pool = worldRenderer.vertexBuilderPool();
         final DefaultVertexBuilder builder = pool.borrowObject();
-        builder.reset();
-        final int cx = chunk.x();
-        final int cy = chunk.y();
-        final int cz = chunk.z();
-        for (Direction direction : Direction.LIST) {
-            for (int x = 0; x < Chunk.SIZE; x++) {
-                for (int y = 0; y < Chunk.SIZE; y++) {
-                    for (int z = 0; z < Chunk.SIZE; z++) {
-                        final int nx = x + direction.axisX();
-                        final int ny = y + direction.axisY();
-                        final int nz = z + direction.axisZ();
-                        if (chunk.getBlockType(nx, ny, nz).air()) {
-                            gameRenderer.blockRenderer().renderBlockFace(
-                                builder,
-                                chunk.getBlockType(x, y, z),
-                                ChunkPos.relativeToAbsolute(cx, x),
-                                ChunkPos.relativeToAbsolute(cy, y),
-                                ChunkPos.relativeToAbsolute(cz, z),
-                                direction
-                            );
+        try {
+            builder.reset();
+            final int cx = chunk.x();
+            final int cy = chunk.y();
+            final int cz = chunk.z();
+            for (Direction direction : Direction.LIST) {
+                for (int x = 0; x < Chunk.SIZE; x++) {
+                    for (int y = 0; y < Chunk.SIZE; y++) {
+                        for (int z = 0; z < Chunk.SIZE; z++) {
+                            final int nx = x + direction.axisX();
+                            final int ny = y + direction.axisY();
+                            final int nz = z + direction.axisZ();
+                            if (chunk.isInBound(nx, ny, nz) &&
+                                chunk.getBlockType(nx, ny, nz).air()) {
+                                gameRenderer.blockRenderer().renderBlockFace(
+                                    builder,
+                                    chunk.getBlockType(x, y, z),
+                                    ChunkPos.relativeToAbsolute(cx, x),
+                                    ChunkPos.relativeToAbsolute(cy, y),
+                                    ChunkPos.relativeToAbsolute(cz, z),
+                                    direction
+                                );
+                            }
                         }
                     }
                 }
             }
-        }
 
-        final Arena arena = Arena.ofShared();
-        final MemorySegment vertexDataSlice = builder.vertexDataSlice();
-        final MemorySegment indexDataSlice = builder.indexDataSlice();
-        final ChunkVertexData data = new ChunkVertexData(
-            builder.vertexLayout(),
-            builder.indexCount(),
-            arena,
-            arena.allocateFrom(ValueLayout.JAVA_BYTE, vertexDataSlice, ValueLayout.JAVA_BYTE, 0L, vertexDataSlice.byteSize()),
-            arena.allocateFrom(ValueLayout.JAVA_BYTE, indexDataSlice, ValueLayout.JAVA_BYTE, 0L, indexDataSlice.byteSize()),
-            builder.shouldReallocateVertexData(),
-            builder.shouldReallocateIndexData()
-        );
-        pool.returnObject(builder);
-        return data;
+            final Arena arena = Arena.ofShared();
+            final MemorySegment vertexDataSlice = builder.vertexDataSlice();
+            final MemorySegment indexDataSlice = builder.indexDataSlice();
+            final ChunkVertexData data = new ChunkVertexData(
+                builder.vertexLayout(),
+                builder.indexCount(),
+                arena,
+                arena.allocateFrom(ValueLayout.JAVA_BYTE, vertexDataSlice, ValueLayout.JAVA_BYTE, 0L, vertexDataSlice.byteSize()),
+                arena.allocateFrom(ValueLayout.JAVA_BYTE, indexDataSlice, ValueLayout.JAVA_BYTE, 0L, indexDataSlice.byteSize()),
+                builder.shouldReallocateVertexData(),
+                builder.shouldReallocateIndexData()
+            );
+            pool.returnObject(builder);
+            return data;
+        } catch (Exception e) {
+            pool.invalidateObject(builder);
+            throw e;
+        }
     }
 }

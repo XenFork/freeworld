@@ -22,6 +22,7 @@ import freeworld.client.render.model.VertexLayouts;
 import freeworld.client.render.texture.TextureAtlas;
 import freeworld.client.render.texture.TextureManager;
 import freeworld.client.render.world.BlockRenderer;
+import freeworld.client.world.chunk.ClientChunk;
 import freeworld.core.Identifier;
 import freeworld.core.math.AABBox;
 import freeworld.util.Direction;
@@ -117,8 +118,11 @@ public final class GameRenderer implements GLResource {
         positionColorTexProgram.getUniform(GLProgram.UNIFORM_PROJECTION_VIEW_MATRIX).set(projectionViewMatrix);
         positionColorTexProgram.getUniform(GLProgram.UNIFORM_MODEL_MATRIX).set(modelMatrix);
         positionColorTexProgram.uploadUniforms(gl);
-        worldRenderer.compileChunks();
-        worldRenderer.renderChunks(gl);
+
+
+        final List<ClientChunk> chunks = worldRenderer.renderingChunks(player);
+        worldRenderer.compileChunks(chunks);
+        worldRenderer.renderChunks(gl, chunks);
 
         hitResult = worldRenderer.selectBlock(player);
         if (!hitResult.missed()) {
