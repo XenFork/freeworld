@@ -58,16 +58,18 @@ public class Chunk {
     }
 
     public void generateTerrain() {
-        if (y != 0) return;
         for (int bx = 0; bx < width; bx++) {
             for (int bz = 0; bz < depth; bz++) {
-                for (int by = 0; by < 8; by++) {
-                    setBlockType(bx, by, bz, BlockTypes.STONE);
+                for (int by = 0; by < height; by++) {
+                    final int absY = ChunkPos.relativeToAbsolute(y, by);
+                    if (absY < 5) {
+                        setBlockType(bx, by, bz, BlockTypes.STONE);
+                    } else if (absY < 8) {
+                        setBlockType(bx, by, bz, BlockTypes.DIRT);
+                    } else if (absY == 8) {
+                        setBlockType(bx, by, bz, BlockTypes.GRASS_BLOCK);
+                    }
                 }
-                for (int by = 8; by < 11; by++) {
-                    setBlockType(bx, by, bz, BlockTypes.DIRT);
-                }
-                setBlockType(bx, 11, bz, BlockTypes.GRASS_BLOCK);
             }
         }
     }

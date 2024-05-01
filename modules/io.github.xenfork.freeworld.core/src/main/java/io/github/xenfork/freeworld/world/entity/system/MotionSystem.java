@@ -11,12 +11,11 @@
 package io.github.xenfork.freeworld.world.entity.system;
 
 import io.github.xenfork.freeworld.core.math.AABBox;
-import io.github.xenfork.freeworld.util.MathUtil;
 import io.github.xenfork.freeworld.world.World;
 import io.github.xenfork.freeworld.world.block.BlockType;
+import io.github.xenfork.freeworld.world.chunk.ChunkPos;
 import io.github.xenfork.freeworld.world.entity.Entity;
 import io.github.xenfork.freeworld.world.entity.component.*;
-import org.joml.Vector2d;
 import org.joml.Vector3d;
 
 import java.util.ArrayList;
@@ -35,21 +34,26 @@ public final class MotionSystem implements EntitySystem {
             if (EntitySystem.hasAllComponents(entity,
                 AccelerationComponent.ID,
                 PositionComponent.ID,
-                RotationXYComponent.ID,
                 VelocityComponent.ID)) {
                 final Vector3d acceleration = entity.acceleration().value();
                 final Vector3d position = entity.position().value();
-                final Vector2d rotation = entity.rotation().value();
                 final Vector3d velocity = entity.velocity().value();
 
                 velocity.add(acceleration);
-                MathUtil.moveRelative(velocity.x(), velocity.y(), velocity.z(), rotation.y(), movement);
+                velocity.y -= 0.08;
 
                 AABBox boundingBox;
                 if (entity.hasComponent(BoundingBoxComponent.ID)) {
                     boundingBox = entity.boundingBox().value();
 
-                    final AABBox range = boundingBox.expand(movement.x(), movement.y(), movement.z());
+                    final double originVx = velocity.x();
+                    final double originVy = velocity.y();
+                    final double originVz = velocity.z();
+                    double moveX = velocity.x();
+                    double moveY = velocity.y();
+                    double moveZ = velocity.z();
+
+                    final AABBox range = boundingBox.expand(moveX, moveY, moveZ);
                     final List<AABBox> boxes = new ArrayList<>();
                     final int x0 = (int) Math.floor(range.minX());
                     final int y0 = (int) Math.floor(range.minY());
@@ -60,7 +64,12 @@ public final class MotionSystem implements EntitySystem {
                     for (int x = x0; x < x1; x++) {
                         for (int y = y0; y < y1; y++) {
                             for (int z = z0; z < z1; z++) {
-                                if (!world.isInBound(x, y, z)) {
+                                if (!world.isBlockLoaded(x, y, z)) {
+                                    world.getOrCreateChunk(
+                                        ChunkPos.absoluteToChunk(x),
+                                        ChunkPos.absoluteToChunk(y),
+                                        ChunkPos.absoluteToChunk(z)
+                                    );
                                     continue;
                                 }
                                 final BlockType blockType = world.getBlockType(x, y, z);
@@ -73,37 +82,47 @@ public final class MotionSystem implements EntitySystem {
                         }
                     }
 
-                    final double originMovementY = movement.y();
                     for (AABBox box : boxes) {
-                        movement.y = box.clipYCollide(boundingBox, movement.y());
+                        moveY = box.clipYCollide(boundingBox, moveY);
                     }
-                    if (originMovementY != movement.y && originMovementY < 0.0) {
-                        velocity.y = 0.0;
+                    boundingBox = boundingBox.move(0.0, moveY, 0.0);
+                    for (AABBox box : boxes) {
+                        moveX = box.clipXCollide(boundingBox, moveX);
+                    }
+                    boundingBox = boundingBox.move(moveX, 0.0, 0.0);
+                    for (AABBox box : boxes) {
+                        moveZ = box.clipZCollide(boundingBox, moveZ);
+                    }
+                    boundingBox = boundingBox.move(0.0, 0.0, moveZ);
+
+                    if (originVy != moveY && originVy < 0.0) {
                         entity.addComponent(OnGroundComponent.INSTANCE);
                     } else {
                         entity.removeComponent(OnGroundComponent.ID);
                     }
-                    position.y += movement.y();
-                    boundingBox = computeBox(boundingBox, position);
 
-                    for (AABBox box : boxes) {
-                        movement.x = box.clipXCollide(boundingBox, movement.x());
+                    if (originVx != moveX) {
+                        velocity.x = 0.0;
                     }
-                    position.x += movement.x();
-                    boundingBox = computeBox(boundingBox, position);
-
-                    for (AABBox box : boxes) {
-                        movement.z = box.clipZCollide(boundingBox, movement.z());
+                    if (originVy != moveY) {
+                        velocity.y = 0.0;
                     }
-                    position.z += movement.z();
+                    if (originVz != moveZ) {
+                        velocity.z = 0.0;
+                    }
 
+                    position.add(moveX, moveY, moveZ);
                     entity.setComponent(new BoundingBoxComponent(computeBox(boundingBox, position)));
                 } else {
-                    position.add(movement);
+                    position.add(velocity);
                 }
 
-                velocity.y -= 0.08;
-                velocity.mul(0.8, 0.98, 0.8);
+                velocity.mul(0.91, 0.98, 0.91);
+                if (entity.hasComponent(OnGroundComponent.ID)) {
+                    final double fiction = 0.7;
+                    velocity.x *= fiction;
+                    velocity.z *= fiction;
+                }
             }
         }
     }

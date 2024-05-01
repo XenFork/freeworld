@@ -24,7 +24,6 @@ import io.github.xenfork.freeworld.world.block.BlockType;
 import io.github.xenfork.freeworld.world.chunk.Chunk;
 import io.github.xenfork.freeworld.world.chunk.ChunkPos;
 import io.github.xenfork.freeworld.world.entity.Entity;
-import io.github.xenfork.freeworld.world.entity.component.BoundingBoxComponent;
 import org.apache.commons.pool2.BasePooledObjectFactory;
 import org.apache.commons.pool2.PooledObject;
 import org.apache.commons.pool2.impl.DefaultPooledObject;
@@ -88,11 +87,11 @@ public final class WorldRenderer implements GLResource, WorldListener {
                 }
             },
             new ThreadPoolExecutor.DiscardPolicy());
-        this.chunks = new ClientChunk[world.xChunks * world.yChunks * world.zChunks];
-        for (int x = 0; x < world.xChunks; x++) {
-            for (int y = 0; y < world.yChunks; y++) {
-                for (int z = 0; z < world.zChunks; z++) {
-                    this.chunks[(y * world.zChunks + z) * world.xChunks + x] = new ClientChunk(world, x, y, z);
+        this.chunks = new ClientChunk[5 * 5 * 5];
+        for (int x = 0; x < 5; x++) {
+            for (int y = 0; y < 5; y++) {
+                for (int z = 0; z < 5; z++) {
+                    this.chunks[(y * 5 + z) * 5 + x] = new ClientChunk(world, x, y, z);
                 }
             }
         }
@@ -108,7 +107,7 @@ public final class WorldRenderer implements GLResource, WorldListener {
                 if (chunk.future != null && chunk.future.state() == Future.State.RUNNING) {
                     chunk.future.cancel(false);
                 }
-                final Chunk chunk1 = world.getChunk(chunk.x(), chunk.y(), chunk.z());
+                final Chunk chunk1 = world.getOrCreateChunk(chunk.x(), chunk.y(), chunk.z());
                 if (chunk1 != null) {
                     chunk.copyFrom(chunk1);
                 }
@@ -151,7 +150,7 @@ public final class WorldRenderer implements GLResource, WorldListener {
 
         final float radius = 5.0f;
         final float radiusSquared = radius * radius;
-        final AABBox range = player.<BoundingBoxComponent>getComponent(BoundingBoxComponent.ID)
+        final AABBox range = player.boundingBox()
             .value()
             .grow(radius, radius, radius);
         final int x0 = (int) Math.floor(range.minX());
@@ -165,7 +164,7 @@ public final class WorldRenderer implements GLResource, WorldListener {
             final float xSquared = vx * vx;
             for (int y = y0; y <= y1; y++) {
                 for (int z = z0; z <= z1; z++) {
-                    if (!world.isInBound(x, y, z)) {
+                    if (!world.isBlockLoaded(x, y, z)) {
                         continue;
                     }
                     final float vz = z + 0.5f - oz;
@@ -383,8 +382,8 @@ public final class WorldRenderer implements GLResource, WorldListener {
     }
 
     private ClientChunk getChunk(int x, int y, int z) {
-        if (x >= 0 && x < world.xChunks && y >= 0 && y < world.yChunks && z >= 0 && z < world.zChunks) {
-            return chunks[(y * world.zChunks + z) * world.xChunks + x];
+        if (x >= 0 && x < 5 && y >= 0 && y < 5 && z >= 0 && z < 5) {
+            return chunks[(y * 5 + z) * 5 + x];
         }
         return null;
     }

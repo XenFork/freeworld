@@ -17,6 +17,7 @@ import io.github.xenfork.freeworld.client.render.world.HitResult;
 import io.github.xenfork.freeworld.core.registry.BuiltinRegistries;
 import io.github.xenfork.freeworld.util.Direction;
 import io.github.xenfork.freeworld.util.Logging;
+import io.github.xenfork.freeworld.util.MathUtil;
 import io.github.xenfork.freeworld.util.Timer;
 import io.github.xenfork.freeworld.world.World;
 import io.github.xenfork.freeworld.world.block.BlockType;
@@ -177,8 +178,9 @@ public final class Freeworld implements AutoCloseable {
 
     private void tick() {
         camera.preUpdate();
+
         final boolean onGround = player.hasComponent(OnGroundComponent.ID);
-        double speed = onGround ? 0.1 : 0.07;
+        double speed = onGround ? 0.1 : 0.02;
         if (glfw.getKey(window, GLFW.KEY_LEFT_CONTROL) == GLFW.PRESS) speed *= 2.0;
         double xo = 0.0;
         double zo = 0.0;
@@ -189,7 +191,8 @@ public final class Freeworld implements AutoCloseable {
         if (onGround && glfw.getKey(window, GLFW.KEY_SPACE) == GLFW.PRESS) {
             player.velocity().value().y = 0.5;
         }
-        player.acceleration().value().set(xo, 0.0, zo).mul(speed);
+        MathUtil.moveRelative(xo, 0.0, zo, player.rotation().value().y(), player.acceleration().value())
+            .mul(speed);
         world.tick();
 
         if (blockDestroyTimer >= 2) {

@@ -23,17 +23,15 @@ public final class MathUtil {
     public static Vector3d moveRelative(double x, double y, double z, double yawDegrees, Vector3d dest) {
         final double dst = x * x + z * z;
         double moveX = 0.0;
-        double moveY = 0.0;
         double moveZ = 0.0;
-        if (dst > 0.001) {
+        if (dst >= 0.01) {
             final double yaw = Math.toRadians(yawDegrees);
-
             final double sin = Math.sin(yaw);
             final double cos = Math.cos(yaw);
-            moveX += x * cos + z * sin;
-            moveZ += z * cos - x * sin;
+
+            moveX = x * cos + z * sin;
+            moveZ = z * cos - x * sin;
         }
-        moveY += y;
-        return dest.set(moveX, moveY, moveZ);
+        return dest.set(moveX, y, moveZ);
     }
 }

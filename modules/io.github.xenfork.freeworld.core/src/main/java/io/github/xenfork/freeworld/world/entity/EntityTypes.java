@@ -23,12 +23,11 @@ import java.util.List;
  * @since 0.1.0
  */
 public final class EntityTypes {
-    public static final BoundingBoxComponent PLAYER_BOUNDING_BOX = new BoundingBoxComponent(new AABBox(0.0, 0.0, 0.0, 0.6, 1.8, 0.6));
     public static final EyeHeightComponent PLAYER_EYE_HEIGHT = new EyeHeightComponent(1.71);
     public static final EntityType PLAYER = register(1, "player",
         new EntityType(List.of(
             AccelerationComponent::new,
-            () -> PLAYER_BOUNDING_BOX,
+            () -> boundingBox(0.0, 0.0, 0.0, 0.6, 1.8, 0.6),
             () -> PLAYER_EYE_HEIGHT,
             PositionComponent::new,
             RotationXYComponent::new,
@@ -43,5 +42,25 @@ public final class EntityTypes {
     }
 
     public static void bootstrap() {
+    }
+
+    public static BoundingBoxComponent boundingBox(
+        double x,
+        double y,
+        double z,
+        double width,
+        double height,
+        double depth
+    ) {
+        final double hw = width * 0.5;
+        final double hd = depth * 0.5;
+        return new BoundingBoxComponent(new AABBox(
+            x - hw,
+            y,
+            z - hd,
+            x + hw,
+            y + height,
+            z + hd
+        ));
     }
 }

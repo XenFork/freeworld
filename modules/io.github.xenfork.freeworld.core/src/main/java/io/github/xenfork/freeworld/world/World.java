@@ -19,36 +19,19 @@ import io.github.xenfork.freeworld.world.entity.EntityType;
 import io.github.xenfork.freeworld.world.entity.component.PositionComponent;
 import io.github.xenfork.freeworld.world.entity.system.MotionSystem;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 
 /**
  * @author squid233
  * @since 0.1.0
  */
 public final class World {
-    private final int width = 256;
-    private final int height = 64;
-    private final int depth = 256;
-    public final int xChunks = width / Chunk.SIZE;
-    public final int yChunks = height / Chunk.SIZE;
-    public final int zChunks = depth / Chunk.SIZE;
-    public final Chunk[] chunks = new Chunk[xChunks * yChunks * zChunks];
+    public final Map<ChunkPos, Chunk> chunks = HashMap.newHashMap(5 * 5 * 5);
     private final List<Entity> entities = new ArrayList<>();
     private final MotionSystem motionSystem = new MotionSystem();
     private final List<WorldListener> listeners = new ArrayList<>();
 
     public World(String name) {
-        for (int x = 0; x < xChunks; x++) {
-            for (int y = 0; y < yChunks; y++) {
-                for (int z = 0; z < zChunks; z++) {
-                    final Chunk chunk = new Chunk(this, x, y, z);
-                    chunks[(y * zChunks + z) * xChunks + x] = chunk;
-                    chunk.generateTerrain();
-                }
-            }
-        }
     }
 
     public void addListener(WorldListener listener) {
@@ -68,11 +51,31 @@ public final class World {
         return entity;
     }
 
+    public boolean isChunkLoaded(int x, int y, int z) {
+        return chunks.containsKey(new ChunkPos(x, y, z));
+    }
+
+    public boolean isBlockLoaded(int x, int y, int z) {
+        return isChunkLoaded(
+            ChunkPos.absoluteToChunk(x),
+            ChunkPos.absoluteToChunk(y),
+            ChunkPos.absoluteToChunk(z)
+        );
+    }
+
+    public Chunk getOrCreateChunk(int x, int y, int z) {
+        return chunks.computeIfAbsent(
+            new ChunkPos(x, y, z),
+            chunkPos -> {
+                final Chunk chunk = new Chunk(this, chunkPos.x(), chunkPos.y(), chunkPos.z());
+                chunk.generateTerrain();
+                return chunk;
+            }
+        );
+    }
+
     public Chunk getChunk(int x, int y, int z) {
-        if (x >= 0 && x < xChunks && y >= 0 && y < yChunks && z >= 0 && z < zChunks) {
-            return chunks[(y * zChunks + z) * xChunks + x];
-        }
-        return null;
+        return chunks.get(new ChunkPos(x, y, z));
     }
 
     public Chunk getChunkByAbsolutePos(int x, int y, int z) {
@@ -108,25 +111,5 @@ public final class World {
                 listener.onBlockChanged(x, y, z);
             }
         }
-    }
-
-    public boolean isInBound(int x, int y, int z) {
-        return x >= 0 && x < width && y >= 0 && y < height && z >= 0 && z < depth;
-    }
-
-    public Chunk createChunk(int x, int y, int z) {
-        return new Chunk(this, x, y, z);
-    }
-
-    public int width() {
-        return width;
-    }
-
-    public int height() {
-        return height;
-    }
-
-    public int depth() {
-        return depth;
     }
 }
