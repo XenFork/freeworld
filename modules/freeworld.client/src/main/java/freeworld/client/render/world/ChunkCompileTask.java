@@ -53,8 +53,13 @@ public final class ChunkCompileTask implements Callable<ChunkVertexData> {
                             final int nx = x + direction.axisX();
                             final int ny = y + direction.axisY();
                             final int nz = z + direction.axisZ();
-                            if (chunk.isInBound(nx, ny, nz) &&
-                                chunk.getBlockType(nx, ny, nz).air()) {
+                            final int absNx = ChunkPos.relativeToAbsolute(cx, nx);
+                            final int absNy = ChunkPos.relativeToAbsolute(cy, ny);
+                            final int absNz = ChunkPos.relativeToAbsolute(cz, nz);
+                            if ((chunk.isInBound(nx, ny, nz) &&
+                                 chunk.getBlockType(nx, ny, nz).air()) ||
+                                (chunk.world().isBlockLoaded(absNx, absNy, absNz) &&
+                                 chunk.world().getBlockType(absNx, absNy, absNz).air())) {
                                 gameRenderer.blockRenderer().renderBlockFace(
                                     builder,
                                     chunk.getBlockType(x, y, z),
@@ -69,13 +74,12 @@ public final class ChunkCompileTask implements Callable<ChunkVertexData> {
                 }
             }
 
-            final Arena arena = Arena.ofShared();
+            final Arena arena = Arena.ofAuto();
             final MemorySegment vertexDataSlice = builder.vertexDataSlice();
             final MemorySegment indexDataSlice = builder.indexDataSlice();
             final ChunkVertexData data = new ChunkVertexData(
                 builder.vertexLayout(),
                 builder.indexCount(),
-                arena,
                 arena.allocateFrom(ValueLayout.JAVA_BYTE, vertexDataSlice, ValueLayout.JAVA_BYTE, 0L, vertexDataSlice.byteSize()),
                 arena.allocateFrom(ValueLayout.JAVA_BYTE, indexDataSlice, ValueLayout.JAVA_BYTE, 0L, indexDataSlice.byteSize()),
                 builder.shouldReallocateVertexData(),

@@ -12,7 +12,6 @@ package freeworld.client.render.world;
 
 import freeworld.client.render.model.VertexLayout;
 
-import java.lang.foreign.Arena;
 import java.lang.foreign.MemorySegment;
 
 /**
@@ -22,7 +21,6 @@ import java.lang.foreign.MemorySegment;
 public record ChunkVertexData(
     VertexLayout vertexLayout,
     int indexCount,
-    Arena arena,
     MemorySegment vertexData,
     MemorySegment indexData,
     boolean shouldReallocateVertexData,

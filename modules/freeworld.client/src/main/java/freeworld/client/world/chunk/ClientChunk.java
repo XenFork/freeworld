@@ -45,31 +45,27 @@ public final class ClientChunk extends Chunk implements GLResource {
         try {
             if (future != null && future.state() == Future.State.SUCCESS) {
                 final ChunkVertexData data = future.get();
-                try {
-                    final MemorySegment vertexData = data.vertexData();
-                    final MemorySegment indexData = data.indexData();
-                    indexCount = data.indexCount();
-                    if (vao == 0) vao = gl.genVertexArrays();
-                    if (vbo == 0) vbo = gl.genBuffers();
-                    if (ebo == 0) ebo = gl.genBuffers();
-                    gl.setVertexArrayBinding(vao);
-                    gl.setArrayBufferBinding(vbo);
-                    if (data.shouldReallocateVertexData()) {
-                        gl.bufferData(GL15C.ARRAY_BUFFER, vertexData, GL15C.DYNAMIC_DRAW);
-                        final VertexLayout layout = data.vertexLayout();
-                        layout.enableAttribs(gl);
-                        layout.specifyAttribPointers(gl);
-                    } else {
-                        gl.bufferSubData(GL15C.ARRAY_BUFFER, 0L, vertexData);
-                    }
-                    gl.bindBuffer(GL15C.ELEMENT_ARRAY_BUFFER, ebo);
-                    if (data.shouldReallocateIndexData()) {
-                        gl.bufferData(GL15C.ELEMENT_ARRAY_BUFFER, indexData, GL15C.DYNAMIC_DRAW);
-                    } else {
-                        gl.bufferSubData(GL15C.ELEMENT_ARRAY_BUFFER, 0L, indexData);
-                    }
-                } finally {
-                    data.arena().close();
+                final MemorySegment vertexData = data.vertexData();
+                final MemorySegment indexData = data.indexData();
+                indexCount = data.indexCount();
+                if (vao == 0) vao = gl.genVertexArrays();
+                if (vbo == 0) vbo = gl.genBuffers();
+                if (ebo == 0) ebo = gl.genBuffers();
+                gl.setVertexArrayBinding(vao);
+                gl.setArrayBufferBinding(vbo);
+                if (data.shouldReallocateVertexData()) {
+                    gl.bufferData(GL15C.ARRAY_BUFFER, vertexData, GL15C.DYNAMIC_DRAW);
+                    final VertexLayout layout = data.vertexLayout();
+                    layout.enableAttribs(gl);
+                    layout.specifyAttribPointers(gl);
+                } else {
+                    gl.bufferSubData(GL15C.ARRAY_BUFFER, 0L, vertexData);
+                }
+                gl.bindBuffer(GL15C.ELEMENT_ARRAY_BUFFER, ebo);
+                if (data.shouldReallocateIndexData()) {
+                    gl.bufferData(GL15C.ELEMENT_ARRAY_BUFFER, indexData, GL15C.DYNAMIC_DRAW);
+                } else {
+                    gl.bufferSubData(GL15C.ELEMENT_ARRAY_BUFFER, 0L, indexData);
                 }
                 future = null;
             }
@@ -90,13 +86,6 @@ public final class ClientChunk extends Chunk implements GLResource {
 
     @Override
     public void close(GLStateMgr gl) {
-        if (future != null && future.state() == Future.State.SUCCESS) {
-            try {
-                future.get().arena().close();
-            } catch (InterruptedException | ExecutionException e) {
-                throw new RuntimeException(e);
-            }
-        }
         gl.deleteVertexArrays(vao);
         gl.deleteBuffers(vbo, ebo);
     }

@@ -98,6 +98,10 @@ public class Chunk {
         System.arraycopy(chunk.blocks, 0, blocks, 0, blocks.length);
     }
 
+    public World world() {
+        return world;
+    }
+
     public int x() {
         return x;
     }
