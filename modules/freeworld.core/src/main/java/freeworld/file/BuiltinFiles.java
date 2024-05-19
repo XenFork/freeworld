@@ -18,6 +18,7 @@ import java.io.*;
 import java.lang.foreign.MemorySegment;
 import java.lang.foreign.SegmentAllocator;
 import java.lang.foreign.ValueLayout;
+import java.net.URL;
 import java.util.stream.Collectors;
 
 /**
@@ -28,9 +29,18 @@ import java.util.stream.Collectors;
  */
 public final class BuiltinFiles {
     private static final Logger logger = Logging.caller();
-    private static final StackWalker STACK_WALKER = StackWalker.getInstance(StackWalker.Option.RETAIN_CLASS_REFERENCE);
 
     private BuiltinFiles() {
+    }
+
+    @Nullable
+    public static URL loadURL(ClassLoader classLoader, String name) {
+        return classLoader.getResource(name);
+    }
+
+    @Nullable
+    public static URL loadURL(String name) {
+        return loadURL(BuiltinFiles.class.getClassLoader(), name);
     }
 
     @Nullable
@@ -40,7 +50,7 @@ public final class BuiltinFiles {
 
     @Nullable
     public static InputStream load(String name) {
-        return load(STACK_WALKER.getCallerClass().getClassLoader(), name);
+        return load(BuiltinFiles.class.getClassLoader(), name);
     }
 
     public static MemorySegment loadBinary(SegmentAllocator allocator, InputStream stream, String name) {

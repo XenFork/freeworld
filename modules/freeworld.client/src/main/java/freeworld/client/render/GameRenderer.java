@@ -121,7 +121,7 @@ public final class GameRenderer implements GLResource {
 
 
         final List<ClientChunk> chunks = worldRenderer.renderingChunks(player);
-        worldRenderer.compileChunks(chunks);
+        worldRenderer.compileChunks(player, chunks);
         worldRenderer.renderChunks(gl, chunks);
 
         hitResult = worldRenderer.selectBlock(player);
@@ -204,6 +204,10 @@ public final class GameRenderer implements GLResource {
         if (positionColorTexProgram != null) positionColorTexProgram.close(gl);
 
         if (tessellator != null) tessellator.close(gl);
+    }
+
+    public Freeworld client() {
+        return client;
     }
 
     public GLProgram positionColorProgram() {

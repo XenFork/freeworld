@@ -44,9 +44,9 @@ public final class TextureAtlas extends Texture {
             final Map<Identifier, NativeImage> imageMap = HashMap.newHashMap(numIds);
             identifierList.forEach(identifier -> imageMap.put(identifier, NativeImage.load(arena, identifier.toResourcePath(Identifier.ROOT_ASSETS, null, null))));
 
-            final STBRPContext context = new STBRPContext(arena);
-            final STBRPNode nodes = new STBRPNode(arena, numIds);
-            final STBRPRect rects = new STBRPRect(arena, numIds);
+            final STBRPContext context = STBRPContext.OF.of(arena);
+            final STBRPNode nodes = STBRPNode.OF.of(arena, numIds);
+            final STBRPRect rects = STBRPRect.OF.of(arena, numIds);
             int mipmapLevel = 4;
             for (int i = 0; i < numIds; i++) {
                 final NativeImage image = imageMap.get(identifierList.get(i));
@@ -57,9 +57,9 @@ public final class TextureAtlas extends Texture {
                 } else if (mipmapLevel > 0) {
                     mipmapLevel = Math.min(Integer.numberOfTrailingZeros(width), Integer.numberOfTrailingZeros(height));
                 }
-                STBRPRect.id.set(rects, i, i);
-                STBRPRect.w.set(rects, i, width);
-                STBRPRect.h.set(rects, i, height);
+                rects.slice(i).id(i)
+                    .w(width)
+                    .h(height);
             }
 
             int packerSize = 256;
@@ -86,12 +86,13 @@ public final class TextureAtlas extends Texture {
                 GL10C.UNSIGNED_BYTE,
                 MemorySegment.NULL);
             for (int i = 0; i < numIds; i++) {
-                if (STBRPRect.wasPacked.get(rects, i) != 0) {
-                    final Identifier identifier = identifierList.get(STBRPRect.id.get(rects, i));
-                    final int xo = STBRPRect.x.get(rects, i);
-                    final int yo = STBRPRect.y.get(rects, i);
-                    final int width = STBRPRect.w.get(rects, i);
-                    final int height = STBRPRect.h.get(rects, i);
+                final STBRPRect slice = rects.slice(i);
+                if (slice.was_packed() != 0) {
+                    final Identifier identifier = identifierList.get(slice.id());
+                    final int xo = slice.x();
+                    final int yo = slice.y();
+                    final int width = slice.w();
+                    final int height = slice.h();
                     regionMap.put(identifier, new TextureRegion(xo, yo, width, height));
                     gl.texSubImage2D(GL10C.TEXTURE_2D,
                         0,

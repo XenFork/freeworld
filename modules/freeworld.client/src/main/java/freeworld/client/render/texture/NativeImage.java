@@ -35,8 +35,7 @@ import java.lang.foreign.ValueLayout;
 public record NativeImage(int width, int height, MemorySegment segment, boolean failed) {
     private static final Logger logger = Logging.caller();
 
-    public static NativeImage load(Arena arena, String path) {
-        final MemorySegment segment = BuiltinFiles.loadBinary(arena, BuiltinFiles.load(path), path);
+    public static NativeImage load(Arena arena, MemorySegment segment, String path) {
         if (Unmarshal.isNullPointer(segment)) {
             return fail();
         }
@@ -55,6 +54,10 @@ public record NativeImage(int width, int height, MemorySegment segment, boolean 
             result.reinterpret(arena, stbImage::free),
             false
         );
+    }
+
+    public static NativeImage load(Arena arena, String path) {
+        return load(arena, BuiltinFiles.loadBinary(arena, BuiltinFiles.load(path), path), path);
     }
 
     public static NativeImage fail() {

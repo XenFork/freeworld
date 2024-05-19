@@ -13,29 +13,35 @@ plugins {
 }
 
 val jdkEnablePreview: String by rootProject
-
 val overrunglVersion: String by rootProject
 
-val overrunglNatives = Pair(
-    System.getProperty("os.name")!!,
-    System.getProperty("os.arch")!!
-).let { (name, arch) ->
+val overrunglOs = System.getProperty("os.name")!!.let { name ->
     when {
-        arrayOf("Linux", "FreeBSD", "SunOS", "Unit").any { name.startsWith(it) } ->
-            if (arrayOf("arm", "aarch64").any { arch.startsWith(it) })
-                "natives-linux${if (arch.contains("64") || arch.startsWith("armv8")) "-arm64" else "-arm32"}"
-            else "natives-linux"
-
-        arrayOf("Mac OS X", "Darwin").any { name.startsWith(it) } ->
-            "natives-macos${if (arch.startsWith("aarch64")) "-arm64" else ""}"
-
-        arrayOf("Windows").any { name.startsWith(it) } ->
-            if (arch.contains("64"))
-                "natives-windows${if (arch.startsWith("aarch64")) "-arm64" else ""}"
-            else throw Error("Unrecognized or unsupported architecture. Please set \"overrunglNatives\" manually")
-
-        else -> throw Error("Unrecognized or unsupported platform. Please set \"overrunglNatives\" manually")
+        "FreeBSD" == name -> "freebsd"
+        arrayOf("Linux", "SunOS", "Unit").any { name.startsWith(it) } -> "linux"
+        arrayOf("Mac OS X", "Darwin").any { name.startsWith(it) } -> "macos"
+        arrayOf("Windows").any { name.startsWith(it) } -> "windows"
+        else -> throw Error("Unrecognized or unsupported platform $name. Please set \"overrunglOs\" manually")
     }
+}
+val overrunglArch = System.getProperty("os.arch")!!.let { arch ->
+    when (overrunglOs) {
+        "freebsd" -> "x64"
+        "linux" -> if (arrayOf("arm", "aarch64").any { arch.startsWith(it) }) {
+            if (arch.contains("64") || arch.startsWith("armv8")) "arm64" else "arm32"
+        } else if (arch.startsWith("ppc")) "ppc64le"
+        else if (arch.startsWith("riscv")) "riscv64"
+        else "x64"
+
+        "macos" -> if (arch.startsWith("aarch64")) "arm64" else "x64"
+        "windows" -> if (arch.contains("64") && arch.startsWith("aarch64")) "arm64" else "x64"
+        else -> throw Error("Unrecognized or unsupported platform $overrunglOs. Please set \"overrunglArch\" manually")
+    }
+}
+
+configurations.runtimeClasspath.get().attributes {
+    attribute(OperatingSystemFamily.OPERATING_SYSTEM_ATTRIBUTE, objects.named(overrunglOs))
+    attribute(MachineArchitecture.ARCHITECTURE_ATTRIBUTE, objects.named(overrunglArch))
 }
 
 dependencies {
@@ -44,12 +50,8 @@ dependencies {
     implementation("io.github.over-run:overrungl")
     implementation("io.github.over-run:overrungl-joml")
     implementation("io.github.over-run:overrungl-glfw")
-    runtimeOnly("io.github.over-run:overrungl-glfw::$overrunglNatives")
     implementation("io.github.over-run:overrungl-opengl")
     implementation("io.github.over-run:overrungl-stb")
-    runtimeOnly("io.github.over-run:overrungl-stb::$overrunglNatives")
-    //TODO
-    implementation("io.github.over-run:marshal:0.1.0-alpha.24-jdk22")
 }
 
 application {
@@ -57,7 +59,7 @@ application {
     mainModule = "freeworld.client"
     mainClass = "freeworld.client.main.Main"
     applicationDefaultJvmArgs = buildList {
-        if (jdkEnablePreview.toBoolean())add("--enable-preview")
+        if (jdkEnablePreview.toBoolean()) add("--enable-preview")
         add(
             "--enable-native-access=${
                 listOf(

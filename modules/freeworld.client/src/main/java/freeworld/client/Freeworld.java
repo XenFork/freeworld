@@ -91,7 +91,7 @@ public final class Freeworld implements AutoCloseable {
         glfw.windowHint(GLFW.CONTEXT_VERSION_MINOR, 3);
 
         // center window
-        final GLFWVidMode.Value videoMode = glfw.getVideoMode(glfw.getPrimaryMonitor());
+        final GLFWVidMode videoMode = glfw.getVideoMode(glfw.getPrimaryMonitor());
         if (videoMode != null) {
             glfw.windowHint(GLFW.POSITION_X, (videoMode.width() - INIT_WINDOW_WIDTH) / 2);
             glfw.windowHint(GLFW.POSITION_Y, (videoMode.height() - INIT_WINDOW_HEIGHT) / 2);
@@ -267,6 +267,10 @@ public final class Freeworld implements AutoCloseable {
 
     public GLFlags glFlags() {
         return glFlags;
+    }
+
+    public GLStateMgr gl() {
+        return gl;
     }
 
     public MemorySegment window() {

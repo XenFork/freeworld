@@ -33,10 +33,7 @@ import org.joml.*;
 
 import java.lang.Math;
 import java.lang.Runtime;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -67,7 +64,7 @@ public final class WorldRenderer implements GLResource, WorldListener {
             return new DefaultPooledObject<>(obj);
         }
     });
-    private final Map<ChunkPos, ClientChunk> chunks = HashMap.newHashMap(RENDER_CHUNK_COUNT);
+    private final Map<ChunkPos, ClientChunk> chunks = WeakHashMap.newWeakHashMap(RENDER_CHUNK_COUNT);
     private final FrustumIntersection frustumIntersection = new FrustumIntersection();
     private final FrustumRayBuilder frustumRayBuilder = new FrustumRayBuilder();
     private final Vector3f frustumRayOrigin = new Vector3f();
@@ -79,12 +76,13 @@ public final class WorldRenderer implements GLResource, WorldListener {
         this.world = world;
         world.addListener(this);
 
+
         final int processors = Runtime.getRuntime().availableProcessors();
         this.executor = new ThreadPoolExecutor(processors,
             processors,
             0L,
             TimeUnit.MILLISECONDS,
-            new LinkedBlockingDeque<>(),
+            new PriorityBlockingQueue<>(RENDER_CHUNK_COUNT),
             new ThreadFactory() {
                 private final AtomicInteger threadNumber = new AtomicInteger(1);
 
@@ -120,7 +118,7 @@ public final class WorldRenderer implements GLResource, WorldListener {
         return chunks;
     }
 
-    public void compileChunks(List<ClientChunk> renderingChunks) {
+    public void compileChunks(Entity player, List<ClientChunk> renderingChunks) {
         for (ClientChunk chunk : renderingChunks) {
             if (chunk.dirty) {
                 if (chunk.future != null && chunk.future.state() == Future.State.RUNNING) {
@@ -130,7 +128,9 @@ public final class WorldRenderer implements GLResource, WorldListener {
                 if (chunk1 != null) {
                     chunk.copyFrom(chunk1);
                 }
-                chunk.future = executor.submit(new ChunkCompileTask(gameRenderer, this, chunk));
+                final ChunkCompileTask task = new ChunkCompileTask(new ChunkCompiler(gameRenderer, this, chunk), player, chunk.x(), chunk.y(), chunk.z());
+                chunk.future = task;
+                executor.execute(task);
                 chunk.dirty = false;
             }
         }
@@ -406,7 +406,7 @@ public final class WorldRenderer implements GLResource, WorldListener {
 
     private ClientChunk getChunkOrCreate(int x, int y, int z) {
         return chunks.computeIfAbsent(new ChunkPos(x, y, z),
-            chunkPos -> new ClientChunk(world, chunkPos.x(), chunkPos.y(), chunkPos.z()));
+            chunkPos -> new ClientChunk(world, this, chunkPos.x(), chunkPos.y(), chunkPos.z()));
     }
 
     private ClientChunk getChunkByAbsolutePos(int x, int y, int z) {
@@ -419,6 +419,10 @@ public final class WorldRenderer implements GLResource, WorldListener {
 
     public GenericObjectPool<DefaultVertexBuilder> vertexBuilderPool() {
         return vertexBuilderPool;
+    }
+
+    public GameRenderer gameRenderer() {
+        return gameRenderer;
     }
 
     @Override
