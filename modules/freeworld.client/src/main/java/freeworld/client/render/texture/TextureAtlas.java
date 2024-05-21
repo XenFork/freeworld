@@ -37,7 +37,7 @@ public final class TextureAtlas extends Texture {
         this.regionMap = regionMap;
     }
 
-    public static TextureAtlas load(GLStateMgr gl, List<Identifier> identifierList) {
+    public static TextureAtlas load(GLStateMgr gl, List<Identifier> identifierList, int initMipmapLevel) {
         final int numIds = identifierList.size();
         final STBRectPack stbrp = STBRectPack.INSTANCE;
         try (Arena arena = Arena.ofConfined()) {
@@ -47,12 +47,13 @@ public final class TextureAtlas extends Texture {
             final STBRPContext context = STBRPContext.OF.of(arena);
             final STBRPNode nodes = STBRPNode.OF.of(arena, numIds);
             final STBRPRect rects = STBRPRect.OF.of(arena, numIds);
-            int mipmapLevel = 4;
+            int mipmapLevel = initMipmapLevel;
             for (int i = 0; i < numIds; i++) {
                 final NativeImage image = imageMap.get(identifierList.get(i));
                 final int width = image.width();
                 final int height = image.height();
-                if (!isPowerOfTwo(width) || !isPowerOfTwo(height)) {
+                if (mipmapLevel != 0 &&
+                    (!isPowerOfTwo(width) || !isPowerOfTwo(height))) {
                     mipmapLevel = 0;
                 } else if (mipmapLevel > 0) {
                     mipmapLevel = Math.min(Integer.numberOfTrailingZeros(width), Integer.numberOfTrailingZeros(height));

@@ -69,7 +69,7 @@ public final class Freeworld implements AutoCloseable {
     private Entity player;
     private int blockDestroyTimer = 0;
     private int blockPlaceTimer = 0;
-    private int selectBlock = 0;
+    private int hotBarSelection = 0;
 
     private Freeworld() {
         this.glfw = GLFW.INSTANCE;
@@ -120,7 +120,7 @@ public final class Freeworld implements AutoCloseable {
         BuiltinRegistries.ENTITY_TYPE.freeze();
 
         world = new World("New world");
-        player = world.createEntity(EntityTypes.PLAYER, 32.0, 16.0, 32.0);
+        player = world.createEntity(EntityTypes.PLAYER, 0.0, 0.0, 0.0);
 
         initGL();
         run();
@@ -140,9 +140,9 @@ public final class Freeworld implements AutoCloseable {
             }
             case GLFW.PRESS -> {
                 switch (key) {
-                    case GLFW.KEY_1 -> selectBlock = 0;
-                    case GLFW.KEY_2 -> selectBlock = 1;
-                    case GLFW.KEY_3 -> selectBlock = 2;
+                    case GLFW.KEY_1 -> hotBarSelection = 0;
+                    case GLFW.KEY_2 -> hotBarSelection = 1;
+                    case GLFW.KEY_3 -> hotBarSelection = 2;
                 }
             }
         }
@@ -207,7 +207,7 @@ public final class Freeworld implements AutoCloseable {
             if (!hitResult.missed() &&
                 glfw.getMouseButton(window, GLFW.MOUSE_BUTTON_RIGHT) == GLFW.PRESS) {
                 final Direction face = hitResult.face();
-                final BlockType type = switch (selectBlock) {
+                final BlockType type = switch (hotBarSelection) {
                     case 0 -> BlockTypes.STONE;
                     case 1 -> BlockTypes.DIRT;
                     case 2 -> BlockTypes.GRASS_BLOCK;
@@ -299,6 +299,10 @@ public final class Freeworld implements AutoCloseable {
 
     public Entity player() {
         return player;
+    }
+
+    public int hotBarSelection() {
+        return hotBarSelection;
     }
 
     public static Freeworld getInstance() {

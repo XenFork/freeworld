@@ -20,12 +20,17 @@ import overrungl.opengl.*;
  * @since 0.1.0
  */
 public abstract class GLStateMgr implements
-    GL10C, GL11C, GL15C,
+    GL10C, GL11C, GL14C, GL15C,
     GL20C,
     GL30C,
     GL41C,
     DirectAccess {
     private int arrayBufferBinding = 0;
+    private boolean blend = false;
+    private int blendSrcRGB = ONE;
+    private int blendSrcAlpha = ONE;
+    private int blendDstRGB = ZERO;
+    private int blendDstAlpha = ZERO;
     private boolean cullFace = false;
     private int currentProgram = 0;
     private int depthFunc = LESS;
@@ -44,6 +49,66 @@ public abstract class GLStateMgr implements
     @Skip
     public int arrayBufferBinding() {
         return arrayBufferBinding;
+    }
+
+    @Skip
+    public void enableBlend() {
+        if (!this.blend) {
+            this.blend = true;
+            enable(BLEND);
+        }
+    }
+
+    @Skip
+    public void disableBlend() {
+        if (this.blend) {
+            this.blend = false;
+            disable(BLEND);
+        }
+    }
+
+    @Skip
+    public boolean blend() {
+        return blend;
+    }
+
+    @Skip
+    public void setBlendFuncSeparate(int srcRGB, int dstRGB, int srcAlpha, int dstAlpha) {
+        if (this.blendSrcRGB != srcRGB ||
+            this.blendDstRGB != dstRGB ||
+            this.blendSrcAlpha != srcAlpha ||
+            this.blendDstAlpha != dstAlpha) {
+            this.blendSrcRGB = srcRGB;
+            this.blendDstRGB = dstRGB;
+            this.blendSrcAlpha = srcAlpha;
+            this.blendDstAlpha = dstAlpha;
+            blendFuncSeparate(srcRGB, dstRGB, srcAlpha, dstAlpha);
+        }
+    }
+
+    @Skip
+    public void setBlendFunc(int sfactor, int dfactor) {
+        setBlendFuncSeparate(sfactor, dfactor, sfactor, dfactor);
+    }
+
+    @Skip
+    public int blendSrcRGB() {
+        return blendSrcRGB;
+    }
+
+    @Skip
+    public int blendSrcAlpha() {
+        return blendSrcAlpha;
+    }
+
+    @Skip
+    public int blendDstRGB() {
+        return blendDstRGB;
+    }
+
+    @Skip
+    public int blendDstAlpha() {
+        return blendDstAlpha;
     }
 
     @Skip

@@ -23,6 +23,7 @@ import java.util.Map;
  */
 public final class TextureManager implements GLResource {
     public static final Identifier BLOCK_ATLAS = Identifier.ofBuiltin("texture/atlas/block-atlas");
+    public static final Identifier GUI_ATLAS = Identifier.ofBuiltin("texture/atlas/gui-atlas");
     private final Map<Identifier, Texture> textureMap = new HashMap<>();
 
     public void addTexture(Identifier identifier, Texture texture) {

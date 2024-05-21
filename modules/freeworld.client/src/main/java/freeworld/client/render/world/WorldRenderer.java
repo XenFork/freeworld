@@ -55,11 +55,6 @@ public final class WorldRenderer implements GLResource, WorldListener {
         }
 
         @Override
-        public void activateObject(PooledObject<DefaultVertexBuilder> p) {
-            p.getObject().reset();
-        }
-
-        @Override
         public PooledObject<DefaultVertexBuilder> wrap(DefaultVertexBuilder obj) {
             return new DefaultPooledObject<>(obj);
         }
@@ -129,8 +124,8 @@ public final class WorldRenderer implements GLResource, WorldListener {
                     chunk.copyFrom(chunk1);
                 }
                 final ChunkCompileTask task = new ChunkCompileTask(new ChunkCompiler(gameRenderer, this, chunk), player, chunk.x(), chunk.y(), chunk.z());
-                chunk.future = task;
                 executor.execute(task);
+                chunk.future = task;
                 chunk.dirty = false;
             }
         }

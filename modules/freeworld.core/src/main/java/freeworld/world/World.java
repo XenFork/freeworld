@@ -29,7 +29,7 @@ public final class World {
     public static final int TICKING_RADIUS = 5;
     public static final int TICKING_CHUNK_COUNT_CBRT = TICKING_RADIUS * 2 + 1;
     public static final int TICKING_CHUNK_COUNT = TICKING_CHUNK_COUNT_CBRT * TICKING_CHUNK_COUNT_CBRT * TICKING_CHUNK_COUNT_CBRT;
-    public final Map<ChunkPos, Chunk> chunks = HashMap.newHashMap(TICKING_CHUNK_COUNT);
+    public final Map<ChunkPos, Chunk> chunks = WeakHashMap.newWeakHashMap(TICKING_CHUNK_COUNT);
     private final List<Entity> entities = new ArrayList<>();
     private final MotionSystem motionSystem = new MotionSystem();
     private final List<WorldListener> listeners = new ArrayList<>();

@@ -62,11 +62,11 @@ public class Chunk {
             for (int bz = 0; bz < depth; bz++) {
                 for (int by = 0; by < height; by++) {
                     final int absY = ChunkPos.relativeToAbsolute(y, by);
-                    if (absY < 5) {
+                    if (absY < -4) {
                         setBlockType(bx, by, bz, BlockTypes.STONE);
-                    } else if (absY < 8) {
+                    } else if (absY < -1) {
                         setBlockType(bx, by, bz, BlockTypes.DIRT);
-                    } else if (absY == 8) {
+                    } else if (absY == -1) {
                         setBlockType(bx, by, bz, BlockTypes.GRASS_BLOCK);
                     }
                 }
