@@ -132,7 +132,7 @@ public final class GameRenderer implements GLResource {
 
 
         final List<ClientChunk> chunks = worldRenderer.renderingChunks(player);
-        worldRenderer.compileChunks(player, chunks);
+        worldRenderer.compileChunks(chunks);
         worldRenderer.renderChunks(gl, chunks);
 
         hitResult = worldRenderer.selectBlock(player);

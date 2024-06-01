@@ -18,6 +18,7 @@ import freeworld.client.render.model.VertexLayouts;
 import freeworld.client.world.chunk.ClientChunk;
 import freeworld.core.math.AABBox;
 import freeworld.util.Direction;
+import freeworld.util.Logging;
 import freeworld.world.World;
 import freeworld.world.WorldListener;
 import freeworld.world.block.BlockType;
@@ -28,26 +29,29 @@ import org.apache.commons.pool2.BasePooledObjectFactory;
 import org.apache.commons.pool2.PooledObject;
 import org.apache.commons.pool2.impl.DefaultPooledObject;
 import org.apache.commons.pool2.impl.GenericObjectPool;
-import org.jetbrains.annotations.NotNull;
 import org.joml.*;
+import org.slf4j.Logger;
+import reactor.core.scheduler.Scheduler;
+import reactor.core.scheduler.Schedulers;
 
 import java.lang.Math;
-import java.lang.Runtime;
-import java.util.*;
-import java.util.concurrent.*;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.WeakHashMap;
 
 /**
  * @author squid233
  * @since 0.1.0
  */
 public final class WorldRenderer implements GLResource, WorldListener {
+    private static final Logger logger = Logging.caller();
     public static final int RENDER_RADIUS = 5;
     public static final int RENDER_CHUNK_COUNT_CBRT = RENDER_RADIUS * 2 + 1;
     public static final int RENDER_CHUNK_COUNT = RENDER_CHUNK_COUNT_CBRT * RENDER_CHUNK_COUNT_CBRT * RENDER_CHUNK_COUNT_CBRT;
     private final GameRenderer gameRenderer;
     private final World world;
-    private final ExecutorService executor;
+    private final Scheduler scheduler = Schedulers.newParallel("WorldRenderer");
     private final GenericObjectPool<DefaultVertexBuilder> vertexBuilderPool = new GenericObjectPool<>(new BasePooledObjectFactory<>() {
         @Override
         public DefaultVertexBuilder create() {
@@ -70,23 +74,6 @@ public final class WorldRenderer implements GLResource, WorldListener {
         this.gameRenderer = gameRenderer;
         this.world = world;
         world.addListener(this);
-
-
-        final int processors = Runtime.getRuntime().availableProcessors();
-        this.executor = new ThreadPoolExecutor(processors,
-            processors,
-            0L,
-            TimeUnit.MILLISECONDS,
-            new PriorityBlockingQueue<>(RENDER_CHUNK_COUNT),
-            new ThreadFactory() {
-                private final AtomicInteger threadNumber = new AtomicInteger(1);
-
-                @Override
-                public Thread newThread(@NotNull Runnable r) {
-                    return new Thread(r, STR."ChunkCompiler-thread-\{threadNumber.getAndIncrement()}");
-                }
-            },
-            new ThreadPoolExecutor.DiscardPolicy());
     }
 
     private static DefaultVertexBuilder createVertexBuilder() {
@@ -113,21 +100,9 @@ public final class WorldRenderer implements GLResource, WorldListener {
         return chunks;
     }
 
-    public void compileChunks(Entity player, List<ClientChunk> renderingChunks) {
+    public void compileChunks(List<ClientChunk> renderingChunks) {
         for (ClientChunk chunk : renderingChunks) {
-            if (chunk.dirty) {
-                if (chunk.future != null && chunk.future.state() == Future.State.RUNNING) {
-                    chunk.future.cancel(false);
-                }
-                final Chunk chunk1 = world.getOrCreateChunk(chunk.x(), chunk.y(), chunk.z());
-                if (chunk1 != null) {
-                    chunk.copyFrom(chunk1);
-                }
-                final ChunkCompileTask task = new ChunkCompileTask(new ChunkCompiler(gameRenderer, this, chunk), player, chunk.x(), chunk.y(), chunk.z());
-                executor.execute(task);
-                chunk.future = task;
-                chunk.dirty = false;
-            }
+            chunk.compile();
         }
     }
 
@@ -416,13 +391,18 @@ public final class WorldRenderer implements GLResource, WorldListener {
         return vertexBuilderPool;
     }
 
+    public Scheduler scheduler() {
+        return scheduler;
+    }
+
     public GameRenderer gameRenderer() {
         return gameRenderer;
     }
 
     @Override
     public void close(GLStateMgr gl) {
-        executor.close();
+        logger.info("Closing world renderer");
+        scheduler.dispose();
         vertexBuilderPool.close();
         for (ClientChunk chunk : chunks.values()) {
             chunk.close(gl);

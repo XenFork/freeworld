@@ -33,8 +33,7 @@ val overrunglArch = System.getProperty("os.arch")!!.let { arch ->
         else if (arch.startsWith("riscv")) "riscv64"
         else "x64"
 
-        "macos" -> if (arch.startsWith("aarch64")) "arm64" else "x64"
-        "windows" -> if (arch.contains("64") && arch.startsWith("aarch64")) "arm64" else "x64"
+        "macos", "windows" -> if (arch.startsWith("aarch64")) "arm64" else "x64"
         else -> throw Error("Unrecognized or unsupported platform $overrunglOs. Please set \"overrunglArch\" manually")
     }
 }

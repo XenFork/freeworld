@@ -137,6 +137,9 @@ subprojects {
         implementation("ch.qos.logback:logback-classic:$logbackVersion")
         implementation("com.google.code.gson:gson:$gsonVersion")
         implementation("org.apache.commons:commons-pool2:$commonsPoolVersion")
+        implementation(platform("io.projectreactor:reactor-bom:2023.0.6"))
+        implementation("io.projectreactor:reactor-core")
+        implementation("io.projectreactor.addons:reactor-pool")
     }
 }
 
