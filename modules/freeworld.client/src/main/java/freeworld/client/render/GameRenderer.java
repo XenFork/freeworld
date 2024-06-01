@@ -130,7 +130,6 @@ public final class GameRenderer implements GLResource {
         positionColorTexProgram.getUniform(GLProgram.UNIFORM_MODEL_MATRIX).set(modelMatrix);
         positionColorTexProgram.uploadUniforms(gl);
 
-
         final List<ClientChunk> chunks = worldRenderer.renderingChunks(player);
         worldRenderer.compileChunks(chunks);
         worldRenderer.renderChunks(gl, chunks);

@@ -10,16 +10,19 @@
 
 package freeworld.client.world.chunk;
 
-import freeworld.client.render.gl.GLResource;
 import freeworld.client.render.gl.GLStateMgr;
 import freeworld.client.render.model.VertexLayout;
 import freeworld.client.render.world.ChunkCompiler;
 import freeworld.client.render.world.ChunkVertexData;
 import freeworld.client.render.world.WorldRenderer;
+import freeworld.util.Logging;
 import freeworld.world.World;
 import freeworld.world.chunk.Chunk;
+import org.slf4j.Logger;
 import overrungl.opengl.GL15C;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+import reactor.pool.PoolShutdownException;
 
 import java.lang.foreign.MemorySegment;
 import java.lang.ref.Cleaner;
@@ -29,11 +32,12 @@ import java.util.concurrent.atomic.AtomicReference;
  * @author squid233
  * @since 0.1.0
  */
-public final class ClientChunk extends Chunk implements GLResource {
+public final class ClientChunk extends Chunk implements AutoCloseable {
+    private static final Logger logger = Logging.caller();
     private static final Cleaner CLEANER = Cleaner.create();
     private final Cleaner.Cleanable cleanable;
     private final State state;
-    private final WorldRenderer worldRenderer;
+    private final Flux<ChunkVertexData> dataFlux;
     private final AtomicReference<ChunkVertexData> dataRef = new AtomicReference<>();
     /**
      * Is this chunk changed?
@@ -46,7 +50,15 @@ public final class ClientChunk extends Chunk implements GLResource {
         // Get OpenGL context directly
         this.state = new State(worldRenderer.gameRenderer().client().gl());
         this.cleanable = CLEANER.register(this, state);
-        this.worldRenderer = worldRenderer;
+        this.dataFlux = worldRenderer.vertexBuilderPool()
+            .withPoolable(vertexBuilder -> Mono.fromCallable(() -> ChunkCompiler.compile(
+                    vertexBuilder,
+                    worldRenderer.gameRenderer().blockRenderer(),
+                    this
+                ))
+            )
+            .onBackpressureBuffer()
+            .subscribeOn(worldRenderer.scheduler());
     }
 
     private static final class State implements Runnable {
@@ -74,9 +86,11 @@ public final class ClientChunk extends Chunk implements GLResource {
         if (chunk != null) {
             copyFrom(chunk);
         }
-        Mono.fromCallable(() -> ChunkCompiler.compile(worldRenderer, this))
-            .subscribeOn(worldRenderer.scheduler())
-            .subscribe(dataRef::set);
+        dataFlux.subscribe(dataRef::set, throwable -> {
+            if (!(throwable instanceof PoolShutdownException)) {
+                logger.error(STR."Error thrown compiling client chunk \{x()}, \{y()}, \{z()}", throwable);
+            }
+        });
         dirty = false;
     }
 
@@ -126,7 +140,7 @@ public final class ClientChunk extends Chunk implements GLResource {
     }
 
     @Override
-    public void close(GLStateMgr gl) {
+    public void close() {
         cleanable.clean();
     }
 }

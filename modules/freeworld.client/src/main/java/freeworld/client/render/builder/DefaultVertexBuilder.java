@@ -222,6 +222,7 @@ public final class DefaultVertexBuilder implements VertexBuilder {
         return shouldReallocateIndexData;
     }
 
+    @Override
     public VertexLayout vertexLayout() {
         return vertexLayout;
     }

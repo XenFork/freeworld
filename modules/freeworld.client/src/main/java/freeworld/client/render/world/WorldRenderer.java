@@ -22,23 +22,24 @@ import freeworld.util.Logging;
 import freeworld.world.World;
 import freeworld.world.WorldListener;
 import freeworld.world.block.BlockType;
-import freeworld.world.chunk.Chunk;
 import freeworld.world.chunk.ChunkPos;
 import freeworld.world.entity.Entity;
-import org.apache.commons.pool2.BasePooledObjectFactory;
-import org.apache.commons.pool2.PooledObject;
-import org.apache.commons.pool2.impl.DefaultPooledObject;
-import org.apache.commons.pool2.impl.GenericObjectPool;
 import org.joml.*;
 import org.slf4j.Logger;
+import reactor.core.Disposable;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Scheduler;
 import reactor.core.scheduler.Schedulers;
+import reactor.pool.Pool;
+import reactor.pool.PoolBuilder;
 
 import java.lang.Math;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.WeakHashMap;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * @author squid233
@@ -52,18 +53,11 @@ public final class WorldRenderer implements GLResource, WorldListener {
     private final GameRenderer gameRenderer;
     private final World world;
     private final Scheduler scheduler = Schedulers.newParallel("WorldRenderer");
-    private final GenericObjectPool<DefaultVertexBuilder> vertexBuilderPool = new GenericObjectPool<>(new BasePooledObjectFactory<>() {
-        @Override
-        public DefaultVertexBuilder create() {
-            return createVertexBuilder();
-        }
-
-        @Override
-        public PooledObject<DefaultVertexBuilder> wrap(DefaultVertexBuilder obj) {
-            return new DefaultPooledObject<>(obj);
-        }
-    });
-    private final Map<ChunkPos, ClientChunk> chunks = WeakHashMap.newWeakHashMap(RENDER_CHUNK_COUNT);
+    private final Pool<DefaultVertexBuilder> vertexBuilderPool = PoolBuilder
+        .from(Mono.fromCallable(WorldRenderer::createVertexBuilder).subscribeOn(scheduler))
+        .buildPool();
+    private final Map<ChunkPos, ClientChunk> chunks = new ConcurrentHashMap<>(RENDER_CHUNK_COUNT);
+    private final Disposable chunkGC;
     private final FrustumIntersection frustumIntersection = new FrustumIntersection();
     private final FrustumRayBuilder frustumRayBuilder = new FrustumRayBuilder();
     private final Vector3f frustumRayOrigin = new Vector3f();
@@ -74,6 +68,19 @@ public final class WorldRenderer implements GLResource, WorldListener {
         this.gameRenderer = gameRenderer;
         this.world = world;
         world.addListener(this);
+        this.chunkGC = Flux.interval(Duration.ofSeconds(60))
+            .subscribe(_ -> {
+                final List<ChunkPos> list = new ArrayList<>(RENDER_CHUNK_COUNT);
+                World.forEachChunk(gameRenderer.client().player(), RENDER_RADIUS, (x, y, z) -> list.add(new ChunkPos(x, y, z)));
+                final var it = chunks.entrySet().iterator();
+                while (it.hasNext()) {
+                    final var e = it.next();
+                    if (!list.contains(e.getKey())) {
+                        e.getValue().close();
+                        it.remove();
+                    }
+                }
+            });
     }
 
     private static DefaultVertexBuilder createVertexBuilder() {
@@ -81,22 +88,8 @@ public final class WorldRenderer implements GLResource, WorldListener {
     }
 
     public List<ClientChunk> renderingChunks(Entity player) {
-        final int renderBlockRadius = RENDER_RADIUS * Chunk.SIZE;
-        final AABBox box = player.boundingBox().value().grow(renderBlockRadius, renderBlockRadius, renderBlockRadius);
-        final int minX = ChunkPos.absoluteToChunk((int) Math.floor(box.minX()));
-        final int minY = ChunkPos.absoluteToChunk((int) Math.floor(box.minY()));
-        final int minZ = ChunkPos.absoluteToChunk((int) Math.floor(box.minZ()));
-        final int maxX = ChunkPos.absoluteToChunk((int) Math.ceil(box.maxX())) + 1;
-        final int maxY = ChunkPos.absoluteToChunk((int) Math.ceil(box.maxY())) + 1;
-        final int maxZ = ChunkPos.absoluteToChunk((int) Math.ceil(box.maxZ())) + 1;
-        final List<ClientChunk> chunks = new ArrayList<>((maxX - minX) * (maxY - minY) * (maxZ - minZ));
-        for (int x = minX; x < maxX; x++) {
-            for (int y = minY; y < maxY; y++) {
-                for (int z = minZ; z < maxZ; z++) {
-                    chunks.add(getChunkOrCreate(x, y, z));
-                }
-            }
-        }
+        final List<ClientChunk> chunks = new ArrayList<>(RENDER_CHUNK_COUNT);
+        World.forEachChunk(player, RENDER_RADIUS, (x, y, z) -> chunks.add(getChunkOrCreate(x, y, z)));
         return chunks;
     }
 
@@ -387,7 +380,7 @@ public final class WorldRenderer implements GLResource, WorldListener {
         );
     }
 
-    public GenericObjectPool<DefaultVertexBuilder> vertexBuilderPool() {
+    public Pool<DefaultVertexBuilder> vertexBuilderPool() {
         return vertexBuilderPool;
     }
 
@@ -403,9 +396,11 @@ public final class WorldRenderer implements GLResource, WorldListener {
     public void close(GLStateMgr gl) {
         logger.info("Closing world renderer");
         scheduler.dispose();
-        vertexBuilderPool.close();
+        vertexBuilderPool.dispose();
+        chunkGC.dispose();
         for (ClientChunk chunk : chunks.values()) {
-            chunk.close(gl);
+            chunk.close();
         }
+        chunks.clear();
     }
 }
