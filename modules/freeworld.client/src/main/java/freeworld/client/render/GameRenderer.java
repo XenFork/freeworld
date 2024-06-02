@@ -10,24 +10,25 @@
 
 package freeworld.client.render;
 
-import freeworld.client.render.gl.GLDrawMode;
-import freeworld.client.render.gl.GLStateMgr;
-import freeworld.client.render.texture.TextureRegion;
-import freeworld.client.render.world.HitResult;
-import freeworld.client.render.world.WorldRenderer;
 import freeworld.client.Freeworld;
+import freeworld.client.render.gl.GLDrawMode;
 import freeworld.client.render.gl.GLProgram;
 import freeworld.client.render.gl.GLResource;
+import freeworld.client.render.gl.GLStateMgr;
 import freeworld.client.render.model.VertexLayout;
 import freeworld.client.render.model.VertexLayouts;
 import freeworld.client.render.texture.TextureAtlas;
 import freeworld.client.render.texture.TextureManager;
+import freeworld.client.render.texture.TextureRegion;
 import freeworld.client.render.world.BlockRenderer;
+import freeworld.client.render.world.HitResult;
+import freeworld.client.render.world.WorldRenderer;
 import freeworld.client.world.chunk.ClientChunk;
 import freeworld.core.Identifier;
 import freeworld.core.math.AABBox;
 import freeworld.util.Direction;
 import freeworld.util.Logging;
+import freeworld.world.block.BlockType;
 import freeworld.world.entity.Entity;
 import org.joml.Matrix4f;
 import org.slf4j.Logger;
@@ -46,7 +47,7 @@ public final class GameRenderer implements GLResource {
     private final Freeworld client;
     private GLProgram positionColorProgram;
     private GLProgram positionColorTexProgram;
-    private final Matrix4f projectionViewMatrix = new Matrix4f();
+    @Deprecated
     private final Matrix4f modelMatrix = new Matrix4f();
     public static final Identifier TEX_DIRT = Identifier.ofBuiltin("texture/block/dirt.png");
     public static final Identifier TEX_GRASS_BLOCK = Identifier.ofBuiltin("texture/block/grass_block.png");
@@ -112,23 +113,24 @@ public final class GameRenderer implements GLResource {
         gl.enableDepthTest();
         gl.setDepthFunc(GL10C.LEQUAL);
         blockAtlas.bind(gl);
-        projectionViewMatrix.setPerspective(
+
+        RenderSystem.pushMatrices();
+        RenderSystem.setProjectionMatrix(RenderSystem.projectionMatrix().setPerspective(
             (float) Math.toRadians(70.0),
             (float) client.framebufferWidth() / client.framebufferHeight(),
             0.01f,
             1000.0f
-        );
+        ));
         final Camera camera = client.camera();
         final Entity player = client.player();
         camera.moveToEntity(player);
         camera.updateLerp(partialTick);
         camera.updateViewMatrix();
-        projectionViewMatrix.mul(camera.viewMatrix());
-        modelMatrix.identity();
-        positionColorTexProgram.use(gl);
-        positionColorTexProgram.getUniform(GLProgram.UNIFORM_PROJECTION_VIEW_MATRIX).set(projectionViewMatrix);
-        positionColorTexProgram.getUniform(GLProgram.UNIFORM_MODEL_MATRIX).set(modelMatrix);
-        positionColorTexProgram.uploadUniforms(gl);
+        RenderSystem.setViewMatrix(camera.viewMatrix());
+        RenderSystem.setModelMatrix(RenderSystem.modelMatrix().identity());
+
+        RenderSystem.bindProgram(positionColorTexProgram);
+        RenderSystem.updateMatrices();
 
         final List<ClientChunk> chunks = worldRenderer.renderingChunks(player);
         worldRenderer.compileChunks(chunks);
@@ -145,10 +147,8 @@ public final class GameRenderer implements GLResource {
             final float maxZ = (float) box.maxZ();
             final float offset = 0.005f;
             gl.setTextureBinding2D(0);
-            positionColorProgram.use(gl);
-            positionColorProgram.getUniform(GLProgram.UNIFORM_PROJECTION_VIEW_MATRIX).set(projectionViewMatrix);
-            positionColorProgram.getUniform(GLProgram.UNIFORM_MODEL_MATRIX).set(modelMatrix);
-            positionColorProgram.uploadUniforms(gl);
+            RenderSystem.bindProgram(positionColorProgram);
+            RenderSystem.updateMatrices();
             tessellator.begin(GLDrawMode.LINES);
             tessellator.color(0, 0, 0);
             // -x
@@ -170,6 +170,8 @@ public final class GameRenderer implements GLResource {
             tessellator.end(gl);
         }
 
+        RenderSystem.popMatrices();
+
         renderGui(gl, partialTick);
     }
 
@@ -178,8 +180,13 @@ public final class GameRenderer implements GLResource {
         final int height = client.framebufferHeight();
         final float screenWidth = width / guiScale;
         final float screenHeight = height / guiScale;
-        projectionViewMatrix.setOrtho(0.0f, screenWidth, 0.0f, screenHeight, -100.0f, 100.0f);
-        modelMatrix.translation(screenWidth * 0.5f, screenHeight * 0.5f, 0.0f);
+
+        RenderSystem.pushMatrices();
+
+        RenderSystem.setProjectionMatrix(RenderSystem.projectionMatrix()
+            .setOrtho(0.0f, screenWidth, 0.0f, screenHeight, -300.0f, 300.0f));
+        RenderSystem.setModelMatrix(RenderSystem.modelMatrix()
+            .translation(screenWidth * 0.5f, screenHeight * 0.5f, 0.0f));
 
         gl.clear(GL10C.DEPTH_BUFFER_BIT);
 
@@ -188,10 +195,8 @@ public final class GameRenderer implements GLResource {
         gl.disableCullFace();
         gl.disableDepthTest();
         guiAtlas.bind(gl);
-        positionColorTexProgram.use(gl);
-        positionColorTexProgram.getUniform(GLProgram.UNIFORM_PROJECTION_VIEW_MATRIX).set(projectionViewMatrix);
-        positionColorTexProgram.getUniform(GLProgram.UNIFORM_MODEL_MATRIX).set(modelMatrix);
-        positionColorTexProgram.uploadUniforms(gl);
+        RenderSystem.bindProgram(positionColorTexProgram);
+        RenderSystem.updateMatrices();
         tessellator.begin(GLDrawMode.TRIANGLES);
         renderCrossing();
         tessellator.end(gl);
@@ -201,6 +206,12 @@ public final class GameRenderer implements GLResource {
         renderHotBar(screenHeight);
         renderHotBarSelected(screenHeight);
         tessellator.end(gl);
+
+        gl.enableDepthTest();
+        blockAtlas.bind(gl);
+        renderHotBarItems(gl, screenHeight);
+
+        RenderSystem.popMatrices();
     }
 
     private void renderGuiSprite(Identifier identifier, float x, float y, float anchorX, float anchorY) {
@@ -228,11 +239,29 @@ public final class GameRenderer implements GLResource {
     }
 
     private void renderHotBar(float screenHeight) {
-        renderGuiSprite(TEX_HOT_BAR, 0.0f, -screenHeight * 0.5f, 0.5f, 0.0f);
+        renderGuiSprite(TEX_HOT_BAR, 0.0f, -screenHeight * 0.5f + 1, 0.5f, 0.0f);
     }
 
     private void renderHotBarSelected(float screenHeight) {
-        renderGuiSprite(TEX_HOT_BAR_SELECTED, (client.hotBarSelection() - 5) * 22.0f - 2.0f, -screenHeight * 0.5f, 0.0f, 0.0f);
+        renderGuiSprite(TEX_HOT_BAR_SELECTED, (client.hotBarSelection() - 5) * 20.0f - 2.0f, -screenHeight * 0.5f, 0.0f, 0.0f);
+    }
+
+    private void renderHotBarItems(GLStateMgr gl, float screenHeight) {
+        int i = 0;
+        for (BlockType blockType : client.hotBar()) {
+            RenderSystem.modelMatrix().pushMatrix();
+            RenderSystem.setModelMatrix(RenderSystem.modelMatrix()
+                .translate((i - 5) * 20 + 3, 0, 0)
+                .translate(0, -screenHeight * 0.5f + 8, 100)
+                .rotateX((float) Math.toRadians(30.0))
+                .rotateY((float) Math.toRadians(45.0))
+                .scale(10));
+            tessellator.begin(GLDrawMode.TRIANGLES);
+            blockRenderer.renderBlock(tessellator, blockType, 0, 0, 0);
+            tessellator.end(gl);
+            i++;
+            RenderSystem.modelMatrix().popMatrix();
+        }
     }
 
     @Override
@@ -266,14 +295,6 @@ public final class GameRenderer implements GLResource {
 
     public BlockRenderer blockRenderer() {
         return blockRenderer;
-    }
-
-    public Matrix4f projectionViewMatrix() {
-        return projectionViewMatrix;
-    }
-
-    public Matrix4f modelMatrix() {
-        return modelMatrix;
     }
 
     public HitResult hitResult() {

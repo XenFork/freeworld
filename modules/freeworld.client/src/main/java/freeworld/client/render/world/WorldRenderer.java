@@ -11,6 +11,7 @@
 package freeworld.client.render.world;
 
 import freeworld.client.render.GameRenderer;
+import freeworld.client.render.RenderSystem;
 import freeworld.client.render.builder.DefaultVertexBuilder;
 import freeworld.client.render.gl.GLResource;
 import freeworld.client.render.gl.GLStateMgr;
@@ -37,6 +38,7 @@ import reactor.pool.PoolBuilder;
 import java.lang.Math;
 import java.time.Duration;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -90,6 +92,9 @@ public final class WorldRenderer implements GLResource, WorldListener {
     public List<ClientChunk> renderingChunks(Entity player) {
         final List<ClientChunk> chunks = new ArrayList<>(RENDER_CHUNK_COUNT);
         World.forEachChunk(player, RENDER_RADIUS, (x, y, z) -> chunks.add(getChunkOrCreate(x, y, z)));
+        chunks.sort(Comparator
+            .<ClientChunk>comparingDouble(o -> o.yDistanceToPlayer(player))
+            .thenComparingDouble(o -> o.xzDistanceToPlayerSquared(player)));
         return chunks;
     }
 
@@ -100,7 +105,7 @@ public final class WorldRenderer implements GLResource, WorldListener {
     }
 
     public void renderChunks(GLStateMgr gl, List<ClientChunk> renderingChunks) {
-        frustumIntersection.set(gameRenderer.projectionViewMatrix());
+        frustumIntersection.set(RenderSystem.projectionViewMatrix());
         for (ClientChunk chunk : renderingChunks) {
             if (frustumIntersection.testAab(
                 chunk.fromX(),
@@ -116,7 +121,7 @@ public final class WorldRenderer implements GLResource, WorldListener {
     }
 
     public HitResult selectBlock(Entity player) {
-        frustumRayBuilder.set(gameRenderer.projectionViewMatrix());
+        frustumRayBuilder.set(RenderSystem.projectionViewMatrix());
         frustumRayBuilder.origin(frustumRayOrigin);
         frustumRayBuilder.dir(0.5f, 0.5f, frustumRayDir);
         final float ox = frustumRayOrigin.x();

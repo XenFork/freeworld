@@ -30,6 +30,12 @@ public final class BlockRenderer {
         this.gameRenderer = gameRenderer;
     }
 
+    public void renderBlock(VertexBuilder builder, BlockType blockType, int x, int y, int z) {
+        for (Direction direction : Direction.LIST) {
+            renderBlockFace(builder, blockType, x, y, z, direction);
+        }
+    }
+
     public void renderBlockFace(VertexBuilder builder, BlockType blockType, int x, int y, int z, Direction direction) {
         if (blockType.air()) {
             return;

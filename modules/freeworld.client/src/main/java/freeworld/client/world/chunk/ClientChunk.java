@@ -18,6 +18,9 @@ import freeworld.client.render.world.WorldRenderer;
 import freeworld.util.Logging;
 import freeworld.world.World;
 import freeworld.world.chunk.Chunk;
+import freeworld.world.entity.Entity;
+import freeworld.world.entity.component.PositionComponent;
+import org.joml.Vector3d;
 import org.slf4j.Logger;
 import overrungl.opengl.GL15C;
 import reactor.core.publisher.Flux;
@@ -38,7 +41,6 @@ public final class ClientChunk extends Chunk implements AutoCloseable {
     private final Cleaner.Cleanable cleanable;
     private final State state;
     private final Flux<ChunkVertexData> dataFlux;
-    private final AtomicReference<ChunkVertexData> dataRef = new AtomicReference<>();
     /**
      * Is this chunk changed?
      */
@@ -66,6 +68,7 @@ public final class ClientChunk extends Chunk implements AutoCloseable {
         private int vao = 0;
         private int vbo = 0;
         private int ebo = 0;
+        private final AtomicReference<ChunkVertexData> dataRef = new AtomicReference<>();
 
         private State(GLStateMgr gl) {
             this.gl = gl;
@@ -75,6 +78,7 @@ public final class ClientChunk extends Chunk implements AutoCloseable {
         public void run() {
             gl.deleteVertexArrays(vao);
             gl.deleteBuffers(vbo, ebo);
+            dataRef.set(null);
         }
     }
 
@@ -86,7 +90,7 @@ public final class ClientChunk extends Chunk implements AutoCloseable {
         if (chunk != null) {
             copyFrom(chunk);
         }
-        dataFlux.subscribe(dataRef::set, throwable -> {
+        dataFlux.subscribe(state.dataRef::set, throwable -> {
             if (!(throwable instanceof PoolShutdownException)) {
                 logger.error(STR."Error thrown compiling client chunk \{x()}, \{y()}, \{z()}", throwable);
             }
@@ -95,10 +99,10 @@ public final class ClientChunk extends Chunk implements AutoCloseable {
     }
 
     public void render(GLStateMgr gl) {
-        final ChunkVertexData data = dataRef.get();
+        final ChunkVertexData data = state.dataRef.get();
         if (data != null) {
             buildBuffer(gl, data);
-            dataRef.set(null);
+            state.dataRef.set(null);
         }
         if (state.vao != 0) {
             gl.setVertexArrayBinding(state.vao);
@@ -131,6 +135,22 @@ public final class ClientChunk extends Chunk implements AutoCloseable {
         } else {
             gl.bufferSubData(GL15C.ELEMENT_ARRAY_BUFFER, 0L, indexData);
         }
+    }
+
+    public double xzDistanceToPlayerSquared(Entity player) {
+        if (!player.hasComponent(PositionComponent.ID)) {
+            return 0.0;
+        }
+        final Vector3d value = player.position().value();
+        return (value.x() - x()) * (value.z() - z());
+    }
+
+    public double yDistanceToPlayer(Entity player) {
+        if (!player.hasComponent(PositionComponent.ID)) {
+            return 0.0;
+        }
+        final Vector3d value = player.position().value();
+        return Math.abs(value.y() - y());
     }
 
     @Override

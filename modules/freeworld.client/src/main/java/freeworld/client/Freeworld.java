@@ -11,6 +11,7 @@
 package freeworld.client;
 
 import freeworld.client.render.GameRenderer;
+import freeworld.client.render.RenderSystem;
 import freeworld.client.render.gl.GLStateMgr;
 import freeworld.client.render.world.HitResult;
 import freeworld.client.render.Camera;
@@ -70,6 +71,18 @@ public final class Freeworld implements AutoCloseable {
     private int blockDestroyTimer = 0;
     private int blockPlaceTimer = 0;
     private int hotBarSelection = 0;
+    private final BlockType[] hotBar = {
+        BlockTypes.STONE,
+        BlockTypes.DIRT,
+        BlockTypes.GRASS_BLOCK,
+        BlockTypes.AIR,
+        BlockTypes.AIR,
+        BlockTypes.AIR,
+        BlockTypes.AIR,
+        BlockTypes.AIR,
+        BlockTypes.AIR,
+        BlockTypes.AIR
+    };
 
     private Freeworld() {
         this.glfw = GLFW.INSTANCE;
@@ -104,7 +117,8 @@ public final class Freeworld implements AutoCloseable {
 
         glfw.setKeyCallback(window, (_, key, scancode, action, mods) -> onKey(key, scancode, action, mods));
         glfw.setFramebufferSizeCallback(window, (_, width, height) -> onResize(width, height));
-        glfw.setCursorPosCallback(window, (_, xpos, ypos) -> onCursorPos(xpos, ypos));
+        glfw.setCursorPosCallback(window, (_, posX, posY) -> onCursorPos(posX, posY));
+        glfw.setScrollCallback(window, (_, scrollX, scrollY) -> onScroll(scrollX, scrollY));
 
         final Pair.OfInt framebufferSize = glfw.getFramebufferSize(window);
         framebufferWidth = framebufferSize.x();
@@ -143,6 +157,13 @@ public final class Freeworld implements AutoCloseable {
                     case GLFW.KEY_1 -> hotBarSelection = 0;
                     case GLFW.KEY_2 -> hotBarSelection = 1;
                     case GLFW.KEY_3 -> hotBarSelection = 2;
+                    case GLFW.KEY_4 -> hotBarSelection = 3;
+                    case GLFW.KEY_5 -> hotBarSelection = 4;
+                    case GLFW.KEY_6 -> hotBarSelection = 5;
+                    case GLFW.KEY_7 -> hotBarSelection = 6;
+                    case GLFW.KEY_8 -> hotBarSelection = 7;
+                    case GLFW.KEY_9 -> hotBarSelection = 8;
+                    case GLFW.KEY_0 -> hotBarSelection = 9;
                 }
             }
         }
@@ -176,6 +197,19 @@ public final class Freeworld implements AutoCloseable {
         cursorY = y;
     }
 
+    private void onScroll(double x, double y) {
+        if (y < 0.0) {
+            hotBarSelection++;
+        } else if (y > 0.0) {
+            hotBarSelection--;
+        }
+        if (hotBarSelection > 9) {
+            hotBarSelection = 0;
+        } else if (hotBarSelection < 0) {
+            hotBarSelection = 9;
+        }
+    }
+
     private void tick() {
         camera.preUpdate();
 
@@ -207,12 +241,7 @@ public final class Freeworld implements AutoCloseable {
             if (!hitResult.missed() &&
                 glfw.getMouseButton(window, GLFW.MOUSE_BUTTON_RIGHT) == GLFW.PRESS) {
                 final Direction face = hitResult.face();
-                final BlockType type = switch (hotBarSelection) {
-                    case 0 -> BlockTypes.STONE;
-                    case 1 -> BlockTypes.DIRT;
-                    case 2 -> BlockTypes.GRASS_BLOCK;
-                    default -> BlockTypes.AIR;
-                };
+                final BlockType type = hotBar[hotBarSelection];
                 if (!type.air()) {
                     world.setBlockType(
                         hitResult.x() + face.axisX(),
@@ -232,6 +261,8 @@ public final class Freeworld implements AutoCloseable {
         glfw.makeContextCurrent(window);
         glFlags = GLLoader.loadFlags(glfw::getProcAddress);
         gl = GLLoader.loadContext(MethodHandles.lookup(), glFlags, GLStateMgr.class);
+
+        RenderSystem.initialize(gl);
 
         gameRenderer = new GameRenderer(this);
         gameRenderer.init(gl);
@@ -303,6 +334,10 @@ public final class Freeworld implements AutoCloseable {
 
     public int hotBarSelection() {
         return hotBarSelection;
+    }
+
+    public BlockType[] hotBar() {
+        return hotBar;
     }
 
     public static Freeworld getInstance() {
