@@ -56,7 +56,7 @@ public final class WorldRenderer implements GLResource, WorldListener {
     private final World world;
     private final Scheduler scheduler = Schedulers.newParallel("WorldRenderer");
     private final Pool<DefaultVertexBuilder> vertexBuilderPool = PoolBuilder
-        .from(Mono.fromCallable(WorldRenderer::createVertexBuilder).subscribeOn(scheduler))
+        .from(Mono.fromSupplier(WorldRenderer::createVertexBuilder).subscribeOn(scheduler))
         .buildPool();
     private final Map<ChunkPos, ClientChunk> chunks = new ConcurrentHashMap<>(RENDER_CHUNK_COUNT);
     private final Disposable chunkGC;

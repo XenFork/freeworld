@@ -30,7 +30,6 @@ import freeworld.util.Direction;
 import freeworld.util.Logging;
 import freeworld.world.block.BlockType;
 import freeworld.world.entity.Entity;
-import org.joml.Matrix4f;
 import org.slf4j.Logger;
 import overrungl.opengl.GL10C;
 
@@ -47,8 +46,6 @@ public final class GameRenderer implements GLResource {
     private final Freeworld client;
     private GLProgram positionColorProgram;
     private GLProgram positionColorTexProgram;
-    @Deprecated
-    private final Matrix4f modelMatrix = new Matrix4f();
     public static final Identifier TEX_DIRT = Identifier.ofBuiltin("texture/block/dirt.png");
     public static final Identifier TEX_GRASS_BLOCK = Identifier.ofBuiltin("texture/block/grass_block.png");
     public static final Identifier TEX_STONE = Identifier.ofBuiltin("texture/block/stone.png");

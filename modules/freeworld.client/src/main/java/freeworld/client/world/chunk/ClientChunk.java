@@ -53,7 +53,7 @@ public final class ClientChunk extends Chunk implements AutoCloseable {
         this.state = new State(worldRenderer.gameRenderer().client().gl());
         this.cleanable = CLEANER.register(this, state);
         this.dataFlux = worldRenderer.vertexBuilderPool()
-            .withPoolable(vertexBuilder -> Mono.fromCallable(() -> ChunkCompiler.compile(
+            .withPoolable(vertexBuilder -> Mono.fromSupplier(() -> ChunkCompiler.compile(
                     vertexBuilder,
                     worldRenderer.gameRenderer().blockRenderer(),
                     this
