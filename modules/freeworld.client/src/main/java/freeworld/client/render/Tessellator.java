@@ -175,6 +175,11 @@ public final class Tessellator implements GLResource, VertexBuilder {
     }
 
     @Override
+    public VertexLayout vertexLayout() {
+        return VERTEX_LAYOUT;
+    }
+
+    @Override
     public void close(GLStateMgr gl) {
         gl.deleteVertexArrays(vao);
         gl.deleteBuffers(vbo, ebo);

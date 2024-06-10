@@ -10,41 +10,57 @@
 
 package freeworld.client.world.chunk;
 
-import freeworld.client.render.gl.GLResource;
 import freeworld.client.render.gl.GLStateMgr;
 import freeworld.client.render.model.VertexLayout;
+import freeworld.client.render.world.ChunkCompiler;
 import freeworld.client.render.world.ChunkVertexData;
 import freeworld.client.render.world.WorldRenderer;
+import freeworld.util.Logging;
 import freeworld.world.World;
 import freeworld.world.chunk.Chunk;
+import freeworld.world.entity.Entity;
+import freeworld.world.entity.component.PositionComponent;
+import org.joml.Vector3d;
+import org.slf4j.Logger;
 import overrungl.opengl.GL15C;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
+import reactor.pool.PoolShutdownException;
 
 import java.lang.foreign.MemorySegment;
 import java.lang.ref.Cleaner;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * @author squid233
  * @since 0.1.0
  */
-public final class ClientChunk extends Chunk implements GLResource {
+public final class ClientChunk extends Chunk implements AutoCloseable {
+    private static final Logger logger = Logging.caller();
     private static final Cleaner CLEANER = Cleaner.create();
     private final Cleaner.Cleanable cleanable;
     private final State state;
-    public Future<ChunkVertexData> future = null;
+    private final Flux<ChunkVertexData> dataFlux;
     /**
      * Is this chunk changed?
      */
-    public boolean dirty = true;
+    private boolean dirty = true;
     private int indexCount = 0;
-    private boolean allAir = false;
 
     public ClientChunk(World world, WorldRenderer worldRenderer, int x, int y, int z) {
         super(world, x, y, z);
         // Get OpenGL context directly
         this.state = new State(worldRenderer.gameRenderer().client().gl());
         this.cleanable = CLEANER.register(this, state);
+        this.dataFlux = worldRenderer.vertexBuilderPool()
+            .withPoolable(vertexBuilder -> Mono.fromSupplier(() -> ChunkCompiler.compile(
+                    vertexBuilder,
+                    worldRenderer.gameRenderer().blockRenderer(),
+                    this
+                ))
+            )
+            .onBackpressureBuffer()
+            .subscribeOn(worldRenderer.scheduler());
     }
 
     private static final class State implements Runnable {
@@ -52,6 +68,7 @@ public final class ClientChunk extends Chunk implements GLResource {
         private int vao = 0;
         private int vbo = 0;
         private int ebo = 0;
+        private final AtomicReference<ChunkVertexData> dataRef = new AtomicReference<>();
 
         private State(GLStateMgr gl) {
             this.gl = gl;
@@ -61,54 +78,79 @@ public final class ClientChunk extends Chunk implements GLResource {
         public void run() {
             gl.deleteVertexArrays(vao);
             gl.deleteBuffers(vbo, ebo);
+            dataRef.set(null);
         }
     }
 
-    public void render(GLStateMgr gl) {
-        try {
-            if (future != null && future.state() == Future.State.SUCCESS) {
-                final ChunkVertexData data = future.get();
-
-                indexCount = data.indexCount();
-                if (indexCount == 0) {
-                    future = null;
-                    allAir = true;
-                    return;
-                } else {
-                    allAir = false;
-                }
-
-                final MemorySegment vertexData = data.vertexData();
-                final MemorySegment indexData = data.indexData();
-
-                if (state.vao == 0) state.vao = gl.genVertexArrays();
-                if (state.vbo == 0) state.vbo = gl.genBuffers();
-                if (state.ebo == 0) state.ebo = gl.genBuffers();
-                gl.setVertexArrayBinding(state.vao);
-                gl.setArrayBufferBinding(state.vbo);
-                if (data.shouldReallocateVertexData()) {
-                    gl.bufferData(GL15C.ARRAY_BUFFER, vertexData, GL15C.DYNAMIC_DRAW);
-                    final VertexLayout layout = data.vertexLayout();
-                    layout.enableAttribs(gl);
-                    layout.specifyAttribPointers(gl);
-                } else {
-                    gl.bufferSubData(GL15C.ARRAY_BUFFER, 0L, vertexData);
-                }
-                gl.bindBuffer(GL15C.ELEMENT_ARRAY_BUFFER, state.ebo);
-                if (data.shouldReallocateIndexData()) {
-                    gl.bufferData(GL15C.ELEMENT_ARRAY_BUFFER, indexData, GL15C.DYNAMIC_DRAW);
-                } else {
-                    gl.bufferSubData(GL15C.ELEMENT_ARRAY_BUFFER, 0L, indexData);
-                }
-                future = null;
-            }
-        } catch (InterruptedException | ExecutionException e) {
-            throw new RuntimeException(e);
+    public void compile() {
+        if (!dirty) {
+            return;
         }
-        if (state.vao != 0 && !allAir) {
+        final Chunk chunk = world().getOrCreateChunk(x(), y(), z());
+        if (chunk != null) {
+            copyFrom(chunk);
+        }
+        dataFlux.subscribe(state.dataRef::set, throwable -> {
+            if (!(throwable instanceof PoolShutdownException)) {
+                logger.error(STR."Error thrown compiling client chunk \{x()}, \{y()}, \{z()}", throwable);
+            }
+        });
+        dirty = false;
+    }
+
+    public void render(GLStateMgr gl) {
+        final ChunkVertexData data = state.dataRef.get();
+        if (data != null) {
+            buildBuffer(gl, data);
+            state.dataRef.set(null);
+        }
+        if (state.vao != 0) {
             gl.setVertexArrayBinding(state.vao);
             gl.drawElements(GLStateMgr.TRIANGLES, indexCount, GLStateMgr.UNSIGNED_INT, MemorySegment.NULL);
         }
+    }
+
+    private void buildBuffer(GLStateMgr gl, ChunkVertexData data) {
+        indexCount = data.indexCount();
+
+        final MemorySegment vertexData = data.vertexData();
+        final MemorySegment indexData = data.indexData();
+
+        if (state.vao == 0) state.vao = gl.genVertexArrays();
+        if (state.vbo == 0) state.vbo = gl.genBuffers();
+        if (state.ebo == 0) state.ebo = gl.genBuffers();
+        gl.setVertexArrayBinding(state.vao);
+        gl.setArrayBufferBinding(state.vbo);
+        if (data.shouldReallocateVertexData()) {
+            gl.bufferData(GL15C.ARRAY_BUFFER, vertexData, GL15C.DYNAMIC_DRAW);
+            final VertexLayout layout = data.vertexLayout();
+            layout.enableAttribs(gl);
+            layout.specifyAttribPointers(gl);
+        } else {
+            gl.bufferSubData(GL15C.ARRAY_BUFFER, 0L, vertexData);
+        }
+        gl.bindBuffer(GL15C.ELEMENT_ARRAY_BUFFER, state.ebo);
+        if (data.shouldReallocateIndexData()) {
+            gl.bufferData(GL15C.ELEMENT_ARRAY_BUFFER, indexData, GL15C.DYNAMIC_DRAW);
+        } else {
+            gl.bufferSubData(GL15C.ELEMENT_ARRAY_BUFFER, 0L, indexData);
+        }
+    }
+
+    public double xzDistanceToPlayerSquared(Entity player) {
+        if (!player.hasComponent(PositionComponent.ID)) {
+            return 0.0;
+        }
+        final Vector3d value = player.position().value();
+        return (value.x() - x()) * (value.z() - z());
+    }
+
+    public double yDistanceToPlayer(Entity player) {
+        if (!player.hasComponent(PositionComponent.ID)) {
+            return 0.0;
+        }
+        final Vector3d value = player.position().value();
+        return Math.abs(value.y() - y());
     }
 
     @Override
@@ -118,7 +160,7 @@ public final class ClientChunk extends Chunk implements GLResource {
     }
 
     @Override
-    public void close(GLStateMgr gl) {
+    public void close() {
         cleanable.clean();
     }
 }

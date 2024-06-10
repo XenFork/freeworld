@@ -10,6 +10,8 @@
 
 package freeworld.client.render.builder;
 
+import freeworld.client.render.model.VertexLayout;
+
 import java.lang.foreign.MemorySegment;
 import java.lang.foreign.ValueLayout;
 
@@ -63,4 +65,6 @@ public interface VertexBuilder {
     boolean shouldReallocateVertexData();
 
     boolean shouldReallocateIndexData();
+
+    VertexLayout vertexLayout();
 }

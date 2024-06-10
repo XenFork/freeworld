@@ -88,6 +88,7 @@ val commonsPoolVersion: String by rootProject
 val gsonVersion: String by rootProject
 val jomlVersion: String by rootProject
 val logbackVersion: String by rootProject
+val reactorVersion: String by rootProject
 
 class GameModule(
     val artifactId: String,
@@ -137,6 +138,9 @@ subprojects {
         implementation("ch.qos.logback:logback-classic:$logbackVersion")
         implementation("com.google.code.gson:gson:$gsonVersion")
         implementation("org.apache.commons:commons-pool2:$commonsPoolVersion")
+        implementation(platform("io.projectreactor:reactor-bom:$reactorVersion"))
+        implementation("io.projectreactor:reactor-core")
+        implementation("io.projectreactor.addons:reactor-pool")
     }
 }
 

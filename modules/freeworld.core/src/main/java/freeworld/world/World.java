@@ -10,6 +10,8 @@
 
 package freeworld.world;
 
+import freeworld.core.math.AABBox;
+import freeworld.util.Int3Consumer;
 import freeworld.world.block.BlockType;
 import freeworld.world.block.BlockTypes;
 import freeworld.world.chunk.Chunk;
@@ -19,7 +21,11 @@ import freeworld.world.entity.EntityType;
 import freeworld.world.entity.component.PositionComponent;
 import freeworld.world.entity.system.MotionSystem;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * @author squid233
@@ -29,12 +35,30 @@ public final class World {
     public static final int TICKING_RADIUS = 5;
     public static final int TICKING_CHUNK_COUNT_CBRT = TICKING_RADIUS * 2 + 1;
     public static final int TICKING_CHUNK_COUNT = TICKING_CHUNK_COUNT_CBRT * TICKING_CHUNK_COUNT_CBRT * TICKING_CHUNK_COUNT_CBRT;
-    public final Map<ChunkPos, Chunk> chunks = WeakHashMap.newWeakHashMap(TICKING_CHUNK_COUNT);
+    public final Map<ChunkPos, Chunk> chunks = new ConcurrentHashMap<>(TICKING_CHUNK_COUNT);
     private final List<Entity> entities = new ArrayList<>();
     private final MotionSystem motionSystem = new MotionSystem();
     private final List<WorldListener> listeners = new ArrayList<>();
 
     public World(String name) {
+    }
+
+    public static void forEachChunk(Entity player, int chunkRadius, Int3Consumer consumer) {
+        final int radius = chunkRadius * Chunk.SIZE;
+        final AABBox box = player.boundingBox().value().grow(radius, radius, radius);
+        final int minX = ChunkPos.absoluteToChunk((int) Math.floor(box.minX()));
+        final int minY = ChunkPos.absoluteToChunk((int) Math.floor(box.minY()));
+        final int minZ = ChunkPos.absoluteToChunk((int) Math.floor(box.minZ()));
+        final int maxX = ChunkPos.absoluteToChunk((int) Math.ceil(box.maxX())) + 1;
+        final int maxY = ChunkPos.absoluteToChunk((int) Math.ceil(box.maxY())) + 1;
+        final int maxZ = ChunkPos.absoluteToChunk((int) Math.ceil(box.maxZ())) + 1;
+        for (int x = minX; x < maxX; x++) {
+            for (int y = minY; y < maxY; y++) {
+                for (int z = minZ; z < maxZ; z++) {
+                    consumer.accept(x, y, z);
+                }
+            }
+        }
     }
 
     public void addListener(WorldListener listener) {
