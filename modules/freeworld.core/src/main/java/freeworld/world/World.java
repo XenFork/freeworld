@@ -11,6 +11,7 @@
 package freeworld.world;
 
 import freeworld.core.math.AABBox;
+import freeworld.math.Vector3d;
 import freeworld.util.Int3Consumer;
 import freeworld.world.block.BlockType;
 import freeworld.world.block.BlockTypes;
@@ -72,7 +73,7 @@ public final class World {
     public Entity createEntity(EntityType type, double x, double y, double z) {
         final Entity entity = new Entity(this, UUID.randomUUID(), type);
         if (entity.hasComponent(PositionComponent.ID)) {
-            entity.position().value().set(x, y, z);
+            entity.setComponent(new PositionComponent(new Vector3d(x, y, z)));
         }
         entities.add(entity);
         return entity;

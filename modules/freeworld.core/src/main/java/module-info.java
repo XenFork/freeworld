@@ -26,10 +26,10 @@ module freeworld.core {
     exports freeworld.world.entity.component;
     exports freeworld.world.entity.system;
 
+    requires transitive freeworld.math;
     requires ch.qos.logback.core;
     requires ch.qos.logback.classic;
     requires transitive com.google.gson;
-    requires transitive org.joml;
     requires transitive org.slf4j;
     requires static org.jetbrains.annotations;
 

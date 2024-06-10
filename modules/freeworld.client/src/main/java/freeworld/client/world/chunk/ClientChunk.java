@@ -15,12 +15,13 @@ import freeworld.client.render.model.VertexLayout;
 import freeworld.client.render.world.ChunkCompiler;
 import freeworld.client.render.world.ChunkVertexData;
 import freeworld.client.render.world.WorldRenderer;
+import freeworld.math.Vector2d;
+import freeworld.math.Vector3d;
 import freeworld.util.Logging;
 import freeworld.world.World;
 import freeworld.world.chunk.Chunk;
 import freeworld.world.entity.Entity;
 import freeworld.world.entity.component.PositionComponent;
-import org.joml.Vector3d;
 import org.slf4j.Logger;
 import overrungl.opengl.GL15C;
 import reactor.core.publisher.Flux;
@@ -142,7 +143,7 @@ public final class ClientChunk extends Chunk implements AutoCloseable {
             return 0.0;
         }
         final Vector3d value = player.position().value();
-        return (value.x() - x()) * (value.z() - z());
+        return Vector2d.distanceSquared(x(), value.x(), z(), value.z());
     }
 
     public double yDistanceToPlayer(Entity player) {

@@ -11,11 +11,11 @@
 package freeworld.world.entity.system;
 
 import freeworld.core.math.AABBox;
+import freeworld.math.Vector3d;
 import freeworld.world.World;
 import freeworld.world.block.BlockType;
 import freeworld.world.chunk.ChunkPos;
 import freeworld.world.entity.Entity;
-import org.joml.Vector3d;
 import freeworld.world.entity.component.*;
 
 import java.util.ArrayList;
@@ -34,19 +34,16 @@ public final class MotionSystem implements EntitySystem {
                 PositionComponent.ID,
                 VelocityComponent.ID)) {
                 final Vector3d acceleration = entity.acceleration().value();
-                final Vector3d position = entity.position().value();
-                final Vector3d velocity = entity.velocity().value();
+                Vector3d position = entity.position().value();
+                Vector3d velocity = entity.velocity().value();
 
-                velocity.add(acceleration);
-                velocity.y -= 0.08;
+                velocity = velocity.add(acceleration.x(), acceleration.y() - 0.08, acceleration.z());
 
                 AABBox boundingBox;
                 if (entity.hasComponent(BoundingBoxComponent.ID)) {
                     boundingBox = entity.boundingBox().value();
 
-                    final double originVx = velocity.x();
-                    final double originVy = velocity.y();
-                    final double originVz = velocity.z();
+                    final Vector3d originV = velocity;
                     double moveX = velocity.x();
                     double moveY = velocity.y();
                     double moveZ = velocity.z();
@@ -93,34 +90,39 @@ public final class MotionSystem implements EntitySystem {
                     }
                     boundingBox = boundingBox.move(0.0, 0.0, moveZ);
 
-                    if (originVy != moveY && originVy < 0.0) {
+                    if (originV.y() != moveY && originV.y() < 0.0) {
                         entity.addComponent(OnGroundComponent.INSTANCE);
                     } else {
                         entity.removeComponent(OnGroundComponent.ID);
                     }
 
-                    if (originVx != moveX) {
-                        velocity.x = 0.0;
+                    double fvx = velocity.x();
+                    double fvy = velocity.y();
+                    double fvz = velocity.z();
+                    if (originV.x() != moveX) {
+                        fvx = 0.0;
                     }
-                    if (originVy != moveY) {
-                        velocity.y = 0.0;
+                    if (originV.y() != moveY) {
+                        fvy = 0.0;
                     }
-                    if (originVz != moveZ) {
-                        velocity.z = 0.0;
+                    if (originV.z() != moveZ) {
+                        fvz = 0.0;
                     }
+                    velocity = new Vector3d(fvx, fvy, fvz);
 
-                    position.add(moveX, moveY, moveZ);
+                    position = position.add(moveX, moveY, moveZ);
+                    entity.setComponent(new PositionComponent(position));
                     entity.setComponent(new BoundingBoxComponent(computeBox(boundingBox, position)));
                 } else {
-                    position.add(velocity);
+                    entity.setComponent(new PositionComponent(position.add(velocity)));
                 }
 
-                velocity.mul(0.91, 0.98, 0.91);
+                velocity = velocity.mul(0.91, 0.98, 0.91);
                 if (entity.hasComponent(OnGroundComponent.ID)) {
                     final double fiction = 0.7;
-                    velocity.x *= fiction;
-                    velocity.z *= fiction;
+                    velocity = velocity.mul(fiction, 1.0, fiction);
                 }
+                entity.setComponent(new VelocityComponent(velocity));
             }
         }
     }

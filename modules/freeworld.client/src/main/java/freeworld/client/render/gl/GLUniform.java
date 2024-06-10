@@ -10,8 +10,7 @@
 
 package freeworld.client.render.gl;
 
-import org.joml.Matrix4fc;
-import overrungl.joml.Matrixn;
+import freeworld.math.Matrix4f;
 
 import java.lang.foreign.Arena;
 import java.lang.foreign.MemorySegment;
@@ -54,9 +53,9 @@ public final class GLUniform {
         value.set(ValueLayout.JAVA_FLOAT, 12L, w);
     }
 
-    public void set(Matrix4fc mat) {
+    public void set(Matrix4f mat) {
         markDirty();
-        Matrixn.put(mat, value);
+        mat.get(value);
     }
 
     public void upload(GLStateMgr gl) {

@@ -11,7 +11,7 @@
 package freeworld.world.entity.component;
 
 import freeworld.core.Identifier;
-import org.joml.Vector3d;
+import freeworld.math.Vector3d;
 
 /**
  * @author squid233
@@ -21,7 +21,7 @@ public record AccelerationComponent(Vector3d value) implements EntityComponent {
     public static final Identifier ID = Identifier.ofBuiltin("acceleration");
 
     public AccelerationComponent() {
-        this(new Vector3d());
+        this(Vector3d.ZERO);
     }
 
     @Override

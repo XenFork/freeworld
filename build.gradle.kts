@@ -8,7 +8,7 @@
  * version 2.1 of the License, or (at your option) any later version.
  */
 
-// last updated: 2024/3/30
+// last updated: 2024/6/10
 
 plugins {
     `java-platform`
@@ -82,33 +82,37 @@ val publicationRepo: PublicationRepo? = if (hasPublication.toBoolean()) Publicat
 val projVersion: String by rootProject
 val coreVersion: String by rootProject
 val clientVersion: String by rootProject
+val mathVersion: String by rootProject
 
 val annotationsVersion: String by rootProject
 val commonsPoolVersion: String by rootProject
 val gsonVersion: String by rootProject
-val jomlVersion: String by rootProject
 val logbackVersion: String by rootProject
 val reactorVersion: String by rootProject
 
 class GameModule(
     val artifactId: String,
     val version: String,
-    val mavenName: String,
     val description: String
 )
 
 val moduleCore = GameModule(
-    "freeworld", coreVersion, "Core",
+    "freeworld", coreVersion,
     "freeworld core library"
 )
 val moduleClient = GameModule(
-    "freeworld-client", clientVersion, "Client",
+    "freeworld-client", clientVersion,
     "freeworld client library"
+)
+val moduleMath = GameModule(
+    "freeworld-math", mathVersion,
+    "freeworld math library"
 )
 
 val gameModules = listOf(
     moduleCore,
-    moduleClient
+    moduleClient,
+    moduleMath
 )
 
 version = projVersion
@@ -134,7 +138,6 @@ subprojects {
     val implementation by configurations
     dependencies {
         compileOnly("org.jetbrains:annotations:$annotationsVersion")
-        implementation("org.joml:joml:$jomlVersion")
         implementation("ch.qos.logback:logback-classic:$logbackVersion")
         implementation("com.google.code.gson:gson:$gsonVersion")
         implementation("org.apache.commons:commons-pool2:$commonsPoolVersion")
@@ -277,7 +280,7 @@ if (hasPublication.toBoolean() && publicationRepo != null) {
         }
 
         gameModules.forEach { gameModule ->
-            register<MavenPublication>("mavenJava${gameModule.mavenName}") {
+            register<MavenPublication>("mavenJava${gameModule.artifactId}") {
                 groupId = projGroupId
                 artifactId = gameModule.artifactId
                 version = gameModule.version
@@ -315,7 +318,7 @@ if (hasPublication.toBoolean() && publicationRepo != null) {
 
     signing {
         if (!publicationRepo.snapshotPredicate(projVersion) && publicationSigning.toBoolean()) {
-            gameModules.forEach { sign(publishing.publications["mavenJava${it.mavenName}"]) }
+            gameModules.forEach { sign(publishing.publications["mavenJava${it.artifactId}"]) }
             sign(publishing.publications["mavenBOM"])
         }
     }

@@ -28,7 +28,6 @@ module freeworld.client {
 
     requires transitive freeworld.core;
     requires io.github.overrun.marshal;
-    requires overrungl.joml;
     requires overrungl.glfw;
     requires overrungl.opengl;
     requires overrungl.stb;

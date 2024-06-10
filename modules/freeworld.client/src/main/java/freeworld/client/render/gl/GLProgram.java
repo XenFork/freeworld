@@ -20,7 +20,6 @@ import freeworld.file.BuiltinFiles;
 import freeworld.util.Logging;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.joml.Matrix4fc;
 import org.slf4j.Logger;
 import overrungl.opengl.GL;
 import overrungl.opengl.GL10C;
@@ -291,14 +290,6 @@ public final class GLProgram implements GLResource {
 
     public boolean hasUniform(String name) {
         return uniformMap.containsKey(name);
-    }
-
-    public void updateProjectionViewMatrix(Matrix4fc matrix) {
-        getUniform(UNIFORM_PROJECTION_VIEW_MATRIX).set(matrix);
-    }
-
-    public void updateModelMatrix(Matrix4fc matrix) {
-        getUniform(UNIFORM_MODEL_MATRIX).set(matrix);
     }
 
     @Override
