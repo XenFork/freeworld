@@ -10,18 +10,13 @@
 
 package freeworld.world.entity.component;
 
-import freeworld.core.Identifier;
-
 /**
  * @author squid233
  * @since 0.1.0
  */
-public final class OnGroundComponent implements EntityComponent {
-    public static final Identifier ID = Identifier.ofBuiltin("on_ground");
+public final class OnGroundComponent {
     public static final OnGroundComponent INSTANCE = new OnGroundComponent();
 
-    @Override
-    public Identifier componentId() {
-        return ID;
+    private OnGroundComponent() {
     }
 }

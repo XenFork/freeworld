@@ -29,6 +29,7 @@ import freeworld.world.WorldListener;
 import freeworld.world.block.BlockType;
 import freeworld.world.chunk.ChunkPos;
 import freeworld.world.entity.Entity;
+import freeworld.world.entity.component.EntityComponentKeys;
 import org.slf4j.Logger;
 import reactor.core.Disposable;
 import reactor.core.publisher.Flux;
@@ -134,8 +135,7 @@ public final class WorldRenderer implements GLResource, WorldListener {
 
         final float radius = 5.0f;
         final float radiusSquared = radius * radius;
-        final AABBox range = player.boundingBox()
-            .value()
+        final AABBox range = player.getComponent(EntityComponentKeys.BOUNDING_BOX)
             .grow(radius, radius, radius);
         final int x0 = (int) Math.floor(range.minX());
         final int y0 = (int) Math.floor(range.minY());

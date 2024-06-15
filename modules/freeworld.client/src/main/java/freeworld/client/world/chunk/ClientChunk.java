@@ -21,7 +21,7 @@ import freeworld.util.Logging;
 import freeworld.world.World;
 import freeworld.world.chunk.Chunk;
 import freeworld.world.entity.Entity;
-import freeworld.world.entity.component.PositionComponent;
+import freeworld.world.entity.component.EntityComponentKeys;
 import org.slf4j.Logger;
 import overrungl.opengl.GL15C;
 import reactor.core.publisher.Flux;
@@ -139,18 +139,18 @@ public final class ClientChunk extends Chunk implements AutoCloseable {
     }
 
     public double xzDistanceToPlayerSquared(Entity player) {
-        if (!player.hasComponent(PositionComponent.ID)) {
+        if (!player.hasComponent(EntityComponentKeys.POSITION)) {
             return 0.0;
         }
-        final Vector3d value = player.position().value();
+        final Vector3d value = player.getComponent(EntityComponentKeys.POSITION);
         return Vector2d.distanceSquared(x(), value.x(), z(), value.z());
     }
 
     public double yDistanceToPlayer(Entity player) {
-        if (!player.hasComponent(PositionComponent.ID)) {
+        if (!player.hasComponent(EntityComponentKeys.POSITION)) {
             return 0.0;
         }
-        final Vector3d value = player.position().value();
+        final Vector3d value = player.getComponent(EntityComponentKeys.POSITION);
         return Math.abs(value.y() - y());
     }
 

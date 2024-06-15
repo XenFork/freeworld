@@ -8,7 +8,9 @@
  * version 2.1 of the License, or (at your option) any later version.
  */
 
-package freeworld.math;
+package freeworld.util;
+
+import freeworld.math.Vector3d;
 
 /**
  * @author squid233
@@ -16,18 +18,6 @@ package freeworld.math;
  */
 public final class MathUtil {
     private MathUtil() {
-    }
-
-    static boolean absEqualsOne(float r) {
-        return (Float.floatToRawIntBits(r) & 0x7FFFFFFF) == 0x3F800000;
-    }
-
-    public static double fma(double a, double b, double c) {
-        return a * b + c;
-    }
-
-    public static float fma(float a, float b, float c) {
-        return a * b + c;
     }
 
     public static Vector3d moveRelative(double x, double y, double z, double yawDegrees, double speed) {

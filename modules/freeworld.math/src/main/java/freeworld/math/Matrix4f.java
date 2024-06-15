@@ -178,21 +178,21 @@ public record Matrix4f(
         float rm30 = right.m30(), rm31 = right.m31(), rm32 = right.m32();
         return new Matrix4f(
             PROPERTY_AFFINE | (this.properties & right.properties() & PROPERTY_ORTHONORMAL),
-            MathUtil.fma(m00, rm00, MathUtil.fma(m10, rm01, m20 * rm02)),
-            MathUtil.fma(m01, rm00, MathUtil.fma(m11, rm01, m21 * rm02)),
-            MathUtil.fma(m02, rm00, MathUtil.fma(m12, rm01, m22 * rm02)),
+            Maths.fma(m00, rm00, Maths.fma(m10, rm01, m20 * rm02)),
+            Maths.fma(m01, rm00, Maths.fma(m11, rm01, m21 * rm02)),
+            Maths.fma(m02, rm00, Maths.fma(m12, rm01, m22 * rm02)),
             m03(),
-            MathUtil.fma(m00, rm10, MathUtil.fma(m10, rm11, m20 * rm12)),
-            MathUtil.fma(m01, rm10, MathUtil.fma(m11, rm11, m21 * rm12)),
-            MathUtil.fma(m02, rm10, MathUtil.fma(m12, rm11, m22 * rm12)),
+            Maths.fma(m00, rm10, Maths.fma(m10, rm11, m20 * rm12)),
+            Maths.fma(m01, rm10, Maths.fma(m11, rm11, m21 * rm12)),
+            Maths.fma(m02, rm10, Maths.fma(m12, rm11, m22 * rm12)),
             m13(),
-            MathUtil.fma(m00, rm20, MathUtil.fma(m10, rm21, m20 * rm22)),
-            MathUtil.fma(m01, rm20, MathUtil.fma(m11, rm21, m21 * rm22)),
-            MathUtil.fma(m02, rm20, MathUtil.fma(m12, rm21, m22 * rm22)),
+            Maths.fma(m00, rm20, Maths.fma(m10, rm21, m20 * rm22)),
+            Maths.fma(m01, rm20, Maths.fma(m11, rm21, m21 * rm22)),
+            Maths.fma(m02, rm20, Maths.fma(m12, rm21, m22 * rm22)),
             m23(),
-            MathUtil.fma(m00, rm30, MathUtil.fma(m10, rm31, MathUtil.fma(m20, rm32, m30()))),
-            MathUtil.fma(m01, rm30, MathUtil.fma(m11, rm31, MathUtil.fma(m21, rm32, m31()))),
-            MathUtil.fma(m02, rm30, MathUtil.fma(m12, rm31, MathUtil.fma(m22, rm32, m32()))),
+            Maths.fma(m00, rm30, Maths.fma(m10, rm31, Maths.fma(m20, rm32, m30()))),
+            Maths.fma(m01, rm30, Maths.fma(m11, rm31, Maths.fma(m21, rm32, m31()))),
+            Maths.fma(m02, rm30, Maths.fma(m12, rm31, Maths.fma(m22, rm32, m32()))),
             m33()
         );
     }
@@ -221,43 +221,43 @@ public record Matrix4f(
     public Matrix4f mulAffineR(Matrix4f right) {
         return new Matrix4f(
             properties & ~(PROPERTY_IDENTITY | PROPERTY_PERSPECTIVE | PROPERTY_TRANSLATION | PROPERTY_ORTHONORMAL),
-            MathUtil.fma(m00(), right.m00(), MathUtil.fma(m10(), right.m01(), m20() * right.m02())),
-            MathUtil.fma(m01(), right.m00(), MathUtil.fma(m11(), right.m01(), m21() * right.m02())),
-            MathUtil.fma(m02(), right.m00(), MathUtil.fma(m12(), right.m01(), m22() * right.m02())),
-            MathUtil.fma(m03(), right.m00(), MathUtil.fma(m13(), right.m01(), m23() * right.m02())),
-            MathUtil.fma(m00(), right.m10(), MathUtil.fma(m10(), right.m11(), m20() * right.m12())),
-            MathUtil.fma(m01(), right.m10(), MathUtil.fma(m11(), right.m11(), m21() * right.m12())),
-            MathUtil.fma(m02(), right.m10(), MathUtil.fma(m12(), right.m11(), m22() * right.m12())),
-            MathUtil.fma(m03(), right.m10(), MathUtil.fma(m13(), right.m11(), m23() * right.m12())),
-            MathUtil.fma(m00(), right.m20(), MathUtil.fma(m10(), right.m21(), m20() * right.m22())),
-            MathUtil.fma(m01(), right.m20(), MathUtil.fma(m11(), right.m21(), m21() * right.m22())),
-            MathUtil.fma(m02(), right.m20(), MathUtil.fma(m12(), right.m21(), m22() * right.m22())),
-            MathUtil.fma(m03(), right.m20(), MathUtil.fma(m13(), right.m21(), m23() * right.m22())),
-            MathUtil.fma(m00(), right.m30(), MathUtil.fma(m10(), right.m31(), MathUtil.fma(m20(), right.m32(), m30()))),
-            MathUtil.fma(m01(), right.m30(), MathUtil.fma(m11(), right.m31(), MathUtil.fma(m21(), right.m32(), m31()))),
-            MathUtil.fma(m02(), right.m30(), MathUtil.fma(m12(), right.m31(), MathUtil.fma(m22(), right.m32(), m32()))),
-            MathUtil.fma(m03(), right.m30(), MathUtil.fma(m13(), right.m31(), MathUtil.fma(m23(), right.m32(), m33())))
+            Maths.fma(m00(), right.m00(), Maths.fma(m10(), right.m01(), m20() * right.m02())),
+            Maths.fma(m01(), right.m00(), Maths.fma(m11(), right.m01(), m21() * right.m02())),
+            Maths.fma(m02(), right.m00(), Maths.fma(m12(), right.m01(), m22() * right.m02())),
+            Maths.fma(m03(), right.m00(), Maths.fma(m13(), right.m01(), m23() * right.m02())),
+            Maths.fma(m00(), right.m10(), Maths.fma(m10(), right.m11(), m20() * right.m12())),
+            Maths.fma(m01(), right.m10(), Maths.fma(m11(), right.m11(), m21() * right.m12())),
+            Maths.fma(m02(), right.m10(), Maths.fma(m12(), right.m11(), m22() * right.m12())),
+            Maths.fma(m03(), right.m10(), Maths.fma(m13(), right.m11(), m23() * right.m12())),
+            Maths.fma(m00(), right.m20(), Maths.fma(m10(), right.m21(), m20() * right.m22())),
+            Maths.fma(m01(), right.m20(), Maths.fma(m11(), right.m21(), m21() * right.m22())),
+            Maths.fma(m02(), right.m20(), Maths.fma(m12(), right.m21(), m22() * right.m22())),
+            Maths.fma(m03(), right.m20(), Maths.fma(m13(), right.m21(), m23() * right.m22())),
+            Maths.fma(m00(), right.m30(), Maths.fma(m10(), right.m31(), Maths.fma(m20(), right.m32(), m30()))),
+            Maths.fma(m01(), right.m30(), Maths.fma(m11(), right.m31(), Maths.fma(m21(), right.m32(), m31()))),
+            Maths.fma(m02(), right.m30(), Maths.fma(m12(), right.m31(), Maths.fma(m22(), right.m32(), m32()))),
+            Maths.fma(m03(), right.m30(), Maths.fma(m13(), right.m31(), Maths.fma(m23(), right.m32(), m33())))
         );
     }
 
     public Matrix4f mul0(Matrix4f right) {
         return new Matrix4f(PROPERTY_UNKNOWN,
-            MathUtil.fma(m00(), right.m00(), MathUtil.fma(m10(), right.m01(), MathUtil.fma(m20(), right.m02(), m30() * right.m03()))),
-            MathUtil.fma(m01(), right.m00(), MathUtil.fma(m11(), right.m01(), MathUtil.fma(m21(), right.m02(), m31() * right.m03()))),
-            MathUtil.fma(m02(), right.m00(), MathUtil.fma(m12(), right.m01(), MathUtil.fma(m22(), right.m02(), m32() * right.m03()))),
-            MathUtil.fma(m03(), right.m00(), MathUtil.fma(m13(), right.m01(), MathUtil.fma(m23(), right.m02(), m33() * right.m03()))),
-            MathUtil.fma(m00(), right.m10(), MathUtil.fma(m10(), right.m11(), MathUtil.fma(m20(), right.m12(), m30() * right.m13()))),
-            MathUtil.fma(m01(), right.m10(), MathUtil.fma(m11(), right.m11(), MathUtil.fma(m21(), right.m12(), m31() * right.m13()))),
-            MathUtil.fma(m02(), right.m10(), MathUtil.fma(m12(), right.m11(), MathUtil.fma(m22(), right.m12(), m32() * right.m13()))),
-            MathUtil.fma(m03(), right.m10(), MathUtil.fma(m13(), right.m11(), MathUtil.fma(m23(), right.m12(), m33() * right.m13()))),
-            MathUtil.fma(m00(), right.m20(), MathUtil.fma(m10(), right.m21(), MathUtil.fma(m20(), right.m22(), m30() * right.m23()))),
-            MathUtil.fma(m01(), right.m20(), MathUtil.fma(m11(), right.m21(), MathUtil.fma(m21(), right.m22(), m31() * right.m23()))),
-            MathUtil.fma(m02(), right.m20(), MathUtil.fma(m12(), right.m21(), MathUtil.fma(m22(), right.m22(), m32() * right.m23()))),
-            MathUtil.fma(m03(), right.m20(), MathUtil.fma(m13(), right.m21(), MathUtil.fma(m23(), right.m22(), m33() * right.m23()))),
-            MathUtil.fma(m00(), right.m30(), MathUtil.fma(m10(), right.m31(), MathUtil.fma(m20(), right.m32(), m30() * right.m33()))),
-            MathUtil.fma(m01(), right.m30(), MathUtil.fma(m11(), right.m31(), MathUtil.fma(m21(), right.m32(), m31() * right.m33()))),
-            MathUtil.fma(m02(), right.m30(), MathUtil.fma(m12(), right.m31(), MathUtil.fma(m22(), right.m32(), m32() * right.m33()))),
-            MathUtil.fma(m03(), right.m30(), MathUtil.fma(m13(), right.m31(), MathUtil.fma(m23(), right.m32(), m33() * right.m33())))
+            Maths.fma(m00(), right.m00(), Maths.fma(m10(), right.m01(), Maths.fma(m20(), right.m02(), m30() * right.m03()))),
+            Maths.fma(m01(), right.m00(), Maths.fma(m11(), right.m01(), Maths.fma(m21(), right.m02(), m31() * right.m03()))),
+            Maths.fma(m02(), right.m00(), Maths.fma(m12(), right.m01(), Maths.fma(m22(), right.m02(), m32() * right.m03()))),
+            Maths.fma(m03(), right.m00(), Maths.fma(m13(), right.m01(), Maths.fma(m23(), right.m02(), m33() * right.m03()))),
+            Maths.fma(m00(), right.m10(), Maths.fma(m10(), right.m11(), Maths.fma(m20(), right.m12(), m30() * right.m13()))),
+            Maths.fma(m01(), right.m10(), Maths.fma(m11(), right.m11(), Maths.fma(m21(), right.m12(), m31() * right.m13()))),
+            Maths.fma(m02(), right.m10(), Maths.fma(m12(), right.m11(), Maths.fma(m22(), right.m12(), m32() * right.m13()))),
+            Maths.fma(m03(), right.m10(), Maths.fma(m13(), right.m11(), Maths.fma(m23(), right.m12(), m33() * right.m13()))),
+            Maths.fma(m00(), right.m20(), Maths.fma(m10(), right.m21(), Maths.fma(m20(), right.m22(), m30() * right.m23()))),
+            Maths.fma(m01(), right.m20(), Maths.fma(m11(), right.m21(), Maths.fma(m21(), right.m22(), m31() * right.m23()))),
+            Maths.fma(m02(), right.m20(), Maths.fma(m12(), right.m21(), Maths.fma(m22(), right.m22(), m32() * right.m23()))),
+            Maths.fma(m03(), right.m20(), Maths.fma(m13(), right.m21(), Maths.fma(m23(), right.m22(), m33() * right.m23()))),
+            Maths.fma(m00(), right.m30(), Maths.fma(m10(), right.m31(), Maths.fma(m20(), right.m32(), m30() * right.m33()))),
+            Maths.fma(m01(), right.m30(), Maths.fma(m11(), right.m31(), Maths.fma(m21(), right.m32(), m31() * right.m33()))),
+            Maths.fma(m02(), right.m30(), Maths.fma(m12(), right.m31(), Maths.fma(m22(), right.m32(), m32() * right.m33()))),
+            Maths.fma(m03(), right.m30(), Maths.fma(m13(), right.m31(), Maths.fma(m23(), right.m32(), m33() * right.m33())))
         );
     }
 
@@ -287,10 +287,10 @@ public record Matrix4f(
             m00, m01, m02, m03,
             m10, m11, m12, m13,
             m20, m21, m22, m23,
-            MathUtil.fma(m00(), x, MathUtil.fma(m10(), y, MathUtil.fma(m20(), z, m30()))),
-            MathUtil.fma(m01(), x, MathUtil.fma(m11(), y, MathUtil.fma(m21(), z, m31()))),
-            MathUtil.fma(m02(), x, MathUtil.fma(m12(), y, MathUtil.fma(m22(), z, m32()))),
-            MathUtil.fma(m03(), x, MathUtil.fma(m13(), y, MathUtil.fma(m23(), z, m33())))
+            Maths.fma(m00(), x, Maths.fma(m10(), y, Maths.fma(m20(), z, m30()))),
+            Maths.fma(m01(), x, Maths.fma(m11(), y, Maths.fma(m21(), z, m31()))),
+            Maths.fma(m02(), x, Maths.fma(m12(), y, Maths.fma(m22(), z, m32()))),
+            Maths.fma(m03(), x, Maths.fma(m13(), y, Maths.fma(m23(), z, m33())))
         );
     }
 
@@ -340,14 +340,14 @@ public record Matrix4f(
             m01(),
             m02(),
             m03(),
-            MathUtil.fma(lm10, cos, lm20 * sin),
-            MathUtil.fma(lm11, cos, lm21 * sin),
-            MathUtil.fma(lm12, cos, lm22 * sin),
-            MathUtil.fma(lm13, cos, lm23 * sin),
-            MathUtil.fma(lm10, -sin, lm20 * cos),
-            MathUtil.fma(lm11, -sin, lm21 * cos),
-            MathUtil.fma(lm12, -sin, lm22 * cos),
-            MathUtil.fma(lm13, -sin, lm23 * cos),
+            Maths.fma(lm10, cos, lm20 * sin),
+            Maths.fma(lm11, cos, lm21 * sin),
+            Maths.fma(lm12, cos, lm22 * sin),
+            Maths.fma(lm13, cos, lm23 * sin),
+            Maths.fma(lm10, -sin, lm20 * cos),
+            Maths.fma(lm11, -sin, lm21 * cos),
+            Maths.fma(lm12, -sin, lm22 * cos),
+            Maths.fma(lm13, -sin, lm23 * cos),
             m30(),
             m31(),
             m32(),
@@ -381,10 +381,10 @@ public record Matrix4f(
         float sin = (float) Math.sin(ang);
         float cos = (float) Math.cos(ang);
         // add temporaries for dependent values
-        float nm00 = MathUtil.fma(m00(), cos, m20() * -sin);
-        float nm01 = MathUtil.fma(m01(), cos, m21() * -sin);
-        float nm02 = MathUtil.fma(m02(), cos, m22() * -sin);
-        float nm03 = MathUtil.fma(m03(), cos, m23() * -sin);
+        float nm00 = Maths.fma(m00(), cos, m20() * -sin);
+        float nm01 = Maths.fma(m01(), cos, m21() * -sin);
+        float nm02 = Maths.fma(m02(), cos, m22() * -sin);
+        float nm03 = Maths.fma(m03(), cos, m23() * -sin);
         return new Matrix4f(
             properties & ~(PROPERTY_PERSPECTIVE | PROPERTY_IDENTITY | PROPERTY_TRANSLATION),
             nm00,
@@ -395,10 +395,10 @@ public record Matrix4f(
             m11(),
             m12(),
             m13(),
-            MathUtil.fma(m00(), sin, m20() * cos),
-            MathUtil.fma(m01(), sin, m21() * cos),
-            MathUtil.fma(m02(), sin, m22() * cos),
-            MathUtil.fma(m03(), sin, m23() * cos),
+            Maths.fma(m00(), sin, m20() * cos),
+            Maths.fma(m01(), sin, m21() * cos),
+            Maths.fma(m02(), sin, m22() * cos),
+            Maths.fma(m03(), sin, m23() * cos),
             m30(),
             m31(),
             m32(),
@@ -410,7 +410,7 @@ public record Matrix4f(
 
     //region scale
     public static Matrix4f scaling(float x, float y, float z) {
-        boolean one = MathUtil.absEqualsOne(x) && MathUtil.absEqualsOne(y) && MathUtil.absEqualsOne(z);
+        boolean one = Maths.absEqualsOne(x) && Maths.absEqualsOne(y) && Maths.absEqualsOne(z);
         return new Matrix4f(
             PROPERTY_AFFINE | (one ? PROPERTY_ORTHONORMAL : 0),
             x, 0.0f, 0.0f, 0.0f,
@@ -427,7 +427,7 @@ public record Matrix4f(
     }
 
     private Matrix4f scaleGeneric(float x, float y, float z) {
-        boolean one = MathUtil.absEqualsOne(x) && MathUtil.absEqualsOne(y) && MathUtil.absEqualsOne(z);
+        boolean one = Maths.absEqualsOne(x) && Maths.absEqualsOne(y) && Maths.absEqualsOne(z);
         return new Matrix4f(
             properties & ~(PROPERTY_PERSPECTIVE | PROPERTY_IDENTITY | PROPERTY_TRANSLATION
                            | (one ? 0 : PROPERTY_ORTHONORMAL)),

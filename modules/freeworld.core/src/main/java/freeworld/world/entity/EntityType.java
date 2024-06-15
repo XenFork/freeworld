@@ -10,14 +10,36 @@
 
 package freeworld.world.entity;
 
-import freeworld.world.entity.component.EntityComponent;
-
-import java.util.List;
-import java.util.function.Supplier;
+import freeworld.core.math.AABBox;
+import freeworld.math.Vector3d;
+import freeworld.world.World;
 
 /**
  * @author squid233
  * @since 0.1.0
  */
-public record EntityType(List<Supplier<EntityComponent>> defaultComponents) {
+public record EntityType(Initializer initializer) {
+    public interface Initializer {
+        void setup(World world, Entity entity, Vector3d position);
+    }
+
+    public static AABBox boundingBox(
+        double x,
+        double y,
+        double z,
+        double width,
+        double height,
+        double depth
+    ) {
+        final double hw = width * 0.5;
+        final double hd = depth * 0.5;
+        return new AABBox(
+            x - hw,
+            y,
+            z - hd,
+            x + hw,
+            y + height,
+            z + hd
+        );
+    }
 }

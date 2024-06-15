@@ -35,9 +35,9 @@ public record Vector3d(double x, double y, double z) {
 
     public Vector3d lerp(Vector3d v, double t) {
         return new Vector3d(
-            MathUtil.fma(v.x() - x, t, x),
-            MathUtil.fma(v.y() - y, t, y),
-            MathUtil.fma(v.z() - z, t, z)
+            Maths.fma(v.x() - x, t, x),
+            Maths.fma(v.y() - y, t, y),
+            Maths.fma(v.z() - z, t, z)
         );
     }
 }

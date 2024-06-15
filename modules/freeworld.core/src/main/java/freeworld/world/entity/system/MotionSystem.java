@@ -30,99 +30,95 @@ public final class MotionSystem implements EntitySystem {
     public void process(World world, List<Entity> entities) {
         for (Entity entity : entities) {
             if (EntitySystem.hasAllComponents(entity,
-                AccelerationComponent.ID,
-                PositionComponent.ID,
-                VelocityComponent.ID)) {
-                final Vector3d acceleration = entity.acceleration().value();
-                Vector3d position = entity.position().value();
-                Vector3d velocity = entity.velocity().value();
+                EntityComponentKeys.ACCELERATION,
+                EntityComponentKeys.BOUNDING_BOX,
+                EntityComponentKeys.POSITION,
+                EntityComponentKeys.VELOCITY)) {
+                final Vector3d acceleration = entity.getComponent(EntityComponentKeys.ACCELERATION);
+                Vector3d position = entity.getComponent(EntityComponentKeys.POSITION);
+                Vector3d velocity = entity.getComponent(EntityComponentKeys.VELOCITY);
 
                 velocity = velocity.add(acceleration.x(), acceleration.y() - 0.08, acceleration.z());
 
-                AABBox boundingBox;
-                if (entity.hasComponent(BoundingBoxComponent.ID)) {
-                    boundingBox = entity.boundingBox().value();
+                AABBox boundingBox = entity.getComponent(EntityComponentKeys.BOUNDING_BOX);
 
-                    final Vector3d originV = velocity;
-                    double moveX = velocity.x();
-                    double moveY = velocity.y();
-                    double moveZ = velocity.z();
+                final Vector3d originV = velocity;
+                double moveX = velocity.x();
+                double moveY = velocity.y();
+                double moveZ = velocity.z();
 
-                    final AABBox range = boundingBox.expand(moveX, moveY, moveZ);
-                    final List<AABBox> boxes = new ArrayList<>();
-                    final int x0 = (int) Math.floor(range.minX());
-                    final int y0 = (int) Math.floor(range.minY());
-                    final int z0 = (int) Math.floor(range.minZ());
-                    final int x1 = (int) Math.ceil(range.maxX() + 1.0);
-                    final int y1 = (int) Math.ceil(range.maxY() + 1.0);
-                    final int z1 = (int) Math.ceil(range.maxZ() + 1.0);
-                    for (int x = x0; x < x1; x++) {
-                        for (int y = y0; y < y1; y++) {
-                            for (int z = z0; z < z1; z++) {
-                                if (!world.isBlockLoaded(x, y, z)) {
-                                    world.getOrCreateChunk(
-                                        ChunkPos.absoluteToChunk(x),
-                                        ChunkPos.absoluteToChunk(y),
-                                        ChunkPos.absoluteToChunk(z)
-                                    );
-                                    continue;
-                                }
-                                final BlockType blockType = world.getBlockType(x, y, z);
-                                if (blockType.air()) {
-                                    continue;
-                                }
-                                final AABBox box = blockType.collisionShape().move(x, y, z);
-                                boxes.add(box);
+                final AABBox range = boundingBox.expand(moveX, moveY, moveZ);
+                final List<AABBox> boxes = new ArrayList<>();
+                final int x0 = (int) Math.floor(range.minX());
+                final int y0 = (int) Math.floor(range.minY());
+                final int z0 = (int) Math.floor(range.minZ());
+                final int x1 = (int) Math.ceil(range.maxX() + 1.0);
+                final int y1 = (int) Math.ceil(range.maxY() + 1.0);
+                final int z1 = (int) Math.ceil(range.maxZ() + 1.0);
+                for (int x = x0; x < x1; x++) {
+                    for (int y = y0; y < y1; y++) {
+                        for (int z = z0; z < z1; z++) {
+                            if (!world.isBlockLoaded(x, y, z)) {
+                                world.getOrCreateChunk(
+                                    ChunkPos.absoluteToChunk(x),
+                                    ChunkPos.absoluteToChunk(y),
+                                    ChunkPos.absoluteToChunk(z)
+                                );
+                                continue;
                             }
+                            final BlockType blockType = world.getBlockType(x, y, z);
+                            if (blockType.air()) {
+                                continue;
+                            }
+                            final AABBox box = blockType.collisionShape().move(x, y, z);
+                            boxes.add(box);
                         }
                     }
-
-                    for (AABBox box : boxes) {
-                        moveY = box.clipYCollide(boundingBox, moveY);
-                    }
-                    boundingBox = boundingBox.move(0.0, moveY, 0.0);
-                    for (AABBox box : boxes) {
-                        moveX = box.clipXCollide(boundingBox, moveX);
-                    }
-                    boundingBox = boundingBox.move(moveX, 0.0, 0.0);
-                    for (AABBox box : boxes) {
-                        moveZ = box.clipZCollide(boundingBox, moveZ);
-                    }
-                    boundingBox = boundingBox.move(0.0, 0.0, moveZ);
-
-                    if (originV.y() != moveY && originV.y() < 0.0) {
-                        entity.addComponent(OnGroundComponent.INSTANCE);
-                    } else {
-                        entity.removeComponent(OnGroundComponent.ID);
-                    }
-
-                    double fvx = velocity.x();
-                    double fvy = velocity.y();
-                    double fvz = velocity.z();
-                    if (originV.x() != moveX) {
-                        fvx = 0.0;
-                    }
-                    if (originV.y() != moveY) {
-                        fvy = 0.0;
-                    }
-                    if (originV.z() != moveZ) {
-                        fvz = 0.0;
-                    }
-                    velocity = new Vector3d(fvx, fvy, fvz);
-
-                    position = position.add(moveX, moveY, moveZ);
-                    entity.setComponent(new PositionComponent(position));
-                    entity.setComponent(new BoundingBoxComponent(computeBox(boundingBox, position)));
-                } else {
-                    entity.setComponent(new PositionComponent(position.add(velocity)));
                 }
 
+                for (AABBox box : boxes) {
+                    moveY = box.clipYCollide(boundingBox, moveY);
+                }
+                boundingBox = boundingBox.move(0.0, moveY, 0.0);
+                for (AABBox box : boxes) {
+                    moveX = box.clipXCollide(boundingBox, moveX);
+                }
+                boundingBox = boundingBox.move(moveX, 0.0, 0.0);
+                for (AABBox box : boxes) {
+                    moveZ = box.clipZCollide(boundingBox, moveZ);
+                }
+                boundingBox = boundingBox.move(0.0, 0.0, moveZ);
+
+                if (originV.y() != moveY && originV.y() < 0.0) {
+                    entity.addComponent(EntityComponentKeys.ON_GROUND);
+                } else {
+                    entity.removeComponent(EntityComponentKeys.ON_GROUND);
+                }
+
+                double fvx = velocity.x();
+                double fvy = velocity.y();
+                double fvz = velocity.z();
+                if (originV.x() != moveX) {
+                    fvx = 0.0;
+                }
+                if (originV.y() != moveY) {
+                    fvy = 0.0;
+                }
+                if (originV.z() != moveZ) {
+                    fvz = 0.0;
+                }
+                velocity = new Vector3d(fvx, fvy, fvz);
+
+                position = position.add(moveX, moveY, moveZ);
+                entity.setComponent(EntityComponentKeys.POSITION, position);
+                entity.setComponent(EntityComponentKeys.BOUNDING_BOX, computeBox(boundingBox, position));
+
                 velocity = velocity.mul(0.91, 0.98, 0.91);
-                if (entity.hasComponent(OnGroundComponent.ID)) {
+                if (entity.hasComponent(EntityComponentKeys.ON_GROUND)) {
                     final double fiction = 0.7;
                     velocity = velocity.mul(fiction, 1.0, fiction);
                 }
-                entity.setComponent(new VelocityComponent(velocity));
+                entity.setComponent(EntityComponentKeys.VELOCITY, velocity);
             }
         }
     }

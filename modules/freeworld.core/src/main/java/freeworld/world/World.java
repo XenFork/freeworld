@@ -19,7 +19,7 @@ import freeworld.world.chunk.Chunk;
 import freeworld.world.chunk.ChunkPos;
 import freeworld.world.entity.Entity;
 import freeworld.world.entity.EntityType;
-import freeworld.world.entity.component.PositionComponent;
+import freeworld.world.entity.component.EntityComponentKeys;
 import freeworld.world.entity.system.MotionSystem;
 
 import java.util.ArrayList;
@@ -46,7 +46,7 @@ public final class World {
 
     public static void forEachChunk(Entity player, int chunkRadius, Int3Consumer consumer) {
         final int radius = chunkRadius * Chunk.SIZE;
-        final AABBox box = player.boundingBox().value().grow(radius, radius, radius);
+        final AABBox box = player.getComponent(EntityComponentKeys.BOUNDING_BOX).grow(radius, radius, radius);
         final int minX = ChunkPos.absoluteToChunk((int) Math.floor(box.minX()));
         final int minY = ChunkPos.absoluteToChunk((int) Math.floor(box.minY()));
         final int minZ = ChunkPos.absoluteToChunk((int) Math.floor(box.minZ()));
@@ -70,11 +70,8 @@ public final class World {
         motionSystem.process(this, entities);
     }
 
-    public Entity createEntity(EntityType type, double x, double y, double z) {
-        final Entity entity = new Entity(this, UUID.randomUUID(), type);
-        if (entity.hasComponent(PositionComponent.ID)) {
-            entity.setComponent(new PositionComponent(new Vector3d(x, y, z)));
-        }
+    public Entity createEntity(EntityType type, Vector3d position) {
+        final Entity entity = new Entity(this, UUID.randomUUID(), position, type);
         entities.add(entity);
         return entity;
     }

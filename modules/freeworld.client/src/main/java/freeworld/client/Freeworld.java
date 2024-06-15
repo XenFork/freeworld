@@ -10,27 +10,24 @@
 
 package freeworld.client;
 
+import freeworld.client.render.Camera;
 import freeworld.client.render.GameRenderer;
 import freeworld.client.render.RenderSystem;
 import freeworld.client.render.gl.GLStateMgr;
 import freeworld.client.render.world.HitResult;
-import freeworld.client.render.Camera;
 import freeworld.core.registry.BuiltinRegistries;
-import freeworld.math.MathUtil;
 import freeworld.math.Vector2d;
 import freeworld.math.Vector3d;
 import freeworld.util.Direction;
 import freeworld.util.Logging;
+import freeworld.util.MathUtil;
 import freeworld.util.Timer;
 import freeworld.world.World;
 import freeworld.world.block.BlockType;
 import freeworld.world.block.BlockTypes;
 import freeworld.world.entity.Entity;
 import freeworld.world.entity.EntityTypes;
-import freeworld.world.entity.component.AccelerationComponent;
-import freeworld.world.entity.component.OnGroundComponent;
-import freeworld.world.entity.component.RotationXYComponent;
-import freeworld.world.entity.component.VelocityComponent;
+import freeworld.world.entity.component.*;
 import org.slf4j.Logger;
 import overrun.marshal.Unmarshal;
 import overrungl.glfw.GLFW;
@@ -138,7 +135,7 @@ public final class Freeworld implements AutoCloseable {
         BuiltinRegistries.ENTITY_TYPE.freeze();
 
         world = new World("New world");
-        player = world.createEntity(EntityTypes.PLAYER, 0.0, 0.0, 0.0);
+        player = world.createEntity(EntityTypes.PLAYER, new Vector3d(0.0, 0.0, 0.0));
 
         initGL();
         run();
@@ -185,7 +182,7 @@ public final class Freeworld implements AutoCloseable {
         if (disableCursor) {
             final double pitch = -cursorDeltaY * MOUSE_SENSITIVITY;
             final double yaw = -cursorDeltaX * MOUSE_SENSITIVITY;
-            final Vector2d rotation = player.rotation().value();
+            final Vector2d rotation = player.getComponent(EntityComponentKeys.ROTATION);
             final double updateX = Math.clamp(rotation.x() + pitch, -90.0, 90.0);
             double updateY = rotation.y() + yaw;
 
@@ -195,7 +192,7 @@ public final class Freeworld implements AutoCloseable {
                 updateY -= 360.0;
             }
 
-            player.setComponent(new RotationXYComponent(new Vector2d(updateX, updateY)));
+            player.setComponent(EntityComponentKeys.ROTATION, new Vector2d(updateX, updateY));
         }
         cursorX = x;
         cursorY = y;
@@ -217,7 +214,7 @@ public final class Freeworld implements AutoCloseable {
     private void tick() {
         camera.preUpdate();
 
-        final boolean onGround = player.hasComponent(OnGroundComponent.ID);
+        final boolean onGround = player.hasComponent(EntityComponentKeys.ON_GROUND);
         double speed = onGround ? 0.1 : 0.02;
         if (glfw.getKey(window, GLFW.KEY_LEFT_CONTROL) == GLFW.PRESS) speed *= 2.0;
         double xo = 0.0;
@@ -227,12 +224,11 @@ public final class Freeworld implements AutoCloseable {
         if (glfw.getKey(window, GLFW.KEY_A) == GLFW.PRESS) xo -= 1.0;
         if (glfw.getKey(window, GLFW.KEY_D) == GLFW.PRESS) xo += 1.0;
         if (onGround && glfw.getKey(window, GLFW.KEY_SPACE) == GLFW.PRESS) {
-            final Vector3d value = player.velocity().value();
-            player.setComponent(new VelocityComponent(new Vector3d(value.x(), 0.5, value.z())));
+            final Vector3d value = player.getComponent(EntityComponentKeys.VELOCITY);
+            player.setComponent(EntityComponentKeys.VELOCITY, new Vector3d(value.x(), 0.5, value.z()));
         }
-        player.setComponent(new AccelerationComponent(
-            MathUtil.moveRelative(xo, 0.0, zo, player.rotation().value().y(), speed)
-        ));
+        player.setComponent(EntityComponentKeys.ACCELERATION,
+            MathUtil.moveRelative(xo, 0.0, zo, player.getComponent(EntityComponentKeys.ROTATION).y(), speed));
         world.tick();
 
         if (blockDestroyTimer >= 2) {

@@ -10,7 +10,7 @@
 
 package freeworld.world.entity;
 
-import freeworld.core.Identifier;
+import freeworld.math.Vector3d;
 import freeworld.world.World;
 import freeworld.world.entity.component.*;
 
@@ -27,65 +27,42 @@ public final class Entity {
     private final World world;
     private final UUID uuid;
     private final EntityType entityType;
-    private final Map<Identifier, EntityComponent> componentMap = new HashMap<>();
+    private final Map<EntityComponentKey<?>, Object> componentMap = new HashMap<>();
 
-    public Entity(World world, UUID uuid, EntityType entityType) {
+    public Entity(World world, UUID uuid, Vector3d position, EntityType entityType) {
         this.world = world;
         this.uuid = uuid;
         this.entityType = entityType;
-        for (var supplier : entityType.defaultComponents()) {
-            addComponent(supplier.get());
-        }
+        entityType.initializer().setup(world, this, position);
     }
 
-    public void addComponent(EntityComponent component) {
+    public <T> void addComponent(EntityComponentKey<T> key, T component) {
         Objects.requireNonNull(component);
-        final Identifier id = component.componentId();
-        if (componentMap.containsKey(id)) {
+        if (componentMap.containsKey(key)) {
             return;
         }
-        componentMap.put(id, component);
+        componentMap.put(key, component);
     }
 
-    public void setComponent(EntityComponent component) {
-        componentMap.put(component.componentId(), component);
+    public <T> void addComponent(EntityComponentKey<T> key) {
+        addComponent(key, key.defaultValue().get());
     }
 
-    public void removeComponent(Identifier id) {
+    public <T> void setComponent(EntityComponentKey<T> key, T component) {
+        componentMap.put(key, component);
+    }
+
+    public void removeComponent(EntityComponentKey<?> id) {
         componentMap.remove(id);
     }
 
     @SuppressWarnings("unchecked")
-    public <T extends EntityComponent> T getComponent(Identifier id) {
+    public <T> T getComponent(EntityComponentKey<T> id) {
         return (T) componentMap.get(id);
     }
 
-    public boolean hasComponent(Identifier id) {
+    public boolean hasComponent(EntityComponentKey<?> id) {
         return componentMap.containsKey(id);
-    }
-
-    public AccelerationComponent acceleration() {
-        return getComponent(AccelerationComponent.ID);
-    }
-
-    public BoundingBoxComponent boundingBox() {
-        return getComponent(BoundingBoxComponent.ID);
-    }
-
-    public EyeHeightComponent eyeHeight() {
-        return getComponent(EyeHeightComponent.ID);
-    }
-
-    public PositionComponent position() {
-        return getComponent(PositionComponent.ID);
-    }
-
-    public RotationXYComponent rotation() {
-        return getComponent(RotationXYComponent.ID);
-    }
-
-    public VelocityComponent velocity() {
-        return getComponent(VelocityComponent.ID);
     }
 
     public World world() {

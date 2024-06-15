@@ -12,20 +12,11 @@ package freeworld.world.entity.component;
 
 import freeworld.core.Identifier;
 
+import java.util.function.Supplier;
+
 /**
  * @author squid233
  * @since 0.1.0
  */
-public sealed interface EntityComponent permits
-    AccelerationComponent,
-    BoundingBoxComponent,
-    EyeHeightComponent,
-    OnGroundComponent,
-    PositionComponent,
-    RotationXYComponent,
-    VelocityComponent {
-    /**
-     * {@return a unique identifier of this component}
-     */
-    Identifier componentId();
+public record EntityComponentKey<T>(Identifier identifier, Supplier<T> defaultValue) {
 }

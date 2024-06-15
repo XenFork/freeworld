@@ -10,9 +10,9 @@
 
 package freeworld.world.entity.system;
 
-import freeworld.core.Identifier;
 import freeworld.world.World;
 import freeworld.world.entity.Entity;
+import freeworld.world.entity.component.EntityComponentKey;
 
 import java.util.List;
 
@@ -23,10 +23,10 @@ import java.util.List;
 public interface EntitySystem {
     void process(World world, List<Entity> entities);
 
-    static boolean hasAllComponents(Entity entity, Identifier... componentIds) {
+    static boolean hasAllComponents(Entity entity, EntityComponentKey<?>... componentIds) {
         if (entity == null) return false;
 
-        for (Identifier id : componentIds) {
+        for (var id : componentIds) {
             if (!entity.hasComponent(id)) {
                 return false;
             }
