@@ -4,8 +4,8 @@
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
- * License as published by the Free Software Foundation; either
- * version 2.1 of the License, or (at your option) any later version.
+ * License as published by the Free Software Foundation;
+ * only version 2.1 of the License.
  */
 
 package freeworld.world.entity;
@@ -15,7 +15,6 @@ import freeworld.core.registry.BuiltinRegistries;
 import freeworld.core.registry.Registry;
 import freeworld.math.Vector3d;
 import freeworld.world.World;
-import freeworld.world.entity.component.*;
 
 /**
  * @author squid233
@@ -29,12 +28,12 @@ public final class EntityTypes {
     }
 
     private static void setupComponentPlayer(World world, Entity entity, Vector3d position) {
-        entity.addComponent(EntityComponentKeys.ACCELERATION);
-        entity.addComponent(EntityComponentKeys.BOUNDING_BOX, EntityType.boundingBox(position.x(), position.y(), position.z(), 0.6, 1.8, 0.6));
-        entity.addComponent(EntityComponentKeys.EYE_HEIGHT, PLAYER_EYE_HEIGHT);
-        entity.addComponent(EntityComponentKeys.POSITION, position);
-        entity.addComponent(EntityComponentKeys.ROTATION);
-        entity.addComponent(EntityComponentKeys.VELOCITY);
+        entity.addComponent(EntityComponents.ACCELERATION);
+        entity.addComponent(EntityComponents.BOUNDING_BOX, EntityType.boundingBox(position.x(), position.y(), position.z(), 0.6, 1.8, 0.6));
+        entity.addComponent(EntityComponents.EYE_HEIGHT, PLAYER_EYE_HEIGHT);
+        entity.addComponent(EntityComponents.POSITION, position);
+        entity.addComponent(EntityComponents.ROTATION);
+        entity.addComponent(EntityComponents.VELOCITY);
     }
 
     private static EntityType register(int rawId, String name, EntityType.Initializer initializer) {

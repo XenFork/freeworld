@@ -4,8 +4,8 @@
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
- * License as published by the Free Software Foundation; either
- * version 2.1 of the License, or (at your option) any later version.
+ * License as published by the Free Software Foundation;
+ * only version 2.1 of the License.
  */
 
 package freeworld.world;
@@ -19,7 +19,7 @@ import freeworld.world.chunk.Chunk;
 import freeworld.world.chunk.ChunkPos;
 import freeworld.world.entity.Entity;
 import freeworld.world.entity.EntityType;
-import freeworld.world.entity.component.EntityComponentKeys;
+import freeworld.world.entity.EntityComponents;
 import freeworld.world.entity.system.MotionSystem;
 
 import java.util.ArrayList;
@@ -46,7 +46,7 @@ public final class World {
 
     public static void forEachChunk(Entity player, int chunkRadius, Int3Consumer consumer) {
         final int radius = chunkRadius * Chunk.SIZE;
-        final AABBox box = player.getComponent(EntityComponentKeys.BOUNDING_BOX).grow(radius, radius, radius);
+        final AABBox box = player.getComponent(EntityComponents.BOUNDING_BOX).grow(radius, radius, radius);
         final int minX = ChunkPos.absoluteToChunk((int) Math.floor(box.minX()));
         final int minY = ChunkPos.absoluteToChunk((int) Math.floor(box.minY()));
         final int minZ = ChunkPos.absoluteToChunk((int) Math.floor(box.minZ()));

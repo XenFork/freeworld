@@ -4,8 +4,8 @@
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
- * License as published by the Free Software Foundation; either
- * version 2.1 of the License, or (at your option) any later version.
+ * License as published by the Free Software Foundation;
+ * only version 2.1 of the License.
  */
 
 package freeworld.client.render;
@@ -14,7 +14,7 @@ import freeworld.math.Matrix4f;
 import freeworld.math.Vector2d;
 import freeworld.math.Vector3d;
 import freeworld.world.entity.Entity;
-import freeworld.world.entity.component.EntityComponentKeys;
+import freeworld.world.entity.EntityComponents;
 import freeworld.world.entity.system.EntitySystem;
 
 /**
@@ -28,18 +28,18 @@ public final class Camera {
     private Vector2d rotation = Vector2d.ZERO;
 
     public void moveToEntity(Entity entity) {
-        if (EntitySystem.hasAllComponents(entity, EntityComponentKeys.POSITION, EntityComponentKeys.ROTATION)) {
-            final Vector3d ePos = entity.getComponent(EntityComponentKeys.POSITION);
-            if (entity.hasComponent(EntityComponentKeys.EYE_HEIGHT)) {
+        if (EntitySystem.hasAllComponents(entity, EntityComponents.POSITION, EntityComponents.ROTATION)) {
+            final Vector3d ePos = entity.getComponent(EntityComponents.POSITION);
+            if (entity.hasComponent(EntityComponents.EYE_HEIGHT)) {
                 position = new Vector3d(
                     ePos.x(),
-                    ePos.y() + entity.getComponent(EntityComponentKeys.EYE_HEIGHT),
+                    ePos.y() + entity.getComponent(EntityComponents.EYE_HEIGHT),
                     ePos.z()
                 );
             } else {
                 position = ePos;
             }
-            rotation = entity.getComponent(EntityComponentKeys.ROTATION);
+            rotation = entity.getComponent(EntityComponents.ROTATION);
         }
     }
 

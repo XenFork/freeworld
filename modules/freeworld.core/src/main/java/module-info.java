@@ -17,13 +17,14 @@ module freeworld.core {
     exports freeworld.core;
     exports freeworld.core.math;
     exports freeworld.core.registry;
-    exports freeworld.file;
     exports freeworld.util;
+    exports freeworld.util.file;
+    exports freeworld.util.math;
     exports freeworld.world;
     exports freeworld.world.block;
     exports freeworld.world.chunk;
+    exports freeworld.world.component;
     exports freeworld.world.entity;
-    exports freeworld.world.entity.component;
     exports freeworld.world.entity.system;
 
     requires transitive freeworld.math;

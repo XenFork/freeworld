@@ -4,8 +4,8 @@
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
- * License as published by the Free Software Foundation; either
- * version 2.1 of the License, or (at your option) any later version.
+ * License as published by the Free Software Foundation;
+ * only version 2.1 of the License.
  */
 
 package freeworld.client.world.chunk;
@@ -21,7 +21,7 @@ import freeworld.util.Logging;
 import freeworld.world.World;
 import freeworld.world.chunk.Chunk;
 import freeworld.world.entity.Entity;
-import freeworld.world.entity.component.EntityComponentKeys;
+import freeworld.world.entity.EntityComponents;
 import org.slf4j.Logger;
 import overrungl.opengl.GL15C;
 import reactor.core.publisher.Flux;
@@ -139,18 +139,18 @@ public final class ClientChunk extends Chunk implements AutoCloseable {
     }
 
     public double xzDistanceToPlayerSquared(Entity player) {
-        if (!player.hasComponent(EntityComponentKeys.POSITION)) {
+        if (!player.hasComponent(EntityComponents.POSITION)) {
             return 0.0;
         }
-        final Vector3d value = player.getComponent(EntityComponentKeys.POSITION);
+        final Vector3d value = player.getComponent(EntityComponents.POSITION);
         return Vector2d.distanceSquared(x(), value.x(), z(), value.z());
     }
 
     public double yDistanceToPlayer(Entity player) {
-        if (!player.hasComponent(EntityComponentKeys.POSITION)) {
+        if (!player.hasComponent(EntityComponents.POSITION)) {
             return 0.0;
         }
-        final Vector3d value = player.getComponent(EntityComponentKeys.POSITION);
+        final Vector3d value = player.getComponent(EntityComponents.POSITION);
         return Math.abs(value.y() - y());
     }
 

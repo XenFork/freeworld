@@ -4,15 +4,15 @@
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
- * License as published by the Free Software Foundation; either
- * version 2.1 of the License, or (at your option) any later version.
+ * License as published by the Free Software Foundation;
+ * only version 2.1 of the License.
  */
 
 package freeworld.world.entity;
 
 import freeworld.math.Vector3d;
 import freeworld.world.World;
-import freeworld.world.entity.component.*;
+import freeworld.world.component.ComponentKey;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -27,7 +27,7 @@ public final class Entity {
     private final World world;
     private final UUID uuid;
     private final EntityType entityType;
-    private final Map<EntityComponentKey<?>, Object> componentMap = new HashMap<>();
+    private final Map<ComponentKey<?>, Object> componentMap = new HashMap<>();
 
     public Entity(World world, UUID uuid, Vector3d position, EntityType entityType) {
         this.world = world;
@@ -36,7 +36,7 @@ public final class Entity {
         entityType.initializer().setup(world, this, position);
     }
 
-    public <T> void addComponent(EntityComponentKey<T> key, T component) {
+    public <T> void addComponent(ComponentKey<T> key, T component) {
         Objects.requireNonNull(component);
         if (componentMap.containsKey(key)) {
             return;
@@ -44,24 +44,24 @@ public final class Entity {
         componentMap.put(key, component);
     }
 
-    public <T> void addComponent(EntityComponentKey<T> key) {
+    public <T> void addComponent(ComponentKey<T> key) {
         addComponent(key, key.defaultValue().get());
     }
 
-    public <T> void setComponent(EntityComponentKey<T> key, T component) {
+    public <T> void setComponent(ComponentKey<T> key, T component) {
         componentMap.put(key, component);
     }
 
-    public void removeComponent(EntityComponentKey<?> id) {
+    public void removeComponent(ComponentKey<?> id) {
         componentMap.remove(id);
     }
 
     @SuppressWarnings("unchecked")
-    public <T> T getComponent(EntityComponentKey<T> id) {
+    public <T> T getComponent(ComponentKey<T> id) {
         return (T) componentMap.get(id);
     }
 
-    public boolean hasComponent(EntityComponentKey<?> id) {
+    public boolean hasComponent(ComponentKey<?> id) {
         return componentMap.containsKey(id);
     }
 

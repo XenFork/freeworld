@@ -4,8 +4,8 @@
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
- * License as published by the Free Software Foundation; either
- * version 2.1 of the License, or (at your option) any later version.
+ * License as published by the Free Software Foundation;
+ * only version 2.1 of the License.
  */
 
 package freeworld.client.render.gl;
@@ -16,7 +16,7 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import freeworld.client.render.model.VertexLayout;
 import freeworld.core.Identifier;
-import freeworld.file.BuiltinFiles;
+import freeworld.util.file.BuiltinFiles;
 import freeworld.util.Logging;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;

@@ -4,15 +4,15 @@
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
- * License as published by the Free Software Foundation; either
- * version 2.1 of the License, or (at your option) any later version.
+ * License as published by the Free Software Foundation;
+ * only version 2.1 of the License.
  */
 
 package freeworld.world.entity.system;
 
 import freeworld.world.World;
 import freeworld.world.entity.Entity;
-import freeworld.world.entity.component.EntityComponentKey;
+import freeworld.world.component.ComponentKey;
 
 import java.util.List;
 
@@ -23,7 +23,7 @@ import java.util.List;
 public interface EntitySystem {
     void process(World world, List<Entity> entities);
 
-    static boolean hasAllComponents(Entity entity, EntityComponentKey<?>... componentIds) {
+    static boolean hasAllComponents(Entity entity, ComponentKey<?>... componentIds) {
         if (entity == null) return false;
 
         for (var id : componentIds) {

@@ -4,8 +4,8 @@
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
- * License as published by the Free Software Foundation; either
- * version 2.1 of the License, or (at your option) any later version.
+ * License as published by the Free Software Foundation;
+ * only version 2.1 of the License.
  */
 
 package freeworld.client.render.world;
@@ -29,7 +29,7 @@ import freeworld.world.WorldListener;
 import freeworld.world.block.BlockType;
 import freeworld.world.chunk.ChunkPos;
 import freeworld.world.entity.Entity;
-import freeworld.world.entity.component.EntityComponentKeys;
+import freeworld.world.entity.EntityComponents;
 import org.slf4j.Logger;
 import reactor.core.Disposable;
 import reactor.core.publisher.Flux;
@@ -135,7 +135,7 @@ public final class WorldRenderer implements GLResource, WorldListener {
 
         final float radius = 5.0f;
         final float radiusSquared = radius * radius;
-        final AABBox range = player.getComponent(EntityComponentKeys.BOUNDING_BOX)
+        final AABBox range = player.getComponent(EntityComponents.BOUNDING_BOX)
             .grow(radius, radius, radius);
         final int x0 = (int) Math.floor(range.minX());
         final int y0 = (int) Math.floor(range.minY());

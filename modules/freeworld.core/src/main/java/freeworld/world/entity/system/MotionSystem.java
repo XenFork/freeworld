@@ -4,8 +4,8 @@
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
- * License as published by the Free Software Foundation; either
- * version 2.1 of the License, or (at your option) any later version.
+ * License as published by the Free Software Foundation;
+ * only version 2.1 of the License.
  */
 
 package freeworld.world.entity.system;
@@ -16,7 +16,7 @@ import freeworld.world.World;
 import freeworld.world.block.BlockType;
 import freeworld.world.chunk.ChunkPos;
 import freeworld.world.entity.Entity;
-import freeworld.world.entity.component.*;
+import freeworld.world.entity.EntityComponents;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -30,17 +30,17 @@ public final class MotionSystem implements EntitySystem {
     public void process(World world, List<Entity> entities) {
         for (Entity entity : entities) {
             if (EntitySystem.hasAllComponents(entity,
-                EntityComponentKeys.ACCELERATION,
-                EntityComponentKeys.BOUNDING_BOX,
-                EntityComponentKeys.POSITION,
-                EntityComponentKeys.VELOCITY)) {
-                final Vector3d acceleration = entity.getComponent(EntityComponentKeys.ACCELERATION);
-                Vector3d position = entity.getComponent(EntityComponentKeys.POSITION);
-                Vector3d velocity = entity.getComponent(EntityComponentKeys.VELOCITY);
+                EntityComponents.ACCELERATION,
+                EntityComponents.BOUNDING_BOX,
+                EntityComponents.POSITION,
+                EntityComponents.VELOCITY)) {
+                final Vector3d acceleration = entity.getComponent(EntityComponents.ACCELERATION);
+                Vector3d position = entity.getComponent(EntityComponents.POSITION);
+                Vector3d velocity = entity.getComponent(EntityComponents.VELOCITY);
 
                 velocity = velocity.add(acceleration.x(), acceleration.y() - 0.08, acceleration.z());
 
-                AABBox boundingBox = entity.getComponent(EntityComponentKeys.BOUNDING_BOX);
+                AABBox boundingBox = entity.getComponent(EntityComponents.BOUNDING_BOX);
 
                 final Vector3d originV = velocity;
                 double moveX = velocity.x();
@@ -90,9 +90,9 @@ public final class MotionSystem implements EntitySystem {
                 boundingBox = boundingBox.move(0.0, 0.0, moveZ);
 
                 if (originV.y() != moveY && originV.y() < 0.0) {
-                    entity.addComponent(EntityComponentKeys.ON_GROUND);
+                    entity.addComponent(EntityComponents.ON_GROUND);
                 } else {
-                    entity.removeComponent(EntityComponentKeys.ON_GROUND);
+                    entity.removeComponent(EntityComponents.ON_GROUND);
                 }
 
                 double fvx = velocity.x();
@@ -110,15 +110,15 @@ public final class MotionSystem implements EntitySystem {
                 velocity = new Vector3d(fvx, fvy, fvz);
 
                 position = position.add(moveX, moveY, moveZ);
-                entity.setComponent(EntityComponentKeys.POSITION, position);
-                entity.setComponent(EntityComponentKeys.BOUNDING_BOX, computeBox(boundingBox, position));
+                entity.setComponent(EntityComponents.POSITION, position);
+                entity.setComponent(EntityComponents.BOUNDING_BOX, computeBox(boundingBox, position));
 
                 velocity = velocity.mul(0.91, 0.98, 0.91);
-                if (entity.hasComponent(EntityComponentKeys.ON_GROUND)) {
+                if (entity.hasComponent(EntityComponents.ON_GROUND)) {
                     final double fiction = 0.7;
                     velocity = velocity.mul(fiction, 1.0, fiction);
                 }
-                entity.setComponent(EntityComponentKeys.VELOCITY, velocity);
+                entity.setComponent(EntityComponents.VELOCITY, velocity);
             }
         }
     }
