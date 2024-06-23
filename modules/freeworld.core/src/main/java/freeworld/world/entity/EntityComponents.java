@@ -27,7 +27,7 @@ public final class EntityComponents {
     public static final ComponentKey<Vector3d> ACCELERATION = of("acceleration", zeroVec3);
     public static final ComponentKey<AABBox> BOUNDING_BOX = of("bounding_box", () -> AABBox.EMPTY);
     public static final ComponentKey<Double> EYE_HEIGHT = of("eye_height", () -> 0.5);
-    public static final ComponentKey<Void> ON_GROUND = of("on_ground", () -> null);
+    public static final ComponentKey<Object> ON_GROUND = of("on_ground", () -> Object.class);
     public static final ComponentKey<Vector3d> POSITION = of("position", zeroVec3);
     public static final ComponentKey<Vector2d> ROTATION = of("rotation", () -> Vector2d.ZERO);
     public static final ComponentKey<Vector3d> VELOCITY = of("velocity", zeroVec3);

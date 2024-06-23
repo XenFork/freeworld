@@ -16,31 +16,18 @@ import freeworld.core.math.AABBox;
  * @author squid233
  * @since 0.1.0
  */
-public class BlockType { // must be an identity class
-    private final boolean air;
-
-    public BlockType(Settings settings) {
-        this.air = settings.air;
+public class AirBlockType extends BlockType {
+    public AirBlockType(Settings settings) {
+        super(settings);
     }
 
-    public static final class Settings {
-        private boolean air = false;
-
-        public Settings air() {
-            this.air = true;
-            return this;
-        }
-    }
-
-    public boolean air() {
-        return air;
-    }
-
+    @Override
     public AABBox outlineShape() {
-        return AABBox.FULL_CUBE;
+        return AABBox.EMPTY;
     }
 
+    @Override
     public AABBox collisionShape() {
-        return AABBox.FULL_CUBE;
+        return AABBox.EMPTY;
     }
 }

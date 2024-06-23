@@ -10,8 +10,9 @@
 
 package freeworld.client.world.chunk;
 
+import freeworld.client.render.GameRenderer;
 import freeworld.client.render.gl.GLStateMgr;
-import freeworld.client.render.model.VertexLayout;
+import freeworld.client.render.model.vertex.VertexLayout;
 import freeworld.client.render.world.ChunkCompiler;
 import freeworld.client.render.world.ChunkVertexData;
 import freeworld.client.render.world.WorldRenderer;
@@ -50,13 +51,15 @@ public final class ClientChunk extends Chunk implements AutoCloseable {
 
     public ClientChunk(World world, WorldRenderer worldRenderer, int x, int y, int z) {
         super(world, x, y, z);
+        final GameRenderer gameRenderer = worldRenderer.gameRenderer();
         // Get OpenGL context directly
-        this.state = new State(worldRenderer.gameRenderer().client().gl());
+        this.state = new State(gameRenderer.client().gl());
         this.cleanable = CLEANER.register(this, state);
         this.dataFlux = worldRenderer.vertexBuilderPool()
             .withPoolable(vertexBuilder -> Mono.fromSupplier(() -> ChunkCompiler.compile(
                     vertexBuilder,
-                    worldRenderer.gameRenderer().blockRenderer(),
+                    gameRenderer.blockRenderer(),
+                    gameRenderer.client().blockModelManager(),
                     this
                 ))
             )

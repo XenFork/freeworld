@@ -4,14 +4,16 @@
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
- * License as published by the Free Software Foundation; either
- * version 2.1 of the License, or (at your option) any later version.
+ * License as published by the Free Software Foundation;
+ * only version 2.1 of the License.
  */
 
 package freeworld.client.render.texture;
 
 import freeworld.client.render.gl.GLStateMgr;
 import freeworld.core.Identifier;
+import freeworld.util.Logging;
+import org.slf4j.Logger;
 import overrungl.opengl.GL;
 import overrungl.opengl.GL10C;
 import overrungl.stb.STBRPContext;
@@ -30,11 +32,16 @@ import java.util.Map;
  * @since 0.1.0
  */
 public final class TextureAtlas extends Texture {
+    private static final Logger logger = Logging.caller();
+    public static final Identifier MISSING = Identifier.ofBuiltin("builtin/missing");
+    public static final Identifier MISSING_RESOURCE_ID = MISSING.toResourceId(Identifier.RES_TEXTURE, Identifier.EXT_PNG);
     private final Map<Identifier, TextureRegion> regionMap;
+    private final Map<Identifier, Identifier> aliasMap;
 
     private TextureAtlas(int id, int width, int height, int mipmapLevel, Map<Identifier, TextureRegion> regionMap) {
         super(id, width, height, mipmapLevel);
         this.regionMap = regionMap;
+        this.aliasMap = new HashMap<>();
     }
 
     public static TextureAtlas load(GLStateMgr gl, List<Identifier> identifierList, int initMipmapLevel) {
@@ -42,7 +49,13 @@ public final class TextureAtlas extends Texture {
         final STBRectPack stbrp = STBRectPack.INSTANCE;
         try (Arena arena = Arena.ofConfined()) {
             final Map<Identifier, NativeImage> imageMap = HashMap.newHashMap(numIds);
-            identifierList.forEach(identifier -> imageMap.put(identifier, NativeImage.load(arena, identifier.toResourcePath(Identifier.ROOT_ASSETS, null, null))));
+            identifierList.forEach(identifier -> {
+                final NativeImage load = NativeImage.load(arena, identifier.toResourcePath(Identifier.ROOT_ASSETS, null, null));
+                imageMap.put(identifier, load);
+                if (load.failed() && !MISSING_RESOURCE_ID.equals(identifier)) {
+                    logger.error("Failed to load texture {}", identifier);
+                }
+            });
 
             final STBRPContext context = STBRPContext.OF.of(arena);
             final STBRPNode nodes = STBRPNode.OF.of(arena, numIds);
@@ -113,7 +126,15 @@ public final class TextureAtlas extends Texture {
         }
     }
 
+    public void addAlias(Identifier original, Identifier alias) {
+        aliasMap.put(alias, original);
+    }
+
     public TextureRegion getRegion(Identifier identifier) {
-        return regionMap.get(identifier);
+        final TextureRegion region = regionMap.get(identifier);
+        if (region != null) {
+            return region;
+        }
+        return regionMap.get(aliasMap.get(identifier));
     }
 }

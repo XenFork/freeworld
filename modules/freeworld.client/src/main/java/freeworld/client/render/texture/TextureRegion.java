@@ -4,8 +4,8 @@
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
- * License as published by the Free Software Foundation; either
- * version 2.1 of the License, or (at your option) any later version.
+ * License as published by the Free Software Foundation;
+ * only version 2.1 of the License.
  */
 
 package freeworld.client.render.texture;
@@ -29,5 +29,13 @@ public record TextureRegion(int x, int y, int width, int height) {
 
     public float v1(int atlasHeight) {
         return (float) (y + height) / atlasHeight;
+    }
+
+    public float u(int atlasWidth, float offset) {
+        return (x + offset) / atlasWidth;
+    }
+
+    public float v(int atlasHeight, float offset) {
+        return (y + offset) / atlasHeight;
     }
 }

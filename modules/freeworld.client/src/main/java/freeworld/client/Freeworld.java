@@ -14,6 +14,7 @@ import freeworld.client.render.Camera;
 import freeworld.client.render.GameRenderer;
 import freeworld.client.render.RenderSystem;
 import freeworld.client.render.gl.GLStateMgr;
+import freeworld.client.render.model.block.BlockModelManager;
 import freeworld.client.render.world.HitResult;
 import freeworld.core.registry.BuiltinRegistries;
 import freeworld.math.Vector2d;
@@ -67,6 +68,7 @@ public final class Freeworld implements AutoCloseable {
     private double cursorDeltaY;
     private boolean disableCursor = false;
     private GameRenderer gameRenderer;
+    private BlockModelManager blockModelManager;
     private World world;
     private Entity player;
     private int blockDestroyTimer = 0;
@@ -133,6 +135,9 @@ public final class Freeworld implements AutoCloseable {
         BuiltinRegistries.BLOCK_TYPE.freeze();
         EntityTypes.bootstrap();
         BuiltinRegistries.ENTITY_TYPE.freeze();
+
+        blockModelManager = new BlockModelManager();
+        blockModelManager.bootstrap();
 
         world = new World("New world");
         player = world.createEntity(EntityTypes.PLAYER, new Vector3d(0.0, 0.0, 0.0));
@@ -325,6 +330,14 @@ public final class Freeworld implements AutoCloseable {
 
     public Camera camera() {
         return camera;
+    }
+
+    public GameRenderer gameRenderer() {
+        return gameRenderer;
+    }
+
+    public BlockModelManager blockModelManager() {
+        return blockModelManager;
     }
 
     public World world() {

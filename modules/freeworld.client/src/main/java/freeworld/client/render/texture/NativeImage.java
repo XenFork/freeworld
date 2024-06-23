@@ -71,7 +71,7 @@ public record NativeImage(int width, int height, MemorySegment segment, boolean 
                         segment.setAtIndex(ValueLayout.JAVA_INT, y * 16 + x, (x < 8 ^ y < 8) ? 0xff000000 : 0xffff00ff);
                     }
                 }
-                FAILED = new NativeImage(16, 16, segment, true);
+                FAILED = new NativeImage(16, 16, segment.asReadOnly(), true);
             }
         }
         return Holder.FAILED;

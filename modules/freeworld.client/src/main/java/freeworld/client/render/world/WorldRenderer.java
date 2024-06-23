@@ -15,7 +15,7 @@ import freeworld.client.render.RenderSystem;
 import freeworld.client.render.builder.DefaultVertexBuilder;
 import freeworld.client.render.gl.GLResource;
 import freeworld.client.render.gl.GLStateMgr;
-import freeworld.client.render.model.VertexLayouts;
+import freeworld.client.render.model.vertex.VertexLayouts;
 import freeworld.client.world.chunk.ClientChunk;
 import freeworld.core.math.AABBox;
 import freeworld.math.FrustumIntersection;

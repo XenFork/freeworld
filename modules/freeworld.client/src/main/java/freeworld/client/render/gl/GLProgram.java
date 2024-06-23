@@ -14,7 +14,7 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
-import freeworld.client.render.model.VertexLayout;
+import freeworld.client.render.model.vertex.VertexLayout;
 import freeworld.core.Identifier;
 import freeworld.util.file.BuiltinFiles;
 import freeworld.util.Logging;

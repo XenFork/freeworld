@@ -4,8 +4,8 @@
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
- * License as published by the Free Software Foundation; either
- * version 2.1 of the License, or (at your option) any later version.
+ * License as published by the Free Software Foundation;
+ * only version 2.1 of the License.
  */
 
 package freeworld.client.render;
@@ -15,8 +15,8 @@ import freeworld.client.render.builder.DefaultVertexBuilder;
 import freeworld.client.render.builder.VertexBuilder;
 import freeworld.client.render.gl.GLResource;
 import freeworld.client.render.gl.GLStateMgr;
-import freeworld.client.render.model.VertexLayout;
-import freeworld.client.render.model.VertexLayouts;
+import freeworld.client.render.model.vertex.VertexLayout;
+import freeworld.client.render.model.vertex.VertexLayouts;
 import overrungl.opengl.GL10C;
 import overrungl.opengl.GL15C;
 

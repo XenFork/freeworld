@@ -8,20 +8,19 @@
  * only version 2.1 of the License.
  */
 
-package freeworld.math;
+package freeworld.client.render.model.block;
+
+import freeworld.math.Vector3f;
+import freeworld.util.Direction;
+
+import java.util.Map;
 
 /**
  * @author squid233
  * @since 0.1.0
  */
-public record Vector3f(float x, float y, float z) {
-    public static final Vector3f ZERO = new Vector3f(0.0f);
-
-    public Vector3f(float d) {
-        this(d, d, d);
-    }
-
-    public Vector3f add(float x, float y, float z) {
-        return new Vector3f(x() + x, y() + y, z() + z);
+public record BlockModelPart(Vector3f from, Vector3f to, Map<Direction, BlockModelFace> faces) {
+    public BlockModelPart {
+        faces = Map.copyOf(faces);
     }
 }

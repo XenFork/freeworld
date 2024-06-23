@@ -4,8 +4,8 @@
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
- * License as published by the Free Software Foundation; either
- * version 2.1 of the License, or (at your option) any later version.
+ * License as published by the Free Software Foundation;
+ * only version 2.1 of the License.
  */
 
 package freeworld.client.render;
@@ -15,8 +15,8 @@ import freeworld.client.render.gl.GLDrawMode;
 import freeworld.client.render.gl.GLProgram;
 import freeworld.client.render.gl.GLResource;
 import freeworld.client.render.gl.GLStateMgr;
-import freeworld.client.render.model.VertexLayout;
-import freeworld.client.render.model.VertexLayouts;
+import freeworld.client.render.model.vertex.VertexLayout;
+import freeworld.client.render.model.vertex.VertexLayouts;
 import freeworld.client.render.texture.TextureAtlas;
 import freeworld.client.render.texture.TextureManager;
 import freeworld.client.render.texture.TextureRegion;
@@ -26,6 +26,7 @@ import freeworld.client.render.world.WorldRenderer;
 import freeworld.client.world.chunk.ClientChunk;
 import freeworld.core.Identifier;
 import freeworld.core.math.AABBox;
+import freeworld.core.registry.BuiltinRegistries;
 import freeworld.math.Matrix4f;
 import freeworld.util.Direction;
 import freeworld.util.Logging;
@@ -34,7 +35,10 @@ import freeworld.world.entity.Entity;
 import org.slf4j.Logger;
 import overrungl.opengl.GL10C;
 
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * The game renderer.
@@ -47,9 +51,6 @@ public final class GameRenderer implements GLResource {
     private final Freeworld client;
     private GLProgram positionColorProgram;
     private GLProgram positionColorTexProgram;
-    public static final Identifier TEX_DIRT = Identifier.ofBuiltin("texture/block/dirt.png");
-    public static final Identifier TEX_GRASS_BLOCK = Identifier.ofBuiltin("texture/block/grass_block.png");
-    public static final Identifier TEX_STONE = Identifier.ofBuiltin("texture/block/stone.png");
     private static final Identifier TEX_CROSSING = Identifier.ofBuiltin("texture/gui/crossing.png");
     private static final Identifier TEX_HOT_BAR = Identifier.ofBuiltin("texture/gui/hotbar.png");
     private static final Identifier TEX_HOT_BAR_SELECTED = Identifier.ofBuiltin("texture/gui/hotbar_selected.png");
@@ -74,19 +75,40 @@ public final class GameRenderer implements GLResource {
         gl.clearColor(0.4f, 0.6f, 0.9f, 1.0f);
 
         textureManager = new TextureManager();
-
-        blockAtlas = TextureAtlas.load(gl, List.of(TEX_DIRT, TEX_GRASS_BLOCK, TEX_STONE), 4);
-        textureManager.addTexture(TextureManager.BLOCK_ATLAS, blockAtlas);
-        logger.info("Created {}x{}x{} {}", blockAtlas.width(), blockAtlas.height(), blockAtlas.mipmapLevel(), TextureManager.BLOCK_ATLAS);
+        initBlockAtlas(gl);
 
         guiAtlas = TextureAtlas.load(gl, List.of(TEX_CROSSING, TEX_HOT_BAR, TEX_HOT_BAR_SELECTED), 0);
         textureManager.addTexture(TextureManager.GUI_ATLAS, guiAtlas);
-        logger.info("Created {}x{}x{} {}", guiAtlas.width(), guiAtlas.height(), guiAtlas.mipmapLevel(), TextureManager.GUI_ATLAS);
+        logAtlas(guiAtlas, TextureManager.GUI_ATLAS);
 
-        blockRenderer = new BlockRenderer(this);
+        blockRenderer = new BlockRenderer(textureManager);
         worldRenderer = new WorldRenderer(this, client.world());
 
         tessellator = new Tessellator();
+    }
+
+    private void initBlockAtlas(GLStateMgr gl) {
+        final var registry = client.blockModelManager().registry();
+
+        final Map<Identifier, List<Identifier>> map = HashMap.newHashMap(registry.size());
+        for (var e : registry) {
+            for (Identifier identifier : e.getValue().textureDefinitions().values()) {
+                map.computeIfAbsent(
+                    identifier.toResourceId(Identifier.RES_TEXTURE, Identifier.EXT_PNG),
+                    _ -> new ArrayList<>()
+                ).add(identifier);
+            }
+        }
+
+        blockAtlas = TextureAtlas.load(gl, List.copyOf(map.keySet()), 4);
+        map.forEach((k, v) -> v.forEach(id -> blockAtlas.addAlias(k, id)));
+
+        textureManager.addTexture(TextureManager.BLOCK_ATLAS, blockAtlas);
+        logAtlas(blockAtlas, TextureManager.BLOCK_ATLAS);
+    }
+
+    private void logAtlas(TextureAtlas atlas, Identifier identifier) {
+        logger.info("Created {}x{}x{} {}", atlas.width(), atlas.height(), atlas.mipmapLevel(), identifier);
     }
 
     private void initGLPrograms(GLStateMgr gl) {
@@ -252,7 +274,7 @@ public final class GameRenderer implements GLResource {
                     .rotateY((float) Math.toRadians(45.0))
                     .scale(10));
                 tessellator.begin(GLDrawMode.TRIANGLES);
-                blockRenderer.renderBlock(tessellator, blockType, 0, 0, 0);
+                blockRenderer.renderBlockModel(tessellator, client.blockModelManager().get(BuiltinRegistries.BLOCK_TYPE.getId(blockType)), 0, 0, 0, _ -> false);
                 tessellator.end(gl);
                 i++;
             }
