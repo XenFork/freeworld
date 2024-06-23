@@ -4,14 +4,15 @@
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
- * License as published by the Free Software Foundation; either
- * version 2.1 of the License, or (at your option) any later version.
+ * License as published by the Free Software Foundation;
+ * only version 2.1 of the License.
  */
 
 package freeworld.client.render;
 
 import freeworld.client.render.gl.GLProgram;
 import freeworld.client.render.gl.GLStateMgr;
+import freeworld.client.render.texture.Texture;
 import freeworld.math.Matrix4f;
 import freeworld.math.Matrix4fStack;
 import freeworld.util.Logging;
@@ -28,6 +29,7 @@ public final class RenderSystem {
     private static final Logger logger = Logging.caller();
     private static GLStateMgr stateMgr = null;
     private static GLProgram currentProgram = null;
+    private static Texture textureBinding2D = null;
     private static final Matrix4fStack projectionMatrixStack = new Matrix4fStack(32);
     private static final Matrix4fStack viewMatrixStack = new Matrix4fStack(32);
     private static final Matrix4fStack modelMatrixStack = new Matrix4fStack(32);
@@ -37,15 +39,30 @@ public final class RenderSystem {
         stateMgr = gl;
     }
 
-    public static void bindProgram(@Nullable GLProgram program) {
+    public static void useProgram(@Nullable GLProgram program) {
         currentProgram = program;
         if (program != null) {
             program.use(stateMgr);
+        } else {
+            stateMgr.setCurrentProgram(0);
         }
     }
 
     public static GLProgram currentProgram() {
         return currentProgram;
+    }
+
+    public static void bindTexture2D(Texture texture) {
+        textureBinding2D = texture;
+        if (texture != null) {
+            texture.bind(stateMgr);
+        } else {
+            stateMgr.setTextureBinding2D(0);
+        }
+    }
+
+    public static Texture textureBinding2D() {
+        return textureBinding2D;
     }
 
     public static void setProjectionMatrix(UnaryOperator<Matrix4f> matrix) {

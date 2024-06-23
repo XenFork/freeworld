@@ -14,28 +14,20 @@ package freeworld.client.render.texture;
  * @author squid233
  * @since 0.1.0
  */
-public record TextureRegion(int x, int y, int width, int height) {
-    public float u0(int atlasWidth) {
-        return (float) x / atlasWidth;
+public record TextureRegion(TextureAtlas atlas, int x, int y, int width, int height) {
+    public float u0() {
+        return (float) x / atlas.width();
     }
 
-    public float u1(int atlasWidth) {
-        return (float) (x + width) / atlasWidth;
+    public float u1() {
+        return (float) (x + width) / atlas.width();
     }
 
-    public float v0(int atlasHeight) {
-        return (float) y / atlasHeight;
+    public float v0() {
+        return (float) y / atlas.height();
     }
 
-    public float v1(int atlasHeight) {
-        return (float) (y + height) / atlasHeight;
-    }
-
-    public float u(int atlasWidth, float offset) {
-        return (x + offset) / atlasWidth;
-    }
-
-    public float v(int atlasHeight, float offset) {
-        return (y + offset) / atlasHeight;
+    public float v1() {
+        return (float) (y + height) / atlas.height();
     }
 }

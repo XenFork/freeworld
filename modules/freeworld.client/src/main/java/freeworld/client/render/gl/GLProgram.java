@@ -210,7 +210,7 @@ public final class GLProgram implements GLResource {
                         continue;
                     }
                     final GLUniformType type = entry.getValue();
-                    final GLUniform uniform = new GLUniform(id, type, location, uniformArena);
+                    final GLUniform uniform = new GLUniform(program, type, location, uniformArena);
                     uniformMap.put(name, uniform);
 
                     final JsonArray array = uniformValueMap.get(name);

@@ -4,12 +4,13 @@
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
- * License as published by the Free Software Foundation; either
- * version 2.1 of the License, or (at your option) any later version.
+ * License as published by the Free Software Foundation;
+ * only version 2.1 of the License.
  */
 
 package freeworld.client.render.texture;
 
+import freeworld.client.render.RenderSystem;
 import freeworld.client.render.gl.GLStateMgr;
 import freeworld.client.render.gl.GLResource;
 import freeworld.core.Identifier;
@@ -26,6 +27,7 @@ import java.lang.foreign.Arena;
  */
 public sealed class Texture implements GLResource permits TextureAtlas {
     private static final Logger logger = Logging.caller();
+    public static final Identifier MISSING = Identifier.ofBuiltin("builtin/missing");
     private final int id;
     private final int width;
     private final int height;
@@ -42,7 +44,7 @@ public sealed class Texture implements GLResource permits TextureAtlas {
         try (Arena arena = Arena.ofConfined()) {
             final String path = identifier.toResourcePath(Identifier.ROOT_ASSETS, null, null);
             final NativeImage image = NativeImage.load(arena, path);
-            if (image.failed()) {
+            if (image.failed() && !MISSING.equals(identifier)) {
                 logger.error("Failed to load texture {}", identifier);
             }
             final int width = image.width();
@@ -51,7 +53,8 @@ public sealed class Texture implements GLResource permits TextureAtlas {
             final int mipmapLevel = hasMipmap ? Math.min(Integer.numberOfTrailingZeros(width), Integer.numberOfTrailingZeros(height)) : 0;
 
             final int id = gl.genTextures();
-            gl.setTextureBinding2D(id);
+            final Texture texture = new Texture(id, width, height, mipmapLevel);
+            RenderSystem.bindTexture2D(texture);
             gl.texParameteri(GL10C.TEXTURE_2D, GL10C.TEXTURE_MIN_FILTER, hasMipmap ? GL10C.NEAREST_MIPMAP_NEAREST : GL10C.NEAREST);
             gl.texParameteri(GL10C.TEXTURE_2D, GL10C.TEXTURE_MAG_FILTER, GL10C.NEAREST);
             gl.texParameteri(GL10C.TEXTURE_2D, GL.TEXTURE_MAX_LEVEL, mipmapLevel);
@@ -67,7 +70,7 @@ public sealed class Texture implements GLResource permits TextureAtlas {
             if (hasMipmap) {
                 gl.generateMipmap(GL10C.TEXTURE_2D);
             }
-            return new Texture(id, width, height, mipmapLevel);
+            return texture;
         }
     }
 

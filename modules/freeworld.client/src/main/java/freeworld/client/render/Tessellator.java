@@ -39,6 +39,16 @@ public final class Tessellator implements GLResource, VertexBuilder {
     private int vbo = 0;
     private int ebo = 0;
 
+    private Tessellator() {
+    }
+
+    public static Tessellator getInstance() {
+        final class Holder {
+            private static final Tessellator INSTANCE = new Tessellator();
+        }
+        return Holder.INSTANCE;
+    }
+
     @Override
     public Tessellator position(float x, float y, float z) {
         vertexBuilder.position(x, y, z);

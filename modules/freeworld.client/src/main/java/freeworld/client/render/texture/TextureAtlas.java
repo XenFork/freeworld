@@ -10,6 +10,7 @@
 
 package freeworld.client.render.texture;
 
+import freeworld.client.render.RenderSystem;
 import freeworld.client.render.gl.GLStateMgr;
 import freeworld.core.Identifier;
 import freeworld.util.Logging;
@@ -33,8 +34,6 @@ import java.util.Map;
  */
 public final class TextureAtlas extends Texture {
     private static final Logger logger = Logging.caller();
-    public static final Identifier MISSING = Identifier.ofBuiltin("builtin/missing");
-    public static final Identifier MISSING_RESOURCE_ID = MISSING.toResourceId(Identifier.RES_TEXTURE, Identifier.EXT_PNG);
     private final Map<Identifier, TextureRegion> regionMap;
     private final Map<Identifier, Identifier> aliasMap;
 
@@ -50,9 +49,9 @@ public final class TextureAtlas extends Texture {
         try (Arena arena = Arena.ofConfined()) {
             final Map<Identifier, NativeImage> imageMap = HashMap.newHashMap(numIds);
             identifierList.forEach(identifier -> {
-                final NativeImage load = NativeImage.load(arena, identifier.toResourcePath(Identifier.ROOT_ASSETS, null, null));
+                final NativeImage load = NativeImage.load(arena, identifier.toResourcePath(Identifier.ROOT_ASSETS, Identifier.RES_TEXTURE, Identifier.EXT_PNG));
                 imageMap.put(identifier, load);
-                if (load.failed() && !MISSING_RESOURCE_ID.equals(identifier)) {
+                if (load.failed() && !MISSING.equals(identifier)) {
                     logger.error("Failed to load texture {}", identifier);
                 }
             });
@@ -86,7 +85,8 @@ public final class TextureAtlas extends Texture {
 
             final Map<Identifier, TextureRegion> regionMap = HashMap.newHashMap(numIds);
             final int id = gl.genTextures();
-            gl.setTextureBinding2D(id);
+            final TextureAtlas atlas = new TextureAtlas(id, packerSize, packerSize, mipmapLevel, regionMap);
+            RenderSystem.bindTexture2D(atlas);
             gl.texParameteri(GL10C.TEXTURE_2D, GL10C.TEXTURE_MIN_FILTER, mipmapLevel > 0 ? GL10C.NEAREST_MIPMAP_NEAREST : GL10C.NEAREST);
             gl.texParameteri(GL10C.TEXTURE_2D, GL10C.TEXTURE_MAG_FILTER, GL10C.NEAREST);
             gl.texParameteri(GL10C.TEXTURE_2D, GL.TEXTURE_MAX_LEVEL, mipmapLevel);
@@ -107,7 +107,7 @@ public final class TextureAtlas extends Texture {
                     final int yo = slice.y();
                     final int width = slice.w();
                     final int height = slice.h();
-                    regionMap.put(identifier, new TextureRegion(xo, yo, width, height));
+                    regionMap.put(identifier, new TextureRegion(atlas, xo, yo, width, height));
                     gl.texSubImage2D(GL10C.TEXTURE_2D,
                         0,
                         xo,
@@ -122,7 +122,7 @@ public final class TextureAtlas extends Texture {
             if (mipmapLevel > 0) {
                 gl.generateMipmap(GL10C.TEXTURE_2D);
             }
-            return new TextureAtlas(id, packerSize, packerSize, mipmapLevel, regionMap);
+            return atlas;
         }
     }
 

@@ -29,6 +29,7 @@ import freeworld.world.block.BlockTypes;
 import freeworld.world.entity.Entity;
 import freeworld.world.entity.EntityComponents;
 import freeworld.world.entity.EntityTypes;
+import org.jetbrains.annotations.ApiStatus;
 import org.slf4j.Logger;
 import overrun.marshal.Unmarshal;
 import overrungl.glfw.GLFW;
@@ -71,6 +72,7 @@ public final class Freeworld implements AutoCloseable {
     private BlockModelManager blockModelManager;
     private World world;
     private Entity player;
+    private int gameTicks = 0;
     private int blockDestroyTimer = 0;
     private int blockPlaceTimer = 0;
     private int hotBarSelection = 0;
@@ -263,6 +265,10 @@ public final class Freeworld implements AutoCloseable {
         }
         blockDestroyTimer++;
         blockPlaceTimer++;
+
+        gameRenderer.tick();
+
+        gameTicks++;
     }
 
     private void initGL() {
@@ -308,6 +314,7 @@ public final class Freeworld implements AutoCloseable {
         return glFlags;
     }
 
+    @ApiStatus.Internal
     public GLStateMgr gl() {
         return gl;
     }
@@ -346,6 +353,10 @@ public final class Freeworld implements AutoCloseable {
 
     public Entity player() {
         return player;
+    }
+
+    public int gameTicks() {
+        return gameTicks;
     }
 
     public int hotBarSelection() {

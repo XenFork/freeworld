@@ -77,7 +77,7 @@ public final class BlockRenderer {
     }
 
     public void renderBlockModel(VertexBuilder builder, BlockModel model, int x, int y, int z, Predicate<Direction> shouldCullFace) {
-        final TextureAtlas texture = (TextureAtlas) textureManager.getTexture(TextureManager.BLOCK_ATLAS);
+        final TextureAtlas texture = textureManager.getTexture(TextureManager.BLOCK_ATLAS);
         final int width = texture.width();
         final int height = texture.height();
 
