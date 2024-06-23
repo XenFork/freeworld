@@ -18,10 +18,14 @@ module freeworld.client {
     exports freeworld.client;
     exports freeworld.client.main;
     exports freeworld.client.render;
+    exports freeworld.client.render.animation;
     exports freeworld.client.render.builder;
     exports freeworld.client.render.gl;
+    exports freeworld.client.render.gui;
     exports freeworld.client.render.model.block;
     exports freeworld.client.render.model.vertex;
+    exports freeworld.client.render.screen;
+    exports freeworld.client.render.screen.ingame;
     exports freeworld.client.render.texture;
     exports freeworld.client.render.world;
     exports freeworld.client.util;

@@ -22,7 +22,7 @@ import freeworld.client.render.model.block.BlockModelFace;
 import freeworld.client.render.model.block.BlockModelPart;
 import freeworld.client.render.model.vertex.VertexLayout;
 import freeworld.client.render.model.vertex.VertexLayouts;
-import freeworld.client.render.texture.Texture;
+import freeworld.client.render.screen.Screen;
 import freeworld.client.render.texture.TextureAtlas;
 import freeworld.client.render.texture.TextureManager;
 import freeworld.client.render.world.BlockRenderer;
@@ -53,9 +53,7 @@ public final class GameRenderer implements GLResource {
     private final Freeworld client;
     private GLProgram positionColorProgram;
     private GLProgram positionColorTexProgram;
-    private final float guiScale = 2;
     private TextureManager textureManager;
-    private TextureAtlas blockAtlas;
     private GuiGraphics guiGraphics;
     private HudRenderer hudRenderer;
     private BlockRenderer blockRenderer;
@@ -74,7 +72,6 @@ public final class GameRenderer implements GLResource {
         gl.clearColor(0.4f, 0.6f, 0.9f, 1.0f);
 
         textureManager = new TextureManager();
-        textureManager.addTexture(Texture.MISSING, Texture.load(gl, Texture.MISSING));
 
         initBlockAtlas(gl);
 
@@ -111,8 +108,7 @@ public final class GameRenderer implements GLResource {
             }
         }
 
-        blockAtlas = TextureAtlas.load(gl, list, 4);
-
+        final TextureAtlas blockAtlas = TextureAtlas.load(gl, list, 4);
         textureManager.addTexture(TextureManager.BLOCK_ATLAS, blockAtlas);
         logAtlas(blockAtlas, TextureManager.BLOCK_ATLAS);
     }
@@ -144,17 +140,16 @@ public final class GameRenderer implements GLResource {
         gl.setDepthFunc(GL10C.LEQUAL);
 
         try (var _ = RenderSystem.matricesScope()) {
-            RenderSystem.setProjectionMatrix(_ -> Matrix4f.setPerspective(
-                (float) Math.toRadians(70.0),
-                (float) client.framebufferWidth() / client.framebufferHeight(),
-                0.01f,
-                1000.0f
-            ));
             final Camera camera = client.camera();
             final Entity player = client.player();
             camera.moveToEntity(player);
             camera.updateLerp(partialTick);
-            RenderSystem.setViewMatrix(_ -> camera.updateViewMatrix());
+            RenderSystem.setProjectionViewMatrix(_ -> Matrix4f.setPerspective(
+                (float) Math.toRadians(70.0),
+                (float) client.framebufferWidth() / client.framebufferHeight(),
+                0.01f,
+                1000.0f
+            ), _ -> camera.updateViewMatrix());
             RenderSystem.setModelMatrix(_ -> Matrix4f.IDENTITY);
 
             RenderSystem.useProgram(positionColorTexProgram);
@@ -163,7 +158,7 @@ public final class GameRenderer implements GLResource {
             final List<ClientChunk> chunks = worldRenderer.renderingChunks(player);
             worldRenderer.compileChunks(chunks);
 
-            RenderSystem.bindTexture2D(blockAtlas);
+            RenderSystem.bindTexture2D(textureManager.getTexture(TextureManager.BLOCK_ATLAS));
             worldRenderer.renderChunks(gl, chunks);
 
             hitResult = worldRenderer.selectBlock(player);
@@ -203,14 +198,29 @@ public final class GameRenderer implements GLResource {
         }
 
         gl.clear(GL10C.DEPTH_BUFFER_BIT);
+
         gl.disableCullFace();
         gl.disableDepthTest();
         gl.enableBlend();
         gl.setBlendFunc(GL10C.SRC_ALPHA, GL10C.ONE_MINUS_SRC_ALPHA);
-
         try (var _ = RenderSystem.matricesScope()) {
             hudRenderer.update(client.framebufferWidth(), client.framebufferHeight());
             hudRenderer.render(guiGraphics, gl, partialTick);
+        }
+
+        gl.disableCullFace();
+        gl.disableDepthTest();
+        gl.enableBlend();
+        gl.setBlendFunc(GL10C.SRC_ALPHA, GL10C.ONE_MINUS_SRC_ALPHA);
+        try (var _ = RenderSystem.matricesScope()) {
+            renderScreen(guiGraphics, gl, partialTick);
+        }
+    }
+
+    private void renderScreen(GuiGraphics graphics, GLStateMgr gl, double partialTick) {
+        final Screen screen = client.screen();
+        if (screen != null) {
+            screen.render(graphics, gl, partialTick);
         }
     }
 
@@ -253,9 +263,5 @@ public final class GameRenderer implements GLResource {
 
     public HitResult hitResult() {
         return hitResult;
-    }
-
-    public float guiScale() {
-        return guiScale;
     }
 }

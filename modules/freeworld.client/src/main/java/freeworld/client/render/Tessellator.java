@@ -129,6 +129,8 @@ public final class Tessellator implements GLResource, VertexBuilder {
             gl.bufferSubData(GL15C.ELEMENT_ARRAY_BUFFER, 0L, indexData);
         }
         gl.drawElements(drawMode.value(), indexCount, GL10C.UNSIGNED_INT, MemorySegment.NULL);
+
+        vertexBuilder.reset();
     }
 
     public void begin(GLDrawMode drawMode) {

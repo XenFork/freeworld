@@ -21,7 +21,7 @@ import freeworld.world.World;
  * @since 0.1.0
  */
 public final class EntityTypes {
-    public static final double PLAYER_EYE_HEIGHT = 1.71;
+    public static final Vector3d PLAYER_EYE_POSITION = new Vector3d(0.0, 1.62, 0.0);
     public static final EntityType PLAYER = register(1, "player", EntityTypes::setupComponentPlayer);
 
     private EntityTypes() {
@@ -30,7 +30,7 @@ public final class EntityTypes {
     private static void setupComponentPlayer(World world, Entity entity, Vector3d position) {
         entity.addComponent(EntityComponents.ACCELERATION);
         entity.addComponent(EntityComponents.BOUNDING_BOX, EntityType.boundingBox(position.x(), position.y(), position.z(), 0.6, 1.8, 0.6));
-        entity.addComponent(EntityComponents.EYE_HEIGHT, PLAYER_EYE_HEIGHT);
+        entity.addComponent(EntityComponents.EYE_POSITION, PLAYER_EYE_POSITION);
         entity.addComponent(EntityComponents.POSITION, position);
         entity.addComponent(EntityComponents.ROTATION);
         entity.addComponent(EntityComponents.VELOCITY);
