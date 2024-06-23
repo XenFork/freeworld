@@ -4,8 +4,8 @@
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
- * License as published by the Free Software Foundation; either
- * version 2.1 of the License, or (at your option) any later version.
+ * License as published by the Free Software Foundation;
+ * only version 2.1 of the License.
  */
 
 /**
@@ -20,7 +20,8 @@ module freeworld.client {
     exports freeworld.client.render;
     exports freeworld.client.render.builder;
     exports freeworld.client.render.gl;
-    exports freeworld.client.render.model;
+    exports freeworld.client.render.model.block;
+    exports freeworld.client.render.model.vertex;
     exports freeworld.client.render.texture;
     exports freeworld.client.render.world;
     exports freeworld.client.util;
@@ -28,7 +29,6 @@ module freeworld.client {
 
     requires transitive freeworld.core;
     requires io.github.overrun.marshal;
-    requires overrungl.joml;
     requires overrungl.glfw;
     requires overrungl.opengl;
     requires overrungl.stb;

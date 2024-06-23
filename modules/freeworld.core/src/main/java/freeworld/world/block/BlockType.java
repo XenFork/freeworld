@@ -4,42 +4,43 @@
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
- * License as published by the Free Software Foundation; either
- * version 2.1 of the License, or (at your option) any later version.
+ * License as published by the Free Software Foundation;
+ * only version 2.1 of the License.
  */
 
 package freeworld.world.block;
 
-import freeworld.core.Identifier;
 import freeworld.core.math.AABBox;
 
 /**
  * @author squid233
  * @since 0.1.0
  */
-public record BlockType(
-    boolean air,
-    AABBox outlineShape,
-    AABBox collisionShape,
-    Identifier textureId
-) {
-    public BlockType() {
-        this(false, AABBox.FULL_CUBE, AABBox.FULL_CUBE, Identifier.ofBuiltin(""));
+public class BlockType { // must be an identity class
+    private final boolean air;
+
+    public BlockType(Settings settings) {
+        this.air = settings.air;
     }
 
-    public BlockType withAir(boolean air) {
-        return new BlockType(air, outlineShape, collisionShape, textureId);
+    public static final class Settings {
+        private boolean air = false;
+
+        public Settings air() {
+            this.air = true;
+            return this;
+        }
     }
 
-    public BlockType withOutlineShape(AABBox outlineShape) {
-        return new BlockType(air, outlineShape, collisionShape, textureId);
+    public boolean air() {
+        return air;
     }
 
-    public BlockType withCollisionShape(AABBox collisionShape) {
-        return new BlockType(air, outlineShape, collisionShape, textureId);
+    public AABBox outlineShape() {
+        return AABBox.FULL_CUBE;
     }
 
-    public BlockType withTextureId(Identifier textureId) {
-        return new BlockType(air, outlineShape, collisionShape, textureId);
+    public AABBox collisionShape() {
+        return AABBox.FULL_CUBE;
     }
 }

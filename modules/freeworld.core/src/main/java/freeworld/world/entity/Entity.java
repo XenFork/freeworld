@@ -4,15 +4,15 @@
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
- * License as published by the Free Software Foundation; either
- * version 2.1 of the License, or (at your option) any later version.
+ * License as published by the Free Software Foundation;
+ * only version 2.1 of the License.
  */
 
 package freeworld.world.entity;
 
-import freeworld.core.Identifier;
+import freeworld.math.Vector3d;
 import freeworld.world.World;
-import freeworld.world.entity.component.*;
+import freeworld.world.component.ComponentKey;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -27,65 +27,42 @@ public final class Entity {
     private final World world;
     private final UUID uuid;
     private final EntityType entityType;
-    private final Map<Identifier, EntityComponent> componentMap = new HashMap<>();
+    private final Map<ComponentKey<?>, Object> componentMap = new HashMap<>();
 
-    public Entity(World world, UUID uuid, EntityType entityType) {
+    public Entity(World world, UUID uuid, Vector3d position, EntityType entityType) {
         this.world = world;
         this.uuid = uuid;
         this.entityType = entityType;
-        for (var supplier : entityType.defaultComponents()) {
-            addComponent(supplier.get());
-        }
+        entityType.initializer().setup(world, this, position);
     }
 
-    public void addComponent(EntityComponent component) {
+    public <T> void addComponent(ComponentKey<T> key, T component) {
         Objects.requireNonNull(component);
-        final Identifier id = component.componentId();
-        if (componentMap.containsKey(id)) {
+        if (componentMap.containsKey(key)) {
             return;
         }
-        componentMap.put(id, component);
+        componentMap.put(key, component);
     }
 
-    public void setComponent(EntityComponent component) {
-        componentMap.put(component.componentId(), component);
+    public <T> void addComponent(ComponentKey<T> key) {
+        addComponent(key, key.defaultValue().get());
     }
 
-    public void removeComponent(Identifier id) {
+    public <T> void setComponent(ComponentKey<T> key, T component) {
+        componentMap.put(key, component);
+    }
+
+    public void removeComponent(ComponentKey<?> id) {
         componentMap.remove(id);
     }
 
     @SuppressWarnings("unchecked")
-    public <T extends EntityComponent> T getComponent(Identifier id) {
+    public <T> T getComponent(ComponentKey<T> id) {
         return (T) componentMap.get(id);
     }
 
-    public boolean hasComponent(Identifier id) {
+    public boolean hasComponent(ComponentKey<?> id) {
         return componentMap.containsKey(id);
-    }
-
-    public AccelerationComponent acceleration() {
-        return getComponent(AccelerationComponent.ID);
-    }
-
-    public BoundingBoxComponent boundingBox() {
-        return getComponent(BoundingBoxComponent.ID);
-    }
-
-    public EyeHeightComponent eyeHeight() {
-        return getComponent(EyeHeightComponent.ID);
-    }
-
-    public PositionComponent position() {
-        return getComponent(PositionComponent.ID);
-    }
-
-    public RotationXYComponent rotation() {
-        return getComponent(RotationXYComponent.ID);
-    }
-
-    public VelocityComponent velocity() {
-        return getComponent(VelocityComponent.ID);
     }
 
     public World world() {

@@ -4,73 +4,72 @@
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
- * License as published by the Free Software Foundation; either
- * version 2.1 of the License, or (at your option) any later version.
+ * License as published by the Free Software Foundation;
+ * only version 2.1 of the License.
  */
 
 package freeworld.client.render;
 
+import freeworld.math.Matrix4f;
+import freeworld.math.Vector2d;
+import freeworld.math.Vector3d;
 import freeworld.world.entity.Entity;
-import freeworld.world.entity.component.EyeHeightComponent;
-import freeworld.world.entity.component.PositionComponent;
-import freeworld.world.entity.component.RotationXYComponent;
+import freeworld.world.entity.EntityComponents;
 import freeworld.world.entity.system.EntitySystem;
-import org.joml.*;
-
-import java.lang.Math;
 
 /**
  * @author squid233
  * @since 0.1.0
  */
 public final class Camera {
-    private final Vector3d prevPosition = new Vector3d();
-    private final Vector3d position = new Vector3d();
-    private final Vector3d lerpPosition = new Vector3d();
-    private final Vector2d rotation = new Vector2d();
-    private final Matrix4f viewMatrix = new Matrix4f();
+    private Vector3d prevPosition = Vector3d.ZERO;
+    private Vector3d position = Vector3d.ZERO;
+    private Vector3d lerpPosition = Vector3d.ZERO;
+    private Vector2d rotation = Vector2d.ZERO;
 
     public void moveToEntity(Entity entity) {
-        if (EntitySystem.hasAllComponents(entity, PositionComponent.ID, RotationXYComponent.ID)) {
-            position.set(entity.position().value());
-            if (entity.hasComponent(EyeHeightComponent.ID)) {
-                position.y += entity.eyeHeight().value();
+        if (EntitySystem.hasAllComponents(entity, EntityComponents.POSITION, EntityComponents.ROTATION)) {
+            final Vector3d ePos = entity.getComponent(EntityComponents.POSITION);
+            if (entity.hasComponent(EntityComponents.EYE_HEIGHT)) {
+                position = new Vector3d(
+                    ePos.x(),
+                    ePos.y() + entity.getComponent(EntityComponents.EYE_HEIGHT),
+                    ePos.z()
+                );
+            } else {
+                position = ePos;
             }
-            rotation.set(entity.rotation().value());
+            rotation = entity.getComponent(EntityComponents.ROTATION);
         }
     }
 
     public void preUpdate() {
-        prevPosition.set(position);
+        prevPosition = position;
     }
 
     public void updateLerp(double partialTick) {
-        prevPosition.lerp(position, partialTick, lerpPosition);
+        lerpPosition = prevPosition.lerp(position, partialTick);
     }
 
-    public void updateViewMatrix() {
-        viewMatrix.rotationX((float) -Math.toRadians(rotation.x()))
+    public Matrix4f updateViewMatrix() {
+        return Matrix4f.rotationX((float) -Math.toRadians(rotation.x()))
             .rotateY((float) -Math.toRadians(rotation.y()))
             .translate((float) -lerpPosition.x(), (float) -lerpPosition.y(), (float) -lerpPosition.z());
     }
 
-    public Vector3dc prevPosition() {
+    public Vector3d prevPosition() {
         return prevPosition;
     }
 
-    public Vector3dc position() {
+    public Vector3d position() {
         return position;
     }
 
-    public Vector3dc lerpPosition() {
+    public Vector3d lerpPosition() {
         return lerpPosition;
     }
 
-    public Vector2dc rotation() {
+    public Vector2d rotation() {
         return rotation;
-    }
-
-    public Matrix4fc viewMatrix() {
-        return viewMatrix;
     }
 }

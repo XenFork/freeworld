@@ -4,13 +4,14 @@
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
- * License as published by the Free Software Foundation; either
- * version 2.1 of the License, or (at your option) any later version.
+ * License as published by the Free Software Foundation;
+ * only version 2.1 of the License.
  */
 
 package freeworld.world;
 
 import freeworld.core.math.AABBox;
+import freeworld.math.Vector3d;
 import freeworld.util.Int3Consumer;
 import freeworld.world.block.BlockType;
 import freeworld.world.block.BlockTypes;
@@ -18,7 +19,7 @@ import freeworld.world.chunk.Chunk;
 import freeworld.world.chunk.ChunkPos;
 import freeworld.world.entity.Entity;
 import freeworld.world.entity.EntityType;
-import freeworld.world.entity.component.PositionComponent;
+import freeworld.world.entity.EntityComponents;
 import freeworld.world.entity.system.MotionSystem;
 
 import java.util.ArrayList;
@@ -45,7 +46,7 @@ public final class World {
 
     public static void forEachChunk(Entity player, int chunkRadius, Int3Consumer consumer) {
         final int radius = chunkRadius * Chunk.SIZE;
-        final AABBox box = player.boundingBox().value().grow(radius, radius, radius);
+        final AABBox box = player.getComponent(EntityComponents.BOUNDING_BOX).grow(radius, radius, radius);
         final int minX = ChunkPos.absoluteToChunk((int) Math.floor(box.minX()));
         final int minY = ChunkPos.absoluteToChunk((int) Math.floor(box.minY()));
         final int minZ = ChunkPos.absoluteToChunk((int) Math.floor(box.minZ()));
@@ -69,11 +70,8 @@ public final class World {
         motionSystem.process(this, entities);
     }
 
-    public Entity createEntity(EntityType type, double x, double y, double z) {
-        final Entity entity = new Entity(this, UUID.randomUUID(), type);
-        if (entity.hasComponent(PositionComponent.ID)) {
-            entity.position().value().set(x, y, z);
-        }
+    public Entity createEntity(EntityType type, Vector3d position) {
+        final Entity entity = new Entity(this, UUID.randomUUID(), position, type);
         entities.add(entity);
         return entity;
     }

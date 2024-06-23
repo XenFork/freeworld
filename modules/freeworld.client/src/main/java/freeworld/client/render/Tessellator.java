@@ -4,8 +4,8 @@
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
- * License as published by the Free Software Foundation; either
- * version 2.1 of the License, or (at your option) any later version.
+ * License as published by the Free Software Foundation;
+ * only version 2.1 of the License.
  */
 
 package freeworld.client.render;
@@ -15,8 +15,8 @@ import freeworld.client.render.builder.DefaultVertexBuilder;
 import freeworld.client.render.builder.VertexBuilder;
 import freeworld.client.render.gl.GLResource;
 import freeworld.client.render.gl.GLStateMgr;
-import freeworld.client.render.model.VertexLayout;
-import freeworld.client.render.model.VertexLayouts;
+import freeworld.client.render.model.vertex.VertexLayout;
+import freeworld.client.render.model.vertex.VertexLayouts;
 import overrungl.opengl.GL10C;
 import overrungl.opengl.GL15C;
 
@@ -38,6 +38,16 @@ public final class Tessellator implements GLResource, VertexBuilder {
     private int vao = 0;
     private int vbo = 0;
     private int ebo = 0;
+
+    private Tessellator() {
+    }
+
+    public static Tessellator getInstance() {
+        final class Holder {
+            private static final Tessellator INSTANCE = new Tessellator();
+        }
+        return Holder.INSTANCE;
+    }
 
     @Override
     public Tessellator position(float x, float y, float z) {

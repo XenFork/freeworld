@@ -4,8 +4,8 @@
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
- * License as published by the Free Software Foundation; either
- * version 2.1 of the License, or (at your option) any later version.
+ * License as published by the Free Software Foundation;
+ * only version 2.1 of the License.
  */
 
 package freeworld.client.render.gl;
@@ -14,13 +14,12 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
-import freeworld.client.render.model.VertexLayout;
+import freeworld.client.render.model.vertex.VertexLayout;
 import freeworld.core.Identifier;
-import freeworld.file.BuiltinFiles;
+import freeworld.util.file.BuiltinFiles;
 import freeworld.util.Logging;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.joml.Matrix4fc;
 import org.slf4j.Logger;
 import overrungl.opengl.GL;
 import overrungl.opengl.GL10C;
@@ -211,7 +210,7 @@ public final class GLProgram implements GLResource {
                         continue;
                     }
                     final GLUniformType type = entry.getValue();
-                    final GLUniform uniform = new GLUniform(id, type, location, uniformArena);
+                    final GLUniform uniform = new GLUniform(program, type, location, uniformArena);
                     uniformMap.put(name, uniform);
 
                     final JsonArray array = uniformValueMap.get(name);
@@ -291,14 +290,6 @@ public final class GLProgram implements GLResource {
 
     public boolean hasUniform(String name) {
         return uniformMap.containsKey(name);
-    }
-
-    public void updateProjectionViewMatrix(Matrix4fc matrix) {
-        getUniform(UNIFORM_PROJECTION_VIEW_MATRIX).set(matrix);
-    }
-
-    public void updateModelMatrix(Matrix4fc matrix) {
-        getUniform(UNIFORM_MODEL_MATRIX).set(matrix);
     }
 
     @Override

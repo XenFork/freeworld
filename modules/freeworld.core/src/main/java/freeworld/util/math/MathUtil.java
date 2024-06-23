@@ -4,13 +4,13 @@
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
- * License as published by the Free Software Foundation; either
- * version 2.1 of the License, or (at your option) any later version.
+ * License as published by the Free Software Foundation;
+ * only version 2.1 of the License.
  */
 
-package freeworld.util;
+package freeworld.util.math;
 
-import org.joml.Vector3d;
+import freeworld.math.Vector3d;
 
 /**
  * @author squid233
@@ -20,7 +20,7 @@ public final class MathUtil {
     private MathUtil() {
     }
 
-    public static Vector3d moveRelative(double x, double y, double z, double yawDegrees, double speed, Vector3d dest) {
+    public static Vector3d moveRelative(double x, double y, double z, double yawDegrees, double speed) {
         final double dst = x * x + z * z;
         double moveX = 0.0;
         double moveZ = 0.0;
@@ -36,6 +36,6 @@ public final class MathUtil {
             moveX = kx * cos + kz * sin;
             moveZ = kz * cos - kx * sin;
         }
-        return dest.set(moveX, y, moveZ);
+        return new Vector3d(moveX, y, moveZ);
     }
 }

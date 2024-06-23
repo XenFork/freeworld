@@ -4,8 +4,8 @@
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
- * License as published by the Free Software Foundation; either
- * version 2.1 of the License, or (at your option) any later version.
+ * License as published by the Free Software Foundation;
+ * only version 2.1 of the License.
  */
 
 package freeworld.client.render;
@@ -15,24 +15,31 @@ import freeworld.client.render.gl.GLDrawMode;
 import freeworld.client.render.gl.GLProgram;
 import freeworld.client.render.gl.GLResource;
 import freeworld.client.render.gl.GLStateMgr;
-import freeworld.client.render.model.VertexLayout;
-import freeworld.client.render.model.VertexLayouts;
+import freeworld.client.render.gui.GuiGraphics;
+import freeworld.client.render.gui.HudRenderer;
+import freeworld.client.render.model.block.BlockModel;
+import freeworld.client.render.model.block.BlockModelFace;
+import freeworld.client.render.model.block.BlockModelPart;
+import freeworld.client.render.model.vertex.VertexLayout;
+import freeworld.client.render.model.vertex.VertexLayouts;
+import freeworld.client.render.texture.Texture;
 import freeworld.client.render.texture.TextureAtlas;
 import freeworld.client.render.texture.TextureManager;
-import freeworld.client.render.texture.TextureRegion;
 import freeworld.client.render.world.BlockRenderer;
 import freeworld.client.render.world.HitResult;
 import freeworld.client.render.world.WorldRenderer;
 import freeworld.client.world.chunk.ClientChunk;
 import freeworld.core.Identifier;
+import freeworld.core.ModelResourcePath;
 import freeworld.core.math.AABBox;
+import freeworld.math.Matrix4f;
 import freeworld.util.Direction;
 import freeworld.util.Logging;
-import freeworld.world.block.BlockType;
 import freeworld.world.entity.Entity;
 import org.slf4j.Logger;
 import overrungl.opengl.GL10C;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -46,19 +53,13 @@ public final class GameRenderer implements GLResource {
     private final Freeworld client;
     private GLProgram positionColorProgram;
     private GLProgram positionColorTexProgram;
-    public static final Identifier TEX_DIRT = Identifier.ofBuiltin("texture/block/dirt.png");
-    public static final Identifier TEX_GRASS_BLOCK = Identifier.ofBuiltin("texture/block/grass_block.png");
-    public static final Identifier TEX_STONE = Identifier.ofBuiltin("texture/block/stone.png");
-    private static final Identifier TEX_CROSSING = Identifier.ofBuiltin("texture/gui/crossing.png");
-    private static final Identifier TEX_HOT_BAR = Identifier.ofBuiltin("texture/gui/hotbar.png");
-    private static final Identifier TEX_HOT_BAR_SELECTED = Identifier.ofBuiltin("texture/gui/hotbar_selected.png");
     private final float guiScale = 2;
     private TextureManager textureManager;
     private TextureAtlas blockAtlas;
-    private TextureAtlas guiAtlas;
+    private GuiGraphics guiGraphics;
+    private HudRenderer hudRenderer;
     private BlockRenderer blockRenderer;
     private WorldRenderer worldRenderer;
-    private Tessellator tessellator;
     private HitResult hitResult = new HitResult(true, null, 0, 0, 0, Direction.SOUTH);
 
     public GameRenderer(Freeworld client) {
@@ -73,19 +74,51 @@ public final class GameRenderer implements GLResource {
         gl.clearColor(0.4f, 0.6f, 0.9f, 1.0f);
 
         textureManager = new TextureManager();
+        textureManager.addTexture(Texture.MISSING, Texture.load(gl, Texture.MISSING));
 
-        blockAtlas = TextureAtlas.load(gl, List.of(TEX_DIRT, TEX_GRASS_BLOCK, TEX_STONE), 4);
-        textureManager.addTexture(TextureManager.BLOCK_ATLAS, blockAtlas);
-        logger.info("Created {}x{}x{} {}", blockAtlas.width(), blockAtlas.height(), blockAtlas.mipmapLevel(), TextureManager.BLOCK_ATLAS);
+        initBlockAtlas(gl);
 
-        guiAtlas = TextureAtlas.load(gl, List.of(TEX_CROSSING, TEX_HOT_BAR, TEX_HOT_BAR_SELECTED), 0);
+        final TextureAtlas guiAtlas = TextureAtlas.load(gl, List.of(
+            HudRenderer.CROSSING_TEXTURE,
+            HudRenderer.HOT_BAR_TEXTURE,
+            HudRenderer.HOT_BAR_SELECTED_TEXTURE
+        ), 0);
         textureManager.addTexture(TextureManager.GUI_ATLAS, guiAtlas);
-        logger.info("Created {}x{}x{} {}", guiAtlas.width(), guiAtlas.height(), guiAtlas.mipmapLevel(), TextureManager.GUI_ATLAS);
+        logAtlas(guiAtlas, TextureManager.GUI_ATLAS);
 
-        blockRenderer = new BlockRenderer(this);
+        blockRenderer = new BlockRenderer(textureManager);
         worldRenderer = new WorldRenderer(this, client.world());
 
-        tessellator = new Tessellator();
+        guiGraphics = new GuiGraphics(gl, this);
+        hudRenderer = new HudRenderer(this);
+    }
+
+    private void initBlockAtlas(GLStateMgr gl) {
+        final var registry = client.blockModelManager().registry();
+
+        // scan textures
+        final List<Identifier> list = new ArrayList<>(registry.size());
+        for (var e : registry) {
+            final BlockModel model = e.getValue();
+            for (BlockModelPart part : model.parts()) {
+                for (BlockModelFace face : part.faces().values()) {
+                    final ModelResourcePath path = face.texture();
+                    switch (path.type()) {
+                        case DIRECT -> list.add(path.identifier());
+                        case VARIABLE -> list.add(model.textureDefinitions().get(path.identifier()));
+                    }
+                }
+            }
+        }
+
+        blockAtlas = TextureAtlas.load(gl, list, 4);
+
+        textureManager.addTexture(TextureManager.BLOCK_ATLAS, blockAtlas);
+        logAtlas(blockAtlas, TextureManager.BLOCK_ATLAS);
+    }
+
+    private void logAtlas(TextureAtlas atlas, Identifier identifier) {
+        logger.info("Created {}x{}x{} {}", atlas.width(), atlas.height(), atlas.mipmapLevel(), identifier);
     }
 
     private void initGLPrograms(GLStateMgr gl) {
@@ -109,156 +142,80 @@ public final class GameRenderer implements GLResource {
         gl.enableCullFace();
         gl.enableDepthTest();
         gl.setDepthFunc(GL10C.LEQUAL);
-        blockAtlas.bind(gl);
 
-        RenderSystem.pushMatrices();
-        RenderSystem.setProjectionMatrix(RenderSystem.projectionMatrix().setPerspective(
-            (float) Math.toRadians(70.0),
-            (float) client.framebufferWidth() / client.framebufferHeight(),
-            0.01f,
-            1000.0f
-        ));
-        final Camera camera = client.camera();
-        final Entity player = client.player();
-        camera.moveToEntity(player);
-        camera.updateLerp(partialTick);
-        camera.updateViewMatrix();
-        RenderSystem.setViewMatrix(camera.viewMatrix());
-        RenderSystem.setModelMatrix(RenderSystem.modelMatrix().identity());
+        try (var _ = RenderSystem.matricesScope()) {
+            RenderSystem.setProjectionMatrix(_ -> Matrix4f.setPerspective(
+                (float) Math.toRadians(70.0),
+                (float) client.framebufferWidth() / client.framebufferHeight(),
+                0.01f,
+                1000.0f
+            ));
+            final Camera camera = client.camera();
+            final Entity player = client.player();
+            camera.moveToEntity(player);
+            camera.updateLerp(partialTick);
+            RenderSystem.setViewMatrix(_ -> camera.updateViewMatrix());
+            RenderSystem.setModelMatrix(_ -> Matrix4f.IDENTITY);
 
-        RenderSystem.bindProgram(positionColorTexProgram);
-        RenderSystem.updateMatrices();
-
-        final List<ClientChunk> chunks = worldRenderer.renderingChunks(player);
-        worldRenderer.compileChunks(chunks);
-        worldRenderer.renderChunks(gl, chunks);
-
-        hitResult = worldRenderer.selectBlock(player);
-        if (!hitResult.missed()) {
-            final AABBox box = hitResult.blockType().outlineShape().move(hitResult.x(), hitResult.y(), hitResult.z());
-            final float minX = (float) box.minX();
-            final float minY = (float) box.minY();
-            final float minZ = (float) box.minZ();
-            final float maxX = (float) box.maxX();
-            final float maxY = (float) box.maxY();
-            final float maxZ = (float) box.maxZ();
-            final float offset = 0.005f;
-            gl.setTextureBinding2D(0);
-            RenderSystem.bindProgram(positionColorProgram);
+            RenderSystem.useProgram(positionColorTexProgram);
             RenderSystem.updateMatrices();
-            tessellator.begin(GLDrawMode.LINES);
-            tessellator.color(0, 0, 0);
-            // -x
-            tessellator.indices(0, 1, 0, 2, 1, 3, 2, 3);
-            // +x
-            tessellator.indices(4, 5, 4, 6, 5, 7, 6, 7);
-            // -z
-            tessellator.indices(0, 4, 2, 6);
-            // +z
-            tessellator.indices(1, 5, 3, 7);
-            tessellator.position(minX - offset, minY - offset, minZ - offset).emit();
-            tessellator.position(minX - offset, minY - offset, maxZ + offset).emit();
-            tessellator.position(minX - offset, maxY + offset, minZ - offset).emit();
-            tessellator.position(minX - offset, maxY + offset, maxZ + offset).emit();
-            tessellator.position(maxX + offset, minY - offset, minZ - offset).emit();
-            tessellator.position(maxX + offset, minY - offset, maxZ + offset).emit();
-            tessellator.position(maxX + offset, maxY + offset, minZ - offset).emit();
-            tessellator.position(maxX + offset, maxY + offset, maxZ + offset).emit();
-            tessellator.end(gl);
+
+            final List<ClientChunk> chunks = worldRenderer.renderingChunks(player);
+            worldRenderer.compileChunks(chunks);
+
+            RenderSystem.bindTexture2D(blockAtlas);
+            worldRenderer.renderChunks(gl, chunks);
+
+            hitResult = worldRenderer.selectBlock(player);
+            if (!hitResult.missed()) {
+                final AABBox box = hitResult.blockType().outlineShape().move(hitResult.x(), hitResult.y(), hitResult.z());
+                final float minX = (float) box.minX();
+                final float minY = (float) box.minY();
+                final float minZ = (float) box.minZ();
+                final float maxX = (float) box.maxX();
+                final float maxY = (float) box.maxY();
+                final float maxZ = (float) box.maxZ();
+                final float offset = 0.005f;
+                RenderSystem.bindTexture2D(null);
+                RenderSystem.useProgram(positionColorProgram);
+                RenderSystem.updateMatrices();
+                final Tessellator tessellator = Tessellator.getInstance();
+                tessellator.begin(GLDrawMode.LINES);
+                tessellator.color(0, 0, 0);
+                // -x
+                tessellator.indices(0, 1, 0, 2, 1, 3, 2, 3);
+                // +x
+                tessellator.indices(4, 5, 4, 6, 5, 7, 6, 7);
+                // -z
+                tessellator.indices(0, 4, 2, 6);
+                // +z
+                tessellator.indices(1, 5, 3, 7);
+                tessellator.position(minX - offset, minY - offset, minZ - offset).emit();
+                tessellator.position(minX - offset, minY - offset, maxZ + offset).emit();
+                tessellator.position(minX - offset, maxY + offset, minZ - offset).emit();
+                tessellator.position(minX - offset, maxY + offset, maxZ + offset).emit();
+                tessellator.position(maxX + offset, minY - offset, minZ - offset).emit();
+                tessellator.position(maxX + offset, minY - offset, maxZ + offset).emit();
+                tessellator.position(maxX + offset, maxY + offset, minZ - offset).emit();
+                tessellator.position(maxX + offset, maxY + offset, maxZ + offset).emit();
+                tessellator.end(gl);
+            }
         }
-
-        RenderSystem.popMatrices();
-
-        renderGui(gl, partialTick);
-    }
-
-    private void renderGui(GLStateMgr gl, double partialTick) {
-        final int width = client.framebufferWidth();
-        final int height = client.framebufferHeight();
-        final float screenWidth = width / guiScale;
-        final float screenHeight = height / guiScale;
-
-        RenderSystem.pushMatrices();
-
-        RenderSystem.setProjectionMatrix(RenderSystem.projectionMatrix()
-            .setOrtho(0.0f, screenWidth, 0.0f, screenHeight, -300.0f, 300.0f));
-        RenderSystem.setModelMatrix(RenderSystem.modelMatrix()
-            .translation(screenWidth * 0.5f, screenHeight * 0.5f, 0.0f));
 
         gl.clear(GL10C.DEPTH_BUFFER_BIT);
-
-        gl.enableBlend();
-        gl.setBlendFuncSeparate(GL10C.ONE_MINUS_DST_COLOR, GL10C.ONE_MINUS_SRC_ALPHA, GL10C.ONE, GL10C.ZERO);
         gl.disableCullFace();
         gl.disableDepthTest();
-        guiAtlas.bind(gl);
-        RenderSystem.bindProgram(positionColorTexProgram);
-        RenderSystem.updateMatrices();
-        tessellator.begin(GLDrawMode.TRIANGLES);
-        renderCrossing();
-        tessellator.end(gl);
-
+        gl.enableBlend();
         gl.setBlendFunc(GL10C.SRC_ALPHA, GL10C.ONE_MINUS_SRC_ALPHA);
-        tessellator.begin(GLDrawMode.TRIANGLES);
-        renderHotBar(screenHeight);
-        renderHotBarSelected(screenHeight);
-        tessellator.end(gl);
 
-        gl.enableDepthTest();
-        blockAtlas.bind(gl);
-        renderHotBarItems(gl, screenHeight);
-
-        RenderSystem.popMatrices();
-    }
-
-    private void renderGuiSprite(Identifier identifier, float x, float y, float anchorX, float anchorY) {
-        final TextureRegion region = guiAtlas.getRegion(identifier);
-        final int width = guiAtlas.width();
-        final int height = guiAtlas.height();
-        final float lWidth = region.width() * anchorX;
-        final float rWidth = region.width() * (1.0f - anchorX);
-        final float bHeight = region.height() * anchorY;
-        final float tHeight = region.height() * (1.0f - anchorY);
-        final float u0 = region.u0(width);
-        final float u1 = region.u1(width);
-        final float v0 = region.v0(height);
-        final float v1 = region.v1(height);
-        tessellator.color(1.0f, 1.0f, 1.0f);
-        tessellator.indices(0, 1, 2, 2, 3, 0);
-        tessellator.texCoord(u0, v0).position(x - lWidth, y + tHeight, 0).emit();
-        tessellator.texCoord(u0, v1).position(x - lWidth, y - bHeight, 0).emit();
-        tessellator.texCoord(u1, v1).position(x + rWidth, y - bHeight, 0).emit();
-        tessellator.texCoord(u1, v0).position(x + rWidth, y + tHeight, 0).emit();
-    }
-
-    private void renderCrossing() {
-        renderGuiSprite(TEX_CROSSING, 0.0f, 0.0f, 0.5f, 0.5f);
-    }
-
-    private void renderHotBar(float screenHeight) {
-        renderGuiSprite(TEX_HOT_BAR, 0.0f, -screenHeight * 0.5f + 1, 0.5f, 0.0f);
-    }
-
-    private void renderHotBarSelected(float screenHeight) {
-        renderGuiSprite(TEX_HOT_BAR_SELECTED, (client.hotBarSelection() - 5) * 20.0f - 2.0f, -screenHeight * 0.5f, 0.0f, 0.0f);
-    }
-
-    private void renderHotBarItems(GLStateMgr gl, float screenHeight) {
-        int i = 0;
-        for (BlockType blockType : client.hotBar()) {
-            RenderSystem.modelMatrix().pushMatrix();
-            RenderSystem.setModelMatrix(RenderSystem.modelMatrix()
-                .translate((i - 5) * 20 + 3, 0, 0)
-                .translate(0, -screenHeight * 0.5f + 8, 100)
-                .rotateX((float) Math.toRadians(30.0))
-                .rotateY((float) Math.toRadians(45.0))
-                .scale(10));
-            tessellator.begin(GLDrawMode.TRIANGLES);
-            blockRenderer.renderBlock(tessellator, blockType, 0, 0, 0);
-            tessellator.end(gl);
-            i++;
-            RenderSystem.modelMatrix().popMatrix();
+        try (var _ = RenderSystem.matricesScope()) {
+            hudRenderer.update(client.framebufferWidth(), client.framebufferHeight());
+            hudRenderer.render(guiGraphics, gl, partialTick);
         }
+    }
+
+    public void tick() {
+        hudRenderer.tick();
     }
 
     @Override
@@ -271,7 +228,7 @@ public final class GameRenderer implements GLResource {
         if (positionColorProgram != null) positionColorProgram.close(gl);
         if (positionColorTexProgram != null) positionColorTexProgram.close(gl);
 
-        if (tessellator != null) tessellator.close(gl);
+        Tessellator.getInstance().close(gl);
     }
 
     public Freeworld client() {
@@ -296,5 +253,9 @@ public final class GameRenderer implements GLResource {
 
     public HitResult hitResult() {
         return hitResult;
+    }
+
+    public float guiScale() {
+        return guiScale;
     }
 }

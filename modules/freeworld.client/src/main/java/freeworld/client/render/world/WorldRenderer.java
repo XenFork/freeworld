@@ -4,8 +4,8 @@
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
- * License as published by the Free Software Foundation; either
- * version 2.1 of the License, or (at your option) any later version.
+ * License as published by the Free Software Foundation;
+ * only version 2.1 of the License.
  */
 
 package freeworld.client.render.world;
@@ -15,9 +15,13 @@ import freeworld.client.render.RenderSystem;
 import freeworld.client.render.builder.DefaultVertexBuilder;
 import freeworld.client.render.gl.GLResource;
 import freeworld.client.render.gl.GLStateMgr;
-import freeworld.client.render.model.VertexLayouts;
+import freeworld.client.render.model.vertex.VertexLayouts;
 import freeworld.client.world.chunk.ClientChunk;
 import freeworld.core.math.AABBox;
+import freeworld.math.FrustumIntersection;
+import freeworld.math.FrustumRayBuilder;
+import freeworld.math.Intersectiond;
+import freeworld.math.Vector3f;
 import freeworld.util.Direction;
 import freeworld.util.Logging;
 import freeworld.world.World;
@@ -25,7 +29,7 @@ import freeworld.world.WorldListener;
 import freeworld.world.block.BlockType;
 import freeworld.world.chunk.ChunkPos;
 import freeworld.world.entity.Entity;
-import org.joml.*;
+import freeworld.world.entity.EntityComponents;
 import org.slf4j.Logger;
 import reactor.core.Disposable;
 import reactor.core.publisher.Flux;
@@ -35,7 +39,6 @@ import reactor.core.scheduler.Schedulers;
 import reactor.pool.Pool;
 import reactor.pool.PoolBuilder;
 
-import java.lang.Math;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -54,17 +57,12 @@ public final class WorldRenderer implements GLResource, WorldListener {
     public static final int RENDER_CHUNK_COUNT = RENDER_CHUNK_COUNT_CBRT * RENDER_CHUNK_COUNT_CBRT * RENDER_CHUNK_COUNT_CBRT;
     private final GameRenderer gameRenderer;
     private final World world;
-    private final Scheduler scheduler = Schedulers.newParallel("WorldRenderer");
+    private final Scheduler scheduler = Schedulers.newParallel("WorldRenderer-Worker");
     private final Pool<DefaultVertexBuilder> vertexBuilderPool = PoolBuilder
         .from(Mono.fromSupplier(WorldRenderer::createVertexBuilder).subscribeOn(scheduler))
         .buildPool();
     private final Map<ChunkPos, ClientChunk> chunks = new ConcurrentHashMap<>(RENDER_CHUNK_COUNT);
     private final Disposable chunkGC;
-    private final FrustumIntersection frustumIntersection = new FrustumIntersection();
-    private final FrustumRayBuilder frustumRayBuilder = new FrustumRayBuilder();
-    private final Vector3f frustumRayOrigin = new Vector3f();
-    private final Vector3f frustumRayDir = new Vector3f();
-    private final Vector2d blockIntersectionResult = new Vector2d();
 
     public WorldRenderer(GameRenderer gameRenderer, World world) {
         this.gameRenderer = gameRenderer;
@@ -105,7 +103,7 @@ public final class WorldRenderer implements GLResource, WorldListener {
     }
 
     public void renderChunks(GLStateMgr gl, List<ClientChunk> renderingChunks) {
-        frustumIntersection.set(RenderSystem.projectionViewMatrix());
+        FrustumIntersection frustumIntersection = new FrustumIntersection(RenderSystem.projectionViewMatrix());
         for (ClientChunk chunk : renderingChunks) {
             if (frustumIntersection.testAab(
                 chunk.fromX(),
@@ -121,9 +119,9 @@ public final class WorldRenderer implements GLResource, WorldListener {
     }
 
     public HitResult selectBlock(Entity player) {
-        frustumRayBuilder.set(RenderSystem.projectionViewMatrix());
-        frustumRayBuilder.origin(frustumRayOrigin);
-        frustumRayBuilder.dir(0.5f, 0.5f, frustumRayDir);
+        final FrustumRayBuilder frustumRayBuilder = new FrustumRayBuilder(RenderSystem.projectionViewMatrix());
+        final Vector3f frustumRayOrigin = frustumRayBuilder.origin();
+        final Vector3f frustumRayDir = frustumRayBuilder.dir(0.5f, 0.5f);
         final float ox = frustumRayOrigin.x();
         final float oy = frustumRayOrigin.y();
         final float oz = frustumRayOrigin.z();
@@ -137,8 +135,7 @@ public final class WorldRenderer implements GLResource, WorldListener {
 
         final float radius = 5.0f;
         final float radiusSquared = radius * radius;
-        final AABBox range = player.boundingBox()
-            .value()
+        final AABBox range = player.getComponent(EntityComponents.BOUNDING_BOX)
             .grow(radius, radius, radius);
         final int x0 = (int) Math.floor(range.minX());
         final int y0 = (int) Math.floor(range.minY());
@@ -162,7 +159,7 @@ public final class WorldRenderer implements GLResource, WorldListener {
                             continue;
                         }
                         final AABBox box = blockType.outlineShape().move(x, y, z);
-                        if (Intersectiond.intersectRayAab(
+                        final Intersectiond.RayAab blockIntersectionResult = Intersectiond.intersectRayAab(
                             ox,
                             oy,
                             oz,
@@ -174,10 +171,11 @@ public final class WorldRenderer implements GLResource, WorldListener {
                             box.minZ(),
                             box.maxX(),
                             box.maxY(),
-                            box.maxZ(),
-                            blockIntersectionResult
-                        ) && blockIntersectionResult.x() < nearestBlockDistance) {
-                            nearestBlockDistance = blockIntersectionResult.x();
+                            box.maxZ()
+                        );
+                        if (blockIntersectionResult.intersected() &&
+                            blockIntersectionResult.result().x() < nearestBlockDistance) {
+                            nearestBlockDistance = blockIntersectionResult.result().x();
                             nearestBlock = blockType;
                             nearestX = x;
                             nearestY = y;

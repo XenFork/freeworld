@@ -8,23 +8,22 @@
  * version 2.1 of the License, or (at your option) any later version.
  */
 
-package freeworld.world.entity.component;
-
-import freeworld.core.Identifier;
+package freeworld.math;
 
 /**
  * @author squid233
  * @since 0.1.0
  */
-public record EyeHeightComponent(double value) implements EntityComponent {
-    public static final Identifier ID = Identifier.ofBuiltin("eye_height");
+public record Vector2d(double x, double y) {
+    public static final Vector2d ZERO = new Vector2d(0.0);
 
-    public EyeHeightComponent() {
-        this(0.5);
+    public Vector2d(double d) {
+        this(d, d);
     }
 
-    @Override
-    public Identifier componentId() {
-        return ID;
+    public static double distanceSquared(double x1, double y1, double x2, double y2) {
+        final double dx = x1 - x2;
+        final double dy = y1 - y2;
+        return dx * dx + dy * dy;
     }
 }

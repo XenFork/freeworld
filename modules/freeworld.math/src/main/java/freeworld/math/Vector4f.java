@@ -8,20 +8,16 @@
  * version 2.1 of the License, or (at your option) any later version.
  */
 
-package freeworld.world.entity.component;
-
-import freeworld.core.Identifier;
+package freeworld.math;
 
 /**
  * @author squid233
  * @since 0.1.0
  */
-public final class OnGroundComponent implements EntityComponent {
-    public static final Identifier ID = Identifier.ofBuiltin("on_ground");
-    public static final OnGroundComponent INSTANCE = new OnGroundComponent();
+public record Vector4f(float x, float y, float z, float w) {
+    public static final Vector4f ZERO = new Vector4f(0.0f);
 
-    @Override
-    public Identifier componentId() {
-        return ID;
+    public Vector4f(float d) {
+        this(d, d, d, d);
     }
 }

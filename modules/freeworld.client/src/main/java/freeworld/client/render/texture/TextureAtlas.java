@@ -4,14 +4,17 @@
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
- * License as published by the Free Software Foundation; either
- * version 2.1 of the License, or (at your option) any later version.
+ * License as published by the Free Software Foundation;
+ * only version 2.1 of the License.
  */
 
 package freeworld.client.render.texture;
 
+import freeworld.client.render.RenderSystem;
 import freeworld.client.render.gl.GLStateMgr;
 import freeworld.core.Identifier;
+import freeworld.util.Logging;
+import org.slf4j.Logger;
 import overrungl.opengl.GL;
 import overrungl.opengl.GL10C;
 import overrungl.stb.STBRPContext;
@@ -30,11 +33,14 @@ import java.util.Map;
  * @since 0.1.0
  */
 public final class TextureAtlas extends Texture {
+    private static final Logger logger = Logging.caller();
     private final Map<Identifier, TextureRegion> regionMap;
+    private final Map<Identifier, Identifier> aliasMap;
 
     private TextureAtlas(int id, int width, int height, int mipmapLevel, Map<Identifier, TextureRegion> regionMap) {
         super(id, width, height, mipmapLevel);
         this.regionMap = regionMap;
+        this.aliasMap = new HashMap<>();
     }
 
     public static TextureAtlas load(GLStateMgr gl, List<Identifier> identifierList, int initMipmapLevel) {
@@ -42,7 +48,13 @@ public final class TextureAtlas extends Texture {
         final STBRectPack stbrp = STBRectPack.INSTANCE;
         try (Arena arena = Arena.ofConfined()) {
             final Map<Identifier, NativeImage> imageMap = HashMap.newHashMap(numIds);
-            identifierList.forEach(identifier -> imageMap.put(identifier, NativeImage.load(arena, identifier.toResourcePath(Identifier.ROOT_ASSETS, null, null))));
+            identifierList.forEach(identifier -> {
+                final NativeImage load = NativeImage.load(arena, identifier.toResourcePath(Identifier.ROOT_ASSETS, Identifier.RES_TEXTURE, Identifier.EXT_PNG));
+                imageMap.put(identifier, load);
+                if (load.failed() && !MISSING.equals(identifier)) {
+                    logger.error("Failed to load texture {}", identifier);
+                }
+            });
 
             final STBRPContext context = STBRPContext.OF.of(arena);
             final STBRPNode nodes = STBRPNode.OF.of(arena, numIds);
@@ -73,7 +85,8 @@ public final class TextureAtlas extends Texture {
 
             final Map<Identifier, TextureRegion> regionMap = HashMap.newHashMap(numIds);
             final int id = gl.genTextures();
-            gl.setTextureBinding2D(id);
+            final TextureAtlas atlas = new TextureAtlas(id, packerSize, packerSize, mipmapLevel, regionMap);
+            RenderSystem.bindTexture2D(atlas);
             gl.texParameteri(GL10C.TEXTURE_2D, GL10C.TEXTURE_MIN_FILTER, mipmapLevel > 0 ? GL10C.NEAREST_MIPMAP_NEAREST : GL10C.NEAREST);
             gl.texParameteri(GL10C.TEXTURE_2D, GL10C.TEXTURE_MAG_FILTER, GL10C.NEAREST);
             gl.texParameteri(GL10C.TEXTURE_2D, GL.TEXTURE_MAX_LEVEL, mipmapLevel);
@@ -94,7 +107,7 @@ public final class TextureAtlas extends Texture {
                     final int yo = slice.y();
                     final int width = slice.w();
                     final int height = slice.h();
-                    regionMap.put(identifier, new TextureRegion(xo, yo, width, height));
+                    regionMap.put(identifier, new TextureRegion(atlas, xo, yo, width, height));
                     gl.texSubImage2D(GL10C.TEXTURE_2D,
                         0,
                         xo,
@@ -109,11 +122,19 @@ public final class TextureAtlas extends Texture {
             if (mipmapLevel > 0) {
                 gl.generateMipmap(GL10C.TEXTURE_2D);
             }
-            return new TextureAtlas(id, packerSize, packerSize, mipmapLevel, regionMap);
+            return atlas;
         }
     }
 
+    public void addAlias(Identifier original, Identifier alias) {
+        aliasMap.put(alias, original);
+    }
+
     public TextureRegion getRegion(Identifier identifier) {
-        return regionMap.get(identifier);
+        final TextureRegion region = regionMap.get(identifier);
+        if (region != null) {
+            return region;
+        }
+        return regionMap.get(aliasMap.get(identifier));
     }
 }

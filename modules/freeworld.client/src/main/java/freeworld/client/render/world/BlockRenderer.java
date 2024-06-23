@@ -4,107 +4,104 @@
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
- * License as published by the Free Software Foundation; either
- * version 2.1 of the License, or (at your option) any later version.
+ * License as published by the Free Software Foundation;
+ * only version 2.1 of the License.
  */
 
 package freeworld.client.render.world;
 
-import freeworld.client.render.GameRenderer;
 import freeworld.client.render.builder.VertexBuilder;
+import freeworld.client.render.model.block.BlockModel;
+import freeworld.client.render.model.block.BlockModelFace;
+import freeworld.client.render.model.block.BlockModelPart;
 import freeworld.client.render.texture.TextureAtlas;
 import freeworld.client.render.texture.TextureManager;
 import freeworld.client.render.texture.TextureRegion;
-import freeworld.core.Identifier;
+import freeworld.core.ModelResourcePath;
+import freeworld.math.Vector2f;
+import freeworld.math.Vector3f;
 import freeworld.util.Direction;
-import freeworld.world.block.BlockType;
+
+import java.util.function.Predicate;
 
 /**
  * @author squid233
  * @since 0.1.0
  */
 public final class BlockRenderer {
-    private final GameRenderer gameRenderer;
+    private final TextureManager textureManager;
 
-    public BlockRenderer(GameRenderer gameRenderer) {
-        this.gameRenderer = gameRenderer;
+    public BlockRenderer(TextureManager textureManager) {
+        this.textureManager = textureManager;
     }
 
-    public void renderBlock(VertexBuilder builder, BlockType blockType, int x, int y, int z) {
-        for (Direction direction : Direction.LIST) {
-            renderBlockFace(builder, blockType, x, y, z, direction);
-        }
-    }
-
-    public void renderBlockFace(VertexBuilder builder, BlockType blockType, int x, int y, int z, Direction direction) {
-        if (blockType.air()) {
-            return;
-        }
-
-        final TextureAtlas texture = (TextureAtlas) gameRenderer.textureManager().getTexture(TextureManager.BLOCK_ATLAS);
-        final TextureRegion region = texture.getRegion(blockType.textureId().toResourceId("texture/block", Identifier.EXT_PNG));
-        if (region == null) {
-            return;
-        }
-
-        final float x0 = x;
-        final float y0 = y;
-        final float z0 = z;
-        final float x1 = x0 + 1f;
-        final float y1 = y0 + 1f;
-        final float z1 = z0 + 1f;
-        final float u0 = region.u0(texture.width());
-        final float u1 = region.u1(texture.width());
-        final float v0 = region.v0(texture.height());
-        final float v1 = region.v1(texture.height());
+    private void emitVertices(VertexBuilder builder, Vector3f from, Vector3f to, Vector2f uvFrom, Vector2f uvTo, Direction direction) {
         switch (direction) {
             case WEST -> {
-                // -x
-                builder.indices(0, 1, 2, 2, 3, 0);
-                builder.position(x0, y1, z0).color(1f, 1f, 1f).texCoord(u0, v0).emit();
-                builder.position(x0, y0, z0).color(1f, 1f, 1f).texCoord(u0, v1).emit();
-                builder.position(x0, y0, z1).color(1f, 1f, 1f).texCoord(u1, v1).emit();
-                builder.position(x0, y1, z1).color(1f, 1f, 1f).texCoord(u1, v0).emit();
+                builder.position(from.x(), to.y(), from.z()).texCoord(uvFrom.x(), uvFrom.y()).emit();
+                builder.position(from.x(), from.y(), from.z()).texCoord(uvFrom.x(), uvTo.y()).emit();
+                builder.position(from.x(), from.y(), to.z()).texCoord(uvTo.x(), uvTo.y()).emit();
+                builder.position(from.x(), to.y(), to.z()).texCoord(uvTo.x(), uvFrom.y()).emit();
             }
             case EAST -> {
-                // +x
-                builder.indices(0, 1, 2, 2, 3, 0);
-                builder.position(x1, y1, z1).color(1f, 1f, 1f).texCoord(u0, v0).emit();
-                builder.position(x1, y0, z1).color(1f, 1f, 1f).texCoord(u0, v1).emit();
-                builder.position(x1, y0, z0).color(1f, 1f, 1f).texCoord(u1, v1).emit();
-                builder.position(x1, y1, z0).color(1f, 1f, 1f).texCoord(u1, v0).emit();
+                builder.position(to.x(), to.y(), to.z()).texCoord(uvFrom.x(), uvFrom.y()).emit();
+                builder.position(to.x(), from.y(), to.z()).texCoord(uvFrom.x(), uvTo.y()).emit();
+                builder.position(to.x(), from.y(), from.z()).texCoord(uvTo.x(), uvTo.y()).emit();
+                builder.position(to.x(), to.y(), from.z()).texCoord(uvTo.x(), uvFrom.y()).emit();
             }
             case DOWN -> {
-                // -y
-                builder.indices(0, 1, 2, 2, 3, 0);
-                builder.position(x0, y0, z1).color(1f, 1f, 1f).texCoord(u0, v0).emit();
-                builder.position(x0, y0, z0).color(1f, 1f, 1f).texCoord(u0, v1).emit();
-                builder.position(x1, y0, z0).color(1f, 1f, 1f).texCoord(u1, v1).emit();
-                builder.position(x1, y0, z1).color(1f, 1f, 1f).texCoord(u1, v0).emit();
+                builder.position(from.x(), from.y(), to.z()).texCoord(uvFrom.x(), uvFrom.y()).emit();
+                builder.position(from.x(), from.y(), from.z()).texCoord(uvFrom.x(), uvTo.y()).emit();
+                builder.position(to.x(), from.y(), from.z()).texCoord(uvTo.x(), uvTo.y()).emit();
+                builder.position(to.x(), from.y(), to.z()).texCoord(uvTo.x(), uvFrom.y()).emit();
             }
             case UP -> {
-                // +y
-                builder.indices(0, 1, 2, 2, 3, 0);
-                builder.position(x0, y1, z0).color(1f, 1f, 1f).texCoord(u0, v0).emit();
-                builder.position(x0, y1, z1).color(1f, 1f, 1f).texCoord(u0, v1).emit();
-                builder.position(x1, y1, z1).color(1f, 1f, 1f).texCoord(u1, v1).emit();
-                builder.position(x1, y1, z0).color(1f, 1f, 1f).texCoord(u1, v0).emit();
+                builder.position(from.x(), to.y(), from.z()).texCoord(uvFrom.x(), uvFrom.y()).emit();
+                builder.position(from.x(), to.y(), to.z()).texCoord(uvFrom.x(), uvTo.y()).emit();
+                builder.position(to.x(), to.y(), to.z()).texCoord(uvTo.x(), uvTo.y()).emit();
+                builder.position(to.x(), to.y(), from.z()).texCoord(uvTo.x(), uvFrom.y()).emit();
             }
             case NORTH -> {
-                // -z
-                builder.indices(0, 1, 2, 2, 3, 0);
-                builder.position(x1, y1, z0).color(1f, 1f, 1f).texCoord(u0, v0).emit();
-                builder.position(x1, y0, z0).color(1f, 1f, 1f).texCoord(u0, v1).emit();
-                builder.position(x0, y0, z0).color(1f, 1f, 1f).texCoord(u1, v1).emit();
-                builder.position(x0, y1, z0).color(1f, 1f, 1f).texCoord(u1, v0).emit();
+                builder.position(to.x(), to.y(), from.z()).texCoord(uvFrom.x(), uvFrom.y()).emit();
+                builder.position(to.x(), from.y(), from.z()).texCoord(uvFrom.x(), uvTo.y()).emit();
+                builder.position(from.x(), from.y(), from.z()).texCoord(uvTo.x(), uvTo.y()).emit();
+                builder.position(from.x(), to.y(), from.z()).texCoord(uvTo.x(), uvFrom.y()).emit();
             }
             case SOUTH -> {
-                // +z
-                builder.indices(0, 1, 2, 2, 3, 0);
-                builder.position(x0, y1, z1).color(1f, 1f, 1f).texCoord(u0, v0).emit();
-                builder.position(x0, y0, z1).color(1f, 1f, 1f).texCoord(u0, v1).emit();
-                builder.position(x1, y0, z1).color(1f, 1f, 1f).texCoord(u1, v1).emit();
-                builder.position(x1, y1, z1).color(1f, 1f, 1f).texCoord(u1, v0).emit();
+                builder.position(from.x(), to.y(), to.z()).texCoord(uvFrom.x(), uvFrom.y()).emit();
+                builder.position(from.x(), from.y(), to.z()).texCoord(uvFrom.x(), uvTo.y()).emit();
+                builder.position(to.x(), from.y(), to.z()).texCoord(uvTo.x(), uvTo.y()).emit();
+                builder.position(to.x(), to.y(), to.z()).texCoord(uvTo.x(), uvFrom.y()).emit();
+            }
+        }
+    }
+
+    public void renderBlockModel(VertexBuilder builder, BlockModel model, int x, int y, int z, Predicate<Direction> shouldCullFace) {
+        final TextureAtlas texture = textureManager.getTexture(TextureManager.BLOCK_ATLAS);
+        final int width = texture.width();
+        final int height = texture.height();
+
+        for (BlockModelPart part : model.parts()) {
+            final Vector3f from = part.from().add(x, y, z);
+            final Vector3f to = part.to().add(x, y, z);
+            for (var e : part.faces().entrySet()) {
+                final BlockModelFace face = e.getValue();
+                if (face != null && !shouldCullFace.test(face.cullFace())) {
+                    final ModelResourcePath path = face.texture();
+                    final TextureRegion region = texture.getRegion(switch (path.type()) {
+                        case DIRECT -> path.identifier();
+                        case VARIABLE -> model.textureDefinitions().get(path.identifier());
+                    });
+                    if (region == null) {
+                        continue;
+                    }
+                    final Vector2f uvFrom = face.uvFrom().mul(region.width(), region.height()).add(region.x(), region.y()).div(width, height);
+                    final Vector2f uvTo = face.uvTo().mul(region.width(), region.height()).add(region.x(), region.y()).div(width, height);
+
+                    builder.indices(0, 1, 2, 2, 3, 0);
+                    builder.color(1f, 1f, 1f);
+                    emitVertices(builder, from, to, uvFrom, uvTo, e.getKey());
+                }
             }
         }
     }
