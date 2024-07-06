@@ -48,8 +48,9 @@ public final class HudRenderer {
     }
 
     public void update(int width, int height) {
-        this.width = width / gameRenderer.guiScale();
-        this.height = height / gameRenderer.guiScale();
+        final float guiScale = gameRenderer.client().guiScale();
+        this.width = width / guiScale;
+        this.height = height / guiScale;
     }
 
     public void render(GuiGraphics graphics, GLStateMgr gl, double partialTick) {

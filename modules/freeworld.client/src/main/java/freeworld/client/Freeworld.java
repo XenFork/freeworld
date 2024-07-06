@@ -15,6 +15,9 @@ import freeworld.client.render.GameRenderer;
 import freeworld.client.render.RenderSystem;
 import freeworld.client.render.gl.GLStateMgr;
 import freeworld.client.render.model.block.BlockModelManager;
+import freeworld.client.render.screen.ingame.CreativeTabScreen;
+import freeworld.client.render.screen.ingame.PauseScreen;
+import freeworld.client.render.screen.Screen;
 import freeworld.client.render.world.HitResult;
 import freeworld.core.registry.BuiltinRegistries;
 import freeworld.math.Vector2d;
@@ -30,6 +33,7 @@ import freeworld.world.entity.Entity;
 import freeworld.world.entity.EntityComponents;
 import freeworld.world.entity.EntityTypes;
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import overrun.marshal.Unmarshal;
 import overrungl.glfw.GLFW;
@@ -72,7 +76,9 @@ public final class Freeworld implements AutoCloseable {
     private BlockModelManager blockModelManager;
     private World world;
     private Entity player;
-    private int gameTicks = 0;
+    @Nullable
+    private Screen screen = null;
+    private final float guiScale = 2;
     private int blockDestroyTimer = 0;
     private int blockPlaceTimer = 0;
     private int hotBarSelection = 0;
@@ -172,6 +178,26 @@ public final class Freeworld implements AutoCloseable {
                     case GLFW.KEY_8 -> hotBarSelection = 7;
                     case GLFW.KEY_9 -> hotBarSelection = 8;
                     case GLFW.KEY_0 -> hotBarSelection = 9;
+                    case GLFW.KEY_ESCAPE -> {
+                        if (screen != null) {
+                            if (screen.escapeCanClose()) {
+                                screen.close();
+                            }
+                        } else if (world != null) {
+                            openScreen(new PauseScreen(this, null));
+                        }
+                    }
+                    default -> {
+                        if (screen == null) {
+                            if (world != null) {
+                                switch (key) {
+                                    case GLFW.KEY_E -> openScreen(new CreativeTabScreen(this, null));
+                                }
+                            }
+                        } else {
+                            screen.onKeyPressed(key);
+                        }
+                    }
                 }
             }
         }
@@ -181,6 +207,10 @@ public final class Freeworld implements AutoCloseable {
         framebufferWidth = width;
         framebufferHeight = height;
         gl.viewport(0, 0, width, height);
+
+        if (screen != null) {
+            screen.onResize(framebufferWidth / guiScale, framebufferHeight / guiScale);
+        }
     }
 
     private void onCursorPos(double x, double y) {
@@ -219,56 +249,56 @@ public final class Freeworld implements AutoCloseable {
     }
 
     private void tick() {
-        camera.preUpdate();
-
-        final boolean onGround = player.hasComponent(EntityComponents.ON_GROUND);
-        double speed = onGround ? 0.1 : 0.02;
-        if (glfw.getKey(window, GLFW.KEY_LEFT_CONTROL) == GLFW.PRESS) speed *= 2.0;
-        double xo = 0.0;
-        double zo = 0.0;
-        if (glfw.getKey(window, GLFW.KEY_W) == GLFW.PRESS) zo -= 1.0;
-        if (glfw.getKey(window, GLFW.KEY_S) == GLFW.PRESS) zo += 1.0;
-        if (glfw.getKey(window, GLFW.KEY_A) == GLFW.PRESS) xo -= 1.0;
-        if (glfw.getKey(window, GLFW.KEY_D) == GLFW.PRESS) xo += 1.0;
-        if (onGround && glfw.getKey(window, GLFW.KEY_SPACE) == GLFW.PRESS) {
-            final Vector3d value = player.getComponent(EntityComponents.VELOCITY);
-            player.setComponent(EntityComponents.VELOCITY, new Vector3d(value.x(), 0.5, value.z()));
-        }
-        player.setComponent(EntityComponents.ACCELERATION,
-            MathUtil.moveRelative(xo, 0.0, zo, player.getComponent(EntityComponents.ROTATION).y(), speed));
-        world.tick();
-
-        if (blockDestroyTimer >= 2) {
-            final HitResult hitResult = gameRenderer.hitResult();
-            if (!hitResult.missed() &&
-                glfw.getMouseButton(window, GLFW.MOUSE_BUTTON_LEFT) == GLFW.PRESS) {
-                world.setBlockType(hitResult.x(), hitResult.y(), hitResult.z(), BlockTypes.AIR);
-                blockDestroyTimer = 0;
-            }
-        }
-        if (blockPlaceTimer >= 2) {
-            final HitResult hitResult = gameRenderer.hitResult();
-            if (!hitResult.missed() &&
-                glfw.getMouseButton(window, GLFW.MOUSE_BUTTON_RIGHT) == GLFW.PRESS) {
-                final Direction face = hitResult.face();
-                final BlockType type = hotBar[hotBarSelection];
-                if (!type.air()) {
-                    world.setBlockType(
-                        hitResult.x() + face.axisX(),
-                        hitResult.y() + face.axisY(),
-                        hitResult.z() + face.axisZ(),
-                        type
-                    );
+        if (world != null) {
+            camera.preUpdate();
+            if (screen == null) {
+                final boolean onGround = player.hasComponent(EntityComponents.ON_GROUND);
+                double speed = onGround ? 0.1 : 0.02;
+                if (glfw.getKey(window, GLFW.KEY_LEFT_CONTROL) == GLFW.PRESS) speed *= 2.0;
+                double xo = 0.0;
+                double zo = 0.0;
+                if (glfw.getKey(window, GLFW.KEY_W) == GLFW.PRESS) zo -= 1.0;
+                if (glfw.getKey(window, GLFW.KEY_S) == GLFW.PRESS) zo += 1.0;
+                if (glfw.getKey(window, GLFW.KEY_A) == GLFW.PRESS) xo -= 1.0;
+                if (glfw.getKey(window, GLFW.KEY_D) == GLFW.PRESS) xo += 1.0;
+                if (onGround && glfw.getKey(window, GLFW.KEY_SPACE) == GLFW.PRESS) {
+                    final Vector3d value = player.getComponent(EntityComponents.VELOCITY);
+                    player.setComponent(EntityComponents.VELOCITY, new Vector3d(value.x(), 0.5, value.z()));
                 }
-                blockPlaceTimer = 0;
+                player.setComponent(EntityComponents.ACCELERATION,
+                    MathUtil.moveRelative(xo, 0.0, zo, player.getComponent(EntityComponents.ROTATION).y(), speed));
+
+                if (blockDestroyTimer >= 2) {
+                    final HitResult hitResult = gameRenderer.hitResult();
+                    if (!hitResult.missed() &&
+                        glfw.getMouseButton(window, GLFW.MOUSE_BUTTON_LEFT) == GLFW.PRESS) {
+                        world.setBlockType(hitResult.x(), hitResult.y(), hitResult.z(), BlockTypes.AIR);
+                        blockDestroyTimer = 0;
+                    }
+                }
+                if (blockPlaceTimer >= 2) {
+                    final HitResult hitResult = gameRenderer.hitResult();
+                    if (!hitResult.missed() &&
+                        glfw.getMouseButton(window, GLFW.MOUSE_BUTTON_RIGHT) == GLFW.PRESS) {
+                        final Direction face = hitResult.face();
+                        final BlockType type = hotBar[hotBarSelection];
+                        if (!type.air()) {
+                            world.setBlockType(
+                                hitResult.x() + face.axisX(),
+                                hitResult.y() + face.axisY(),
+                                hitResult.z() + face.axisZ(),
+                                type
+                            );
+                        }
+                        blockPlaceTimer = 0;
+                    }
+                }
+                blockDestroyTimer++;
+                blockPlaceTimer++;
             }
+            world.tick();
         }
-        blockDestroyTimer++;
-        blockPlaceTimer++;
-
         gameRenderer.tick();
-
-        gameTicks++;
     }
 
     private void initGL() {
@@ -304,6 +334,20 @@ public final class Freeworld implements AutoCloseable {
         }
         glfw.terminate();
         glfw.setErrorCallback(null);
+    }
+
+    public void openScreen(@Nullable Screen screen) {
+        if (this.screen != null) {
+            this.screen.dispose();
+        }
+        this.screen = screen;
+        if (screen != null) {
+            screen.init(framebufferWidth / guiScale, framebufferHeight / guiScale);
+        }
+    }
+
+    public @Nullable Screen screen() {
+        return screen;
     }
 
     public GLFW glfw() {
@@ -355,16 +399,16 @@ public final class Freeworld implements AutoCloseable {
         return player;
     }
 
-    public int gameTicks() {
-        return gameTicks;
-    }
-
     public int hotBarSelection() {
         return hotBarSelection;
     }
 
     public BlockType[] hotBar() {
         return hotBar;
+    }
+
+    public float guiScale() {
+        return guiScale;
     }
 
     public static Freeworld getInstance() {

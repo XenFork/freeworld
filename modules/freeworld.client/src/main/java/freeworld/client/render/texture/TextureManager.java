@@ -38,6 +38,16 @@ public final class TextureManager implements GLResource {
         return (T) textureMap.get(identifier);
     }
 
+    public Texture getOrLoad(GLStateMgr gl, Identifier identifier) {
+        final Texture texture = getTexture(identifier);
+        if (texture != null) {
+            return texture;
+        }
+        final Texture load = Texture.load(gl, identifier);
+        addTexture(identifier, load);
+        return load;
+    }
+
     @Override
     public void close(GLStateMgr gl) {
         logger.info("Closing texture manager");
