@@ -47,7 +47,6 @@ dependencies {
     api(project(":freeworld"))
     implementation(platform("io.github.over-run:overrungl-bom:$overrunglVersion"))
     implementation("io.github.over-run:overrungl")
-    implementation("io.github.over-run:overrungl-joml")
     implementation("io.github.over-run:overrungl-glfw")
     implementation("io.github.over-run:overrungl-opengl")
     implementation("io.github.over-run:overrungl-stb")

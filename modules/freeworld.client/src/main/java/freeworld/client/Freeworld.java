@@ -4,29 +4,36 @@
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
- * License as published by the Free Software Foundation; either
- * version 2.1 of the License, or (at your option) any later version.
+ * License as published by the Free Software Foundation;
+ * only version 2.1 of the License.
  */
 
 package freeworld.client;
 
+import freeworld.client.render.Camera;
 import freeworld.client.render.GameRenderer;
 import freeworld.client.render.RenderSystem;
 import freeworld.client.render.gl.GLStateMgr;
+import freeworld.client.render.model.block.BlockModelManager;
+import freeworld.client.render.screen.ingame.CreativeTabScreen;
+import freeworld.client.render.screen.ingame.PauseScreen;
+import freeworld.client.render.screen.Screen;
 import freeworld.client.render.world.HitResult;
-import freeworld.client.render.Camera;
 import freeworld.core.registry.BuiltinRegistries;
+import freeworld.math.Vector2d;
+import freeworld.math.Vector3d;
 import freeworld.util.Direction;
 import freeworld.util.Logging;
-import freeworld.util.MathUtil;
-import freeworld.util.Timer;
+import freeworld.util.math.MathUtil;
+import freeworld.core.Timer;
 import freeworld.world.World;
 import freeworld.world.block.BlockType;
 import freeworld.world.block.BlockTypes;
 import freeworld.world.entity.Entity;
+import freeworld.world.entity.EntityComponents;
 import freeworld.world.entity.EntityTypes;
-import freeworld.world.entity.component.OnGroundComponent;
-import org.joml.Vector2d;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import overrun.marshal.Unmarshal;
 import overrungl.glfw.GLFW;
@@ -66,8 +73,12 @@ public final class Freeworld implements AutoCloseable {
     private double cursorDeltaY;
     private boolean disableCursor = false;
     private GameRenderer gameRenderer;
+    private BlockModelManager blockModelManager;
     private World world;
     private Entity player;
+    @Nullable
+    private Screen screen = null;
+    private final float guiScale = 2;
     private int blockDestroyTimer = 0;
     private int blockPlaceTimer = 0;
     private int hotBarSelection = 0;
@@ -133,8 +144,11 @@ public final class Freeworld implements AutoCloseable {
         EntityTypes.bootstrap();
         BuiltinRegistries.ENTITY_TYPE.freeze();
 
+        blockModelManager = new BlockModelManager();
+        blockModelManager.bootstrap();
+
         world = new World("New world");
-        player = world.createEntity(EntityTypes.PLAYER, 0.0, 0.0, 0.0);
+        player = world.createEntity(EntityTypes.PLAYER, new Vector3d(0.0, 0.0, 0.0));
 
         initGL();
         run();
@@ -164,6 +178,26 @@ public final class Freeworld implements AutoCloseable {
                     case GLFW.KEY_8 -> hotBarSelection = 7;
                     case GLFW.KEY_9 -> hotBarSelection = 8;
                     case GLFW.KEY_0 -> hotBarSelection = 9;
+                    case GLFW.KEY_ESCAPE -> {
+                        if (screen != null) {
+                            if (screen.escapeCanClose()) {
+                                screen.close();
+                            }
+                        } else if (world != null) {
+                            openScreen(new PauseScreen(this, null));
+                        }
+                    }
+                    default -> {
+                        if (screen == null) {
+                            if (world != null) {
+                                switch (key) {
+                                    case GLFW.KEY_E -> openScreen(new CreativeTabScreen(this, null));
+                                }
+                            }
+                        } else {
+                            screen.onKeyPressed(key);
+                        }
+                    }
                 }
             }
         }
@@ -173,6 +207,10 @@ public final class Freeworld implements AutoCloseable {
         framebufferWidth = width;
         framebufferHeight = height;
         gl.viewport(0, 0, width, height);
+
+        if (screen != null) {
+            screen.onResize(framebufferWidth / guiScale, framebufferHeight / guiScale);
+        }
     }
 
     private void onCursorPos(double x, double y) {
@@ -181,7 +219,7 @@ public final class Freeworld implements AutoCloseable {
         if (disableCursor) {
             final double pitch = -cursorDeltaY * MOUSE_SENSITIVITY;
             final double yaw = -cursorDeltaX * MOUSE_SENSITIVITY;
-            final Vector2d rotation = player.rotation().value();
+            final Vector2d rotation = player.getComponent(EntityComponents.ROTATION);
             final double updateX = Math.clamp(rotation.x() + pitch, -90.0, 90.0);
             double updateY = rotation.y() + yaw;
 
@@ -191,7 +229,7 @@ public final class Freeworld implements AutoCloseable {
                 updateY -= 360.0;
             }
 
-            rotation.set(updateX, updateY);
+            player.setComponent(EntityComponents.ROTATION, new Vector2d(updateX, updateY));
         }
         cursorX = x;
         cursorY = y;
@@ -211,50 +249,56 @@ public final class Freeworld implements AutoCloseable {
     }
 
     private void tick() {
-        camera.preUpdate();
-
-        final boolean onGround = player.hasComponent(OnGroundComponent.ID);
-        double speed = onGround ? 0.1 : 0.02;
-        if (glfw.getKey(window, GLFW.KEY_LEFT_CONTROL) == GLFW.PRESS) speed *= 2.0;
-        double xo = 0.0;
-        double zo = 0.0;
-        if (glfw.getKey(window, GLFW.KEY_W) == GLFW.PRESS) zo -= 1.0;
-        if (glfw.getKey(window, GLFW.KEY_S) == GLFW.PRESS) zo += 1.0;
-        if (glfw.getKey(window, GLFW.KEY_A) == GLFW.PRESS) xo -= 1.0;
-        if (glfw.getKey(window, GLFW.KEY_D) == GLFW.PRESS) xo += 1.0;
-        if (onGround && glfw.getKey(window, GLFW.KEY_SPACE) == GLFW.PRESS) {
-            player.velocity().value().y = 0.5;
-        }
-        MathUtil.moveRelative(xo, 0.0, zo, player.rotation().value().y(), speed, player.acceleration().value());
-        world.tick();
-
-        if (blockDestroyTimer >= 2) {
-            final HitResult hitResult = gameRenderer.hitResult();
-            if (!hitResult.missed() &&
-                glfw.getMouseButton(window, GLFW.MOUSE_BUTTON_LEFT) == GLFW.PRESS) {
-                world.setBlockType(hitResult.x(), hitResult.y(), hitResult.z(), BlockTypes.AIR);
-                blockDestroyTimer = 0;
-            }
-        }
-        if (blockPlaceTimer >= 2) {
-            final HitResult hitResult = gameRenderer.hitResult();
-            if (!hitResult.missed() &&
-                glfw.getMouseButton(window, GLFW.MOUSE_BUTTON_RIGHT) == GLFW.PRESS) {
-                final Direction face = hitResult.face();
-                final BlockType type = hotBar[hotBarSelection];
-                if (!type.air()) {
-                    world.setBlockType(
-                        hitResult.x() + face.axisX(),
-                        hitResult.y() + face.axisY(),
-                        hitResult.z() + face.axisZ(),
-                        type
-                    );
+        if (world != null) {
+            camera.preUpdate();
+            if (screen == null) {
+                final boolean onGround = player.hasComponent(EntityComponents.ON_GROUND);
+                double speed = onGround ? 0.1 : 0.02;
+                if (glfw.getKey(window, GLFW.KEY_LEFT_CONTROL) == GLFW.PRESS) speed *= 2.0;
+                double xo = 0.0;
+                double zo = 0.0;
+                if (glfw.getKey(window, GLFW.KEY_W) == GLFW.PRESS) zo -= 1.0;
+                if (glfw.getKey(window, GLFW.KEY_S) == GLFW.PRESS) zo += 1.0;
+                if (glfw.getKey(window, GLFW.KEY_A) == GLFW.PRESS) xo -= 1.0;
+                if (glfw.getKey(window, GLFW.KEY_D) == GLFW.PRESS) xo += 1.0;
+                if (onGround && glfw.getKey(window, GLFW.KEY_SPACE) == GLFW.PRESS) {
+                    final Vector3d value = player.getComponent(EntityComponents.VELOCITY);
+                    player.setComponent(EntityComponents.VELOCITY, new Vector3d(value.x(), 0.5, value.z()));
                 }
-                blockPlaceTimer = 0;
+                player.setComponent(EntityComponents.ACCELERATION,
+                    MathUtil.moveRelative(xo, 0.0, zo, player.getComponent(EntityComponents.ROTATION).y(), speed));
+
+                if (blockDestroyTimer >= 2) {
+                    final HitResult hitResult = gameRenderer.hitResult();
+                    if (!hitResult.missed() &&
+                        glfw.getMouseButton(window, GLFW.MOUSE_BUTTON_LEFT) == GLFW.PRESS) {
+                        world.setBlockType(hitResult.x(), hitResult.y(), hitResult.z(), BlockTypes.AIR);
+                        blockDestroyTimer = 0;
+                    }
+                }
+                if (blockPlaceTimer >= 2) {
+                    final HitResult hitResult = gameRenderer.hitResult();
+                    if (!hitResult.missed() &&
+                        glfw.getMouseButton(window, GLFW.MOUSE_BUTTON_RIGHT) == GLFW.PRESS) {
+                        final Direction face = hitResult.face();
+                        final BlockType type = hotBar[hotBarSelection];
+                        if (!type.air()) {
+                            world.setBlockType(
+                                hitResult.x() + face.axisX(),
+                                hitResult.y() + face.axisY(),
+                                hitResult.z() + face.axisZ(),
+                                type
+                            );
+                        }
+                        blockPlaceTimer = 0;
+                    }
+                }
+                blockDestroyTimer++;
+                blockPlaceTimer++;
             }
+            world.tick();
         }
-        blockDestroyTimer++;
-        blockPlaceTimer++;
+        gameRenderer.tick();
     }
 
     private void initGL() {
@@ -292,6 +336,20 @@ public final class Freeworld implements AutoCloseable {
         glfw.setErrorCallback(null);
     }
 
+    public void openScreen(@Nullable Screen screen) {
+        if (this.screen != null) {
+            this.screen.dispose();
+        }
+        this.screen = screen;
+        if (screen != null) {
+            screen.init(framebufferWidth / guiScale, framebufferHeight / guiScale);
+        }
+    }
+
+    public @Nullable Screen screen() {
+        return screen;
+    }
+
     public GLFW glfw() {
         return glfw;
     }
@@ -300,6 +358,7 @@ public final class Freeworld implements AutoCloseable {
         return glFlags;
     }
 
+    @ApiStatus.Internal
     public GLStateMgr gl() {
         return gl;
     }
@@ -324,6 +383,14 @@ public final class Freeworld implements AutoCloseable {
         return camera;
     }
 
+    public GameRenderer gameRenderer() {
+        return gameRenderer;
+    }
+
+    public BlockModelManager blockModelManager() {
+        return blockModelManager;
+    }
+
     public World world() {
         return world;
     }
@@ -338,6 +405,10 @@ public final class Freeworld implements AutoCloseable {
 
     public BlockType[] hotBar() {
         return hotBar;
+    }
+
+    public float guiScale() {
+        return guiScale;
     }
 
     public static Freeworld getInstance() {

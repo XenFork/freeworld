@@ -4,23 +4,25 @@
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
- * License as published by the Free Software Foundation; either
- * version 2.1 of the License, or (at your option) any later version.
+ * License as published by the Free Software Foundation;
+ * only version 2.1 of the License.
  */
 
 package freeworld.client.world.chunk;
 
+import freeworld.client.render.GameRenderer;
 import freeworld.client.render.gl.GLStateMgr;
-import freeworld.client.render.model.VertexLayout;
+import freeworld.client.render.model.vertex.VertexLayout;
 import freeworld.client.render.world.ChunkCompiler;
 import freeworld.client.render.world.ChunkVertexData;
 import freeworld.client.render.world.WorldRenderer;
+import freeworld.math.Vector2d;
+import freeworld.math.Vector3d;
 import freeworld.util.Logging;
 import freeworld.world.World;
 import freeworld.world.chunk.Chunk;
 import freeworld.world.entity.Entity;
-import freeworld.world.entity.component.PositionComponent;
-import org.joml.Vector3d;
+import freeworld.world.entity.EntityComponents;
 import org.slf4j.Logger;
 import overrungl.opengl.GL15C;
 import reactor.core.publisher.Flux;
@@ -49,13 +51,15 @@ public final class ClientChunk extends Chunk implements AutoCloseable {
 
     public ClientChunk(World world, WorldRenderer worldRenderer, int x, int y, int z) {
         super(world, x, y, z);
+        final GameRenderer gameRenderer = worldRenderer.gameRenderer();
         // Get OpenGL context directly
-        this.state = new State(worldRenderer.gameRenderer().client().gl());
+        this.state = new State(gameRenderer.client().gl());
         this.cleanable = CLEANER.register(this, state);
         this.dataFlux = worldRenderer.vertexBuilderPool()
             .withPoolable(vertexBuilder -> Mono.fromSupplier(() -> ChunkCompiler.compile(
                     vertexBuilder,
-                    worldRenderer.gameRenderer().blockRenderer(),
+                    gameRenderer.blockRenderer(),
+                    gameRenderer.client().blockModelManager(),
                     this
                 ))
             )
@@ -138,18 +142,18 @@ public final class ClientChunk extends Chunk implements AutoCloseable {
     }
 
     public double xzDistanceToPlayerSquared(Entity player) {
-        if (!player.hasComponent(PositionComponent.ID)) {
+        if (!player.hasComponent(EntityComponents.POSITION)) {
             return 0.0;
         }
-        final Vector3d value = player.position().value();
-        return (value.x() - x()) * (value.z() - z());
+        final Vector3d value = player.getComponent(EntityComponents.POSITION);
+        return Vector2d.distanceSquared(x(), value.x(), z(), value.z());
     }
 
     public double yDistanceToPlayer(Entity player) {
-        if (!player.hasComponent(PositionComponent.ID)) {
+        if (!player.hasComponent(EntityComponents.POSITION)) {
             return 0.0;
         }
-        final Vector3d value = player.position().value();
+        final Vector3d value = player.getComponent(EntityComponents.POSITION);
         return Math.abs(value.y() - y());
     }
 

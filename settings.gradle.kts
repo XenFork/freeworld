@@ -20,7 +20,11 @@ pluginManagement {
 val projName: String by settings
 rootProject.name = projName
 
-mapOf("freeworld" to "core", "freeworld-client" to "client").forEach { (name, path) ->
+mapOf(
+    "freeworld" to "core",
+    "freeworld-client" to "client",
+    "freeworld-math" to "math"
+).forEach { (name, path) ->
     include(name)
     project(":$name").projectDir = file("modules/freeworld.$path")
 }
