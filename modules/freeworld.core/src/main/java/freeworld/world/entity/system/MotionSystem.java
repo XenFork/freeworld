@@ -38,7 +38,11 @@ public final class MotionSystem implements EntitySystem {
                 Vector3d position = entity.getComponent(EntityComponents.POSITION);
                 Vector3d velocity = entity.getComponent(EntityComponents.VELOCITY);
 
-                velocity = velocity.add(acceleration.x(), acceleration.y() - 0.08, acceleration.z());
+                double g = 0.08;
+                if (entity.hasComponent(EntityComponents.FLYING)) {
+                    g = 0.0;
+                }
+                velocity = velocity.add(acceleration.x(), acceleration.y() - g, acceleration.z());
 
                 AABBox boundingBox = entity.getComponent(EntityComponents.BOUNDING_BOX);
 
@@ -113,7 +117,11 @@ public final class MotionSystem implements EntitySystem {
                 entity.setComponent(EntityComponents.POSITION, position);
                 entity.setComponent(EntityComponents.BOUNDING_BOX, computeBox(boundingBox, position));
 
-                velocity = velocity.mul(0.91, 0.98, 0.91);
+                if (!entity.hasComponent(EntityComponents.FLYING)) {
+                    velocity = velocity.mul(0.91, 0.98, 0.91);
+                } else {
+                    velocity = Vector3d.ZERO;
+                }
                 if (entity.hasComponent(EntityComponents.ON_GROUND)) {
                     final double fiction = 0.7;
                     velocity = velocity.mul(fiction, 1.0, fiction);

@@ -22,10 +22,7 @@ import freeworld.world.entity.EntityType;
 import freeworld.world.entity.EntityComponents;
 import freeworld.world.entity.system.MotionSystem;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -40,8 +37,10 @@ public final class World {
     private final List<Entity> entities = new ArrayList<>();
     private final MotionSystem motionSystem = new MotionSystem();
     private final List<WorldListener> listeners = new ArrayList<>();
+    private final long seed;
 
-    public World(String name) {
+    public World(String name, long seed) {
+        this.seed = seed;
     }
 
     public static void forEachChunk(Entity player, int chunkRadius, Int3Consumer consumer) {
@@ -136,5 +135,9 @@ public final class World {
                 listener.onBlockChanged(x, y, z);
             }
         }
+    }
+
+    public long seed() {
+        return seed;
     }
 }

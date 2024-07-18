@@ -18,10 +18,7 @@ import freeworld.client.render.gl.GLStateMgr;
 import freeworld.client.render.model.vertex.VertexLayouts;
 import freeworld.client.world.chunk.ClientChunk;
 import freeworld.core.math.AABBox;
-import freeworld.math.FrustumIntersection;
-import freeworld.math.FrustumRayBuilder;
-import freeworld.math.Intersectiond;
-import freeworld.math.Vector3f;
+import freeworld.math.*;
 import freeworld.util.Direction;
 import freeworld.util.Logging;
 import freeworld.world.World;
@@ -41,7 +38,6 @@ import reactor.pool.PoolBuilder;
 
 import java.time.Duration;
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -63,36 +59,38 @@ public final class WorldRenderer implements GLResource, WorldListener {
         .buildPool();
     private final Map<ChunkPos, ClientChunk> chunks = new ConcurrentHashMap<>(RENDER_CHUNK_COUNT);
     private final Disposable chunkGC;
+    private int playerChunkX = 0;
+    private int playerChunkY = 0;
+    private int playerChunkZ = 0;
 
     public WorldRenderer(GameRenderer gameRenderer, World world) {
         this.gameRenderer = gameRenderer;
         this.world = world;
         world.addListener(this);
-        this.chunkGC = Flux.interval(Duration.ofSeconds(60))
-            .subscribe(_ -> {
-                final List<ChunkPos> list = new ArrayList<>(RENDER_CHUNK_COUNT);
-                World.forEachChunk(gameRenderer.client().player(), RENDER_RADIUS, (x, y, z) -> list.add(new ChunkPos(x, y, z)));
-                final var it = chunks.entrySet().iterator();
-                while (it.hasNext()) {
-                    final var e = it.next();
-                    if (!list.contains(e.getKey())) {
-                        e.getValue().close();
-                        it.remove();
-                    }
-                }
-            });
+        this.chunkGC = Flux.interval(Duration.ofSeconds(45))
+            .subscribe(_ -> uninstallChunks());
     }
 
     private static DefaultVertexBuilder createVertexBuilder() {
         return new DefaultVertexBuilder(VertexLayouts.POSITION_COLOR_TEX, 30000, 45000);
     }
 
+    private void uninstallChunks() {
+        final List<ChunkPos> list = new ArrayList<>(RENDER_CHUNK_COUNT);
+        World.forEachChunk(gameRenderer.client().player(), RENDER_RADIUS, (x, y, z) -> list.add(new ChunkPos(x, y, z)));
+        final var it = chunks.entrySet().iterator();
+        while (it.hasNext()) {
+            final var e = it.next();
+            if (!list.contains(e.getKey())) {
+                e.getValue().close();
+                it.remove();
+            }
+        }
+    }
+
     public List<ClientChunk> renderingChunks(Entity player) {
         final List<ClientChunk> chunks = new ArrayList<>(RENDER_CHUNK_COUNT);
         World.forEachChunk(player, RENDER_RADIUS, (x, y, z) -> chunks.add(getChunkOrCreate(x, y, z)));
-        chunks.sort(Comparator
-            .<ClientChunk>comparingDouble(o -> o.yDistanceToPlayer(player))
-            .thenComparingDouble(o -> o.xzDistanceToPlayerSquared(player)));
         return chunks;
     }
 
@@ -103,6 +101,20 @@ public final class WorldRenderer implements GLResource, WorldListener {
     }
 
     public void renderChunks(GLStateMgr gl, List<ClientChunk> renderingChunks) {
+        Vector3d playerPos = gameRenderer.client().player().getComponent(EntityComponents.POSITION);
+        int playerChunkX = ChunkPos.absoluteToChunk((int) Math.floor(playerPos.x()));
+        int playerChunkY = ChunkPos.absoluteToChunk((int) Math.floor(playerPos.y()));
+        int playerChunkZ = ChunkPos.absoluteToChunk((int) Math.floor(playerPos.z()));
+        if (playerChunkX != this.playerChunkX ||
+            playerChunkY != this.playerChunkY ||
+            playerChunkZ != this.playerChunkZ) {
+            this.playerChunkX = playerChunkX;
+            this.playerChunkY = playerChunkY;
+            this.playerChunkZ = playerChunkZ;
+            uninstallChunks();
+        }
+
+        int builtChunkCount = 0;
         FrustumIntersection frustumIntersection = new FrustumIntersection(RenderSystem.projectionViewMatrix());
         for (ClientChunk chunk : renderingChunks) {
             if (frustumIntersection.testAab(
@@ -113,6 +125,10 @@ public final class WorldRenderer implements GLResource, WorldListener {
                 chunk.toY(),
                 chunk.toZ()
             )) {
+                if (builtChunkCount < 8 && chunk.shouldBuildBuffer()) {
+                    builtChunkCount++;
+                    chunk.buildBuffer(gl);
+                }
                 chunk.render(gl);
             }
         }
@@ -398,12 +414,12 @@ public final class WorldRenderer implements GLResource, WorldListener {
     @Override
     public void close(GLStateMgr gl) {
         logger.info("Closing world renderer");
-        scheduler.dispose();
-        vertexBuilderPool.dispose();
-        chunkGC.dispose();
         for (ClientChunk chunk : chunks.values()) {
             chunk.close();
         }
         chunks.clear();
+        scheduler.dispose();
+        vertexBuilderPool.dispose();
+        chunkGC.dispose();
     }
 }
