@@ -11,7 +11,7 @@
 package freeworld.world.block;
 
 import freeworld.core.Identifier;
-import freeworld.core.registry.BuiltinRegistries;
+import freeworld.core.registry.Registries;
 import freeworld.core.registry.Registry;
 
 /**
@@ -19,16 +19,16 @@ import freeworld.core.registry.Registry;
  * @since 0.1.0
  */
 public final class BlockTypes {
-    public static final BlockType AIR = register("air", 0, new AirBlockType(new BlockType.Settings().air()));
-    public static final BlockType GRASS_BLOCK = register("grass_block", 1, new BlockType(new BlockType.Settings()));
-    public static final BlockType DIRT = register("dirt", 2, new BlockType(new BlockType.Settings()));
-    public static final BlockType STONE = register("stone", 3, new BlockType(new BlockType.Settings()));
+    public static final BlockType AIR = register("air", new AirBlockType(new BlockType.Settings().air().nonOpaque()));
+    public static final BlockType GRASS_BLOCK = register("grass_block", new BlockType(new BlockType.Settings()));
+    public static final BlockType DIRT = register("dirt", new BlockType(new BlockType.Settings()));
+    public static final BlockType STONE = register("stone", new BlockType(new BlockType.Settings()));
 
     private BlockTypes() {
     }
 
-    private static BlockType register(String name, int rawId, BlockType blockType) {
-        return Registry.register(BuiltinRegistries.BLOCK_TYPE, Identifier.ofBuiltin(name), rawId, blockType);
+    private static BlockType register(String name, BlockType blockType) {
+        return Registry.register(Registries.BLOCK_TYPE, Identifier.ofBuiltin(name), blockType);
     }
 
     public static void bootstrap() {

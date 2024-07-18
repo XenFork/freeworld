@@ -19,7 +19,8 @@ import freeworld.client.render.screen.ingame.CreativeTabScreen;
 import freeworld.client.render.screen.ingame.PauseScreen;
 import freeworld.client.render.screen.Screen;
 import freeworld.client.render.world.HitResult;
-import freeworld.core.registry.BuiltinRegistries;
+import freeworld.client.render.world.WorldRenderer;
+import freeworld.core.registry.Registries;
 import freeworld.math.Vector2d;
 import freeworld.math.Vector3d;
 import freeworld.util.Direction;
@@ -46,6 +47,7 @@ import overrungl.util.value.Pair;
 
 import java.lang.foreign.MemorySegment;
 import java.lang.invoke.MethodHandles;
+import java.util.Random;
 
 /**
  * Client logic
@@ -94,6 +96,8 @@ public final class Freeworld implements AutoCloseable {
         BlockTypes.AIR,
         BlockTypes.AIR
     };
+    private int gameTick = 0;
+    private int spaceTick = 0;
 
     private Freeworld() {
         this.glfw = GLFW.INSTANCE;
@@ -140,15 +144,17 @@ public final class Freeworld implements AutoCloseable {
         }
 
         BlockTypes.bootstrap();
-        BuiltinRegistries.BLOCK_TYPE.freeze();
+        Registries.BLOCK_TYPE.freeze();
         EntityTypes.bootstrap();
-        BuiltinRegistries.ENTITY_TYPE.freeze();
+        Registries.ENTITY_TYPE.freeze();
 
         blockModelManager = new BlockModelManager();
         blockModelManager.bootstrap();
 
-        world = new World("New world");
-        player = world.createEntity(EntityTypes.PLAYER, new Vector3d(0.0, 0.0, 0.0));
+        world = new World("New world", new Random().nextLong());
+        player = world.createEntity(EntityTypes.PLAYER, new Vector3d(0.0, 128.0, 0.0));
+
+        World.forEachChunk(player, WorldRenderer.RENDER_RADIUS, (x, y, z) -> world.getOrCreateChunk(x, y, z));
 
         initGL();
         run();
@@ -168,16 +174,6 @@ public final class Freeworld implements AutoCloseable {
             }
             case GLFW.PRESS -> {
                 switch (key) {
-                    case GLFW.KEY_1 -> hotBarSelection = 0;
-                    case GLFW.KEY_2 -> hotBarSelection = 1;
-                    case GLFW.KEY_3 -> hotBarSelection = 2;
-                    case GLFW.KEY_4 -> hotBarSelection = 3;
-                    case GLFW.KEY_5 -> hotBarSelection = 4;
-                    case GLFW.KEY_6 -> hotBarSelection = 5;
-                    case GLFW.KEY_7 -> hotBarSelection = 6;
-                    case GLFW.KEY_8 -> hotBarSelection = 7;
-                    case GLFW.KEY_9 -> hotBarSelection = 8;
-                    case GLFW.KEY_0 -> hotBarSelection = 9;
                     case GLFW.KEY_ESCAPE -> {
                         if (screen != null) {
                             if (screen.escapeCanClose()) {
@@ -191,7 +187,27 @@ public final class Freeworld implements AutoCloseable {
                         if (screen == null) {
                             if (world != null) {
                                 switch (key) {
+                                    case GLFW.KEY_1 -> hotBarSelection = 0;
+                                    case GLFW.KEY_2 -> hotBarSelection = 1;
+                                    case GLFW.KEY_3 -> hotBarSelection = 2;
+                                    case GLFW.KEY_4 -> hotBarSelection = 3;
+                                    case GLFW.KEY_5 -> hotBarSelection = 4;
+                                    case GLFW.KEY_6 -> hotBarSelection = 5;
+                                    case GLFW.KEY_7 -> hotBarSelection = 6;
+                                    case GLFW.KEY_8 -> hotBarSelection = 7;
+                                    case GLFW.KEY_9 -> hotBarSelection = 8;
+                                    case GLFW.KEY_0 -> hotBarSelection = 9;
                                     case GLFW.KEY_E -> openScreen(new CreativeTabScreen(this, null));
+                                    case GLFW.KEY_SPACE -> {
+                                        if (gameTick - spaceTick < 5) {
+                                            if (player.hasComponent(EntityComponents.FLYING)) {
+                                                player.removeComponent(EntityComponents.FLYING);
+                                            } else {
+                                                player.addComponent(EntityComponents.FLYING);
+                                            }
+                                        }
+                                        spaceTick = gameTick;
+                                    }
                                 }
                             }
                         } else {
@@ -253,17 +269,35 @@ public final class Freeworld implements AutoCloseable {
             camera.preUpdate();
             if (screen == null) {
                 final boolean onGround = player.hasComponent(EntityComponents.ON_GROUND);
-                double speed = onGround ? 0.1 : 0.02;
+                final boolean flying = player.hasComponent(EntityComponents.FLYING);
+                double speed;
+                if (onGround) {
+                    speed = 0.1;
+                } else if (flying) {
+                    speed = 0.5;
+                } else {
+                    speed = 0.02;
+                }
                 if (glfw.getKey(window, GLFW.KEY_LEFT_CONTROL) == GLFW.PRESS) speed *= 2.0;
                 double xo = 0.0;
+                double yo = 0.0;
+                boolean changedYo = false;
                 double zo = 0.0;
                 if (glfw.getKey(window, GLFW.KEY_W) == GLFW.PRESS) zo -= 1.0;
                 if (glfw.getKey(window, GLFW.KEY_S) == GLFW.PRESS) zo += 1.0;
                 if (glfw.getKey(window, GLFW.KEY_A) == GLFW.PRESS) xo -= 1.0;
                 if (glfw.getKey(window, GLFW.KEY_D) == GLFW.PRESS) xo += 1.0;
-                if (onGround && glfw.getKey(window, GLFW.KEY_SPACE) == GLFW.PRESS) {
-                    final Vector3d value = player.getComponent(EntityComponents.VELOCITY);
-                    player.setComponent(EntityComponents.VELOCITY, new Vector3d(value.x(), 0.5, value.z()));
+                if ((onGround || flying) && glfw.getKey(window, GLFW.KEY_SPACE) == GLFW.PRESS) {
+                    yo += 0.5;
+                    changedYo = true;
+                }
+                if (flying && glfw.getKey(window, GLFW.KEY_LEFT_SHIFT) == GLFW.PRESS) {
+                    yo -= 0.5;
+                    changedYo = true;
+                }
+                if (changedYo) {
+                    double finalYo = yo;
+                    player.withComponent(EntityComponents.VELOCITY, v -> v.withY(finalYo));
                 }
                 player.setComponent(EntityComponents.ACCELERATION,
                     MathUtil.moveRelative(xo, 0.0, zo, player.getComponent(EntityComponents.ROTATION).y(), speed));
@@ -299,6 +333,8 @@ public final class Freeworld implements AutoCloseable {
             world.tick();
         }
         gameRenderer.tick();
+
+        gameTick++;
     }
 
     private void initGL() {

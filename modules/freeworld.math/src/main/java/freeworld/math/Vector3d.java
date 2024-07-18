@@ -4,8 +4,8 @@
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
- * License as published by the Free Software Foundation; either
- * version 2.1 of the License, or (at your option) any later version.
+ * License as published by the Free Software Foundation;
+ * only version 2.1 of the License.
  */
 
 package freeworld.math;
@@ -39,5 +39,17 @@ public record Vector3d(double x, double y, double z) {
             Maths.fma(v.y() - y, t, y),
             Maths.fma(v.z() - z, t, z)
         );
+    }
+
+    public Vector3d withX(double x) {
+        return new Vector3d(x, y(), z());
+    }
+
+    public Vector3d withY(double y) {
+        return new Vector3d(x(), y, z());
+    }
+
+    public Vector3d withZ(double z) {
+        return new Vector3d(x(), y(), z);
     }
 }

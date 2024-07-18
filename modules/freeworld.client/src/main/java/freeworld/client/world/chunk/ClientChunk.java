@@ -25,9 +25,9 @@ import freeworld.world.entity.Entity;
 import freeworld.world.entity.EntityComponents;
 import org.slf4j.Logger;
 import overrungl.opengl.GL15C;
+import reactor.core.Disposable;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
-import reactor.pool.PoolShutdownException;
 
 import java.lang.foreign.MemorySegment;
 import java.lang.ref.Cleaner;
@@ -43,6 +43,7 @@ public final class ClientChunk extends Chunk implements AutoCloseable {
     private final Cleaner.Cleanable cleanable;
     private final State state;
     private final Flux<ChunkVertexData> dataFlux;
+    private Disposable subscribed;
     /**
      * Is this chunk changed?
      */
@@ -56,13 +57,18 @@ public final class ClientChunk extends Chunk implements AutoCloseable {
         this.state = new State(gameRenderer.client().gl());
         this.cleanable = CLEANER.register(this, state);
         this.dataFlux = worldRenderer.vertexBuilderPool()
-            .withPoolable(vertexBuilder -> Mono.fromSupplier(() -> ChunkCompiler.compile(
+            .withPoolable(vertexBuilder -> Mono.fromSupplier(() -> {
+                final Chunk chunk = world().getOrCreateChunk(x(), y(), z());
+                if (chunk != null) {
+                    copyFrom(chunk);
+                }
+                return ChunkCompiler.compile(
                     vertexBuilder,
                     gameRenderer.blockRenderer(),
                     gameRenderer.client().blockModelManager(),
                     this
-                ))
-            )
+                );
+            }))
             .onBackpressureBuffer()
             .subscribeOn(worldRenderer.scheduler());
     }
@@ -90,24 +96,26 @@ public final class ClientChunk extends Chunk implements AutoCloseable {
         if (!dirty) {
             return;
         }
-        final Chunk chunk = world().getOrCreateChunk(x(), y(), z());
-        if (chunk != null) {
-            copyFrom(chunk);
+        if (subscribed != null) {
+            subscribed.dispose();
         }
-        dataFlux.subscribe(state.dataRef::set, throwable -> {
-            if (!(throwable instanceof PoolShutdownException)) {
-                logger.error(STR."Error thrown compiling client chunk \{x()}, \{y()}, \{z()}", throwable);
-            }
-        });
+        subscribed = dataFlux.subscribe(state.dataRef::set);
         dirty = false;
     }
 
-    public void render(GLStateMgr gl) {
+    public boolean shouldBuildBuffer() {
+        return state.dataRef.get() != null;
+    }
+
+    public void buildBuffer(GLStateMgr gl) {
         final ChunkVertexData data = state.dataRef.get();
         if (data != null) {
             buildBuffer(gl, data);
             state.dataRef.set(null);
         }
+    }
+
+    public void render(GLStateMgr gl) {
         if (state.vao != 0) {
             gl.setVertexArrayBinding(state.vao);
             gl.drawElements(GLStateMgr.TRIANGLES, indexCount, GLStateMgr.UNSIGNED_INT, MemorySegment.NULL);
@@ -165,6 +173,7 @@ public final class ClientChunk extends Chunk implements AutoCloseable {
 
     @Override
     public void close() {
+        subscribed.dispose();
         cleanable.clean();
     }
 }

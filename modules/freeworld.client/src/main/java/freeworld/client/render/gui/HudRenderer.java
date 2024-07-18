@@ -14,14 +14,12 @@ import freeworld.client.Freeworld;
 import freeworld.client.render.GameRenderer;
 import freeworld.client.render.RenderSystem;
 import freeworld.client.render.Tessellator;
-import freeworld.client.render.animation.Animation;
 import freeworld.client.render.gl.GLDrawMode;
 import freeworld.client.render.gl.GLStateMgr;
 import freeworld.client.render.texture.TextureAtlas;
 import freeworld.client.render.texture.TextureManager;
 import freeworld.core.Identifier;
-import freeworld.core.registry.BuiltinRegistries;
-import freeworld.math.Maths;
+import freeworld.core.registry.Registries;
 import freeworld.math.Matrix4f;
 import freeworld.world.block.BlockType;
 import overrungl.opengl.GL10C;
@@ -35,11 +33,6 @@ public final class HudRenderer {
     public static final Identifier HOT_BAR_TEXTURE = Identifier.ofBuiltin("gui/hotbar");
     public static final Identifier HOT_BAR_SELECTED_TEXTURE = Identifier.ofBuiltin("gui/hotbar_selected");
     private final GameRenderer gameRenderer;
-    private final Animation<Float> hotBarSelectorAnimation = new Animation<>(
-        hotBarSelectorX(0),
-        (start, end, progress) -> (float) Maths.lerp(start, end, progress)
-    );
-    private int prevHotBarSelection = 0;
     private float width = 0f;
     private float height = 0f;
 
@@ -97,7 +90,7 @@ public final class HudRenderer {
         );
         graphics.drawSprite(
             atlas.getRegion(HOT_BAR_SELECTED_TEXTURE),
-            (float) Maths.lerp(hotBarSelectorAnimation.previous(), hotBarSelectorAnimation.current(), partialTick),
+            hotBarSelectorX(gameRenderer.client().hotBarSelection()),
             -height * 0.5f,
             0.0f,
             0.0f
@@ -123,7 +116,7 @@ public final class HudRenderer {
                     .rotateY((float) Math.toRadians(45.0))
                     .scale(10));
                 tessellator.begin(GLDrawMode.TRIANGLES);
-                gameRenderer.blockRenderer().renderBlockModel(tessellator, client.blockModelManager().get(BuiltinRegistries.BLOCK_TYPE.getId(blockType)), 0, 0, 0, _ -> false);
+                gameRenderer.blockRenderer().renderBlockModel(tessellator, client.blockModelManager().get(Registries.BLOCK_TYPE.getId(blockType)), 0, 0, 0, _ -> false);
                 tessellator.end(gl);
                 i++;
             }
@@ -135,14 +128,5 @@ public final class HudRenderer {
     }
 
     public void tick() {
-        final int selection = gameRenderer.client().hotBarSelection();
-        if (prevHotBarSelection != selection) {
-            hotBarSelectorAnimation.reset(
-                hotBarSelectorX(selection),
-                1
-            );
-            prevHotBarSelection = selection;
-        }
-        hotBarSelectorAnimation.tick();
     }
 }

@@ -12,7 +12,7 @@ package freeworld.client.render.model.block;
 
 import freeworld.client.render.texture.TextureAtlas;
 import freeworld.core.Identifier;
-import freeworld.core.registry.BuiltinRegistries;
+import freeworld.core.registry.Registries;
 import freeworld.core.registry.DefaultedRegistry;
 import freeworld.core.registry.Registry;
 import freeworld.world.block.BlockType;
@@ -57,7 +57,7 @@ public final class BlockModelManager {
     }
 
     public void register(BlockType blockType, BlockModel blockModel) {
-        register(BuiltinRegistries.BLOCK_TYPE.getId(blockType), blockModel);
+        register(Registries.BLOCK_TYPE.getId(blockType), blockModel);
     }
 
     public void bootstrap() {

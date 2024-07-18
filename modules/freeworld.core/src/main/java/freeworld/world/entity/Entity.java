@@ -18,6 +18,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
+import java.util.function.UnaryOperator;
 
 /**
  * @author squid233
@@ -50,6 +51,10 @@ public final class Entity {
 
     public <T> void setComponent(ComponentKey<T> key, T component) {
         componentMap.put(key, component);
+    }
+
+    public <T> void withComponent(ComponentKey<T> key, UnaryOperator<T> component) {
+        setComponent(key, component.apply(getComponent(key)));
     }
 
     public void removeComponent(ComponentKey<?> id) {

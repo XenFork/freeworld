@@ -4,12 +4,13 @@
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
- * License as published by the Free Software Foundation; either
- * version 2.1 of the License, or (at your option) any later version.
+ * License as published by the Free Software Foundation;
+ * only version 2.1 of the License.
  */
 
 package freeworld.world.chunk;
 
+import freeworld.util.math.SimplexNoiseUtil;
 import freeworld.world.World;
 import freeworld.world.block.BlockType;
 import freeworld.world.block.BlockTypes;
@@ -23,7 +24,7 @@ import java.util.StringJoiner;
  * @since 0.1.0
  */
 public class Chunk {
-    public static final int SIZE = 32;
+    public static final int SIZE = 16;
     private final World world;
     private final int x;
     private final int y;
@@ -60,13 +61,16 @@ public class Chunk {
     public void generateTerrain() {
         for (int bx = 0; bx < width; bx++) {
             for (int bz = 0; bz < depth; bz++) {
+                final int absX = ChunkPos.relativeToAbsolute(x, bx);
+                final int absZ = ChunkPos.relativeToAbsolute(z, bz);
+                final float heightmap = SimplexNoiseUtil.sumOctave(8, absX, absZ, world.seed() & 0xff, (world.seed() >> 8) & 0xff, 0.2f, 0.003f, -64.0f, 64.0f);
                 for (int by = 0; by < height; by++) {
                     final int absY = ChunkPos.relativeToAbsolute(y, by);
-                    if (absY < -4) {
+                    if (absY < heightmap - 3) {
                         setBlockType(bx, by, bz, BlockTypes.STONE);
-                    } else if (absY < -1) {
+                    } else if (absY < heightmap - 1) {
                         setBlockType(bx, by, bz, BlockTypes.DIRT);
-                    } else if (absY == -1) {
+                    } else if (absY < heightmap) {
                         setBlockType(bx, by, bz, BlockTypes.GRASS_BLOCK);
                     }
                 }

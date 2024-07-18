@@ -13,7 +13,7 @@ package freeworld.client.render.world;
 import freeworld.client.render.builder.VertexBuilder;
 import freeworld.client.render.model.block.BlockModel;
 import freeworld.client.render.model.block.BlockModelManager;
-import freeworld.core.registry.BuiltinRegistries;
+import freeworld.core.registry.Registries;
 import freeworld.world.chunk.Chunk;
 import freeworld.world.chunk.ChunkPos;
 
@@ -45,7 +45,7 @@ public final class ChunkCompiler {
                     int finalX = x;
                     int finalY = y;
                     int finalZ = z;
-                    final BlockModel model = blockModelManager.get(BuiltinRegistries.BLOCK_TYPE.getId(chunk.getBlockType(x, y, z)));
+                    final BlockModel model = blockModelManager.get(Registries.BLOCK_TYPE.getId(chunk.getBlockType(x, y, z)));
                     blockRenderer.renderBlockModel(
                         vertexBuilder,
                         model,
@@ -61,9 +61,10 @@ public final class ChunkCompiler {
                             final int absNz = ChunkPos.relativeToAbsolute(cz, nz);
                             final boolean shouldRender =
                                 (chunk.isInBound(nx, ny, nz) &&
-                                 chunk.getBlockType(nx, ny, nz).air()) ||
+                                 chunk.getBlockType(nx, ny, nz).nonOpaque()) ||
                                 (chunk.world().isBlockLoaded(absNx, absNy, absNz) &&
-                                 chunk.world().getBlockType(absNx, absNy, absNz).air());
+                                 chunk.world().getBlockType(absNx, absNy, absNz).nonOpaque()) ||
+                                !chunk.world().isBlockLoaded(absNx, absNy, absNz) /* TODO: add method world::tryLoading() */;
                             return !shouldRender;
                         }
                     );

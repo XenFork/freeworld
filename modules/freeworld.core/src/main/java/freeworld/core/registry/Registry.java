@@ -22,10 +22,6 @@ import java.util.Map;
  * @since 0.1.0
  */
 public interface Registry<T> extends Iterable<Map.Entry<Identifier, T>> {
-    static <T> T register(MutableRegistry<? super T> registry, Identifier id, int rawId, T entry) {
-        return registry.set(id, rawId, entry);
-    }
-
     static <T> T register(MutableRegistry<? super T> registry, Identifier id, T entry) {
         return registry.add(id, entry);
     }

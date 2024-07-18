@@ -11,7 +11,7 @@
 package freeworld.world.entity;
 
 import freeworld.core.Identifier;
-import freeworld.core.registry.BuiltinRegistries;
+import freeworld.core.registry.Registries;
 import freeworld.core.registry.Registry;
 import freeworld.math.Vector3d;
 import freeworld.world.World;
@@ -22,7 +22,7 @@ import freeworld.world.World;
  */
 public final class EntityTypes {
     public static final Vector3d PLAYER_EYE_POSITION = new Vector3d(0.0, 1.62, 0.0);
-    public static final EntityType PLAYER = register(1, "player", EntityTypes::setupComponentPlayer);
+    public static final EntityType PLAYER = register("player", EntityTypes::setupComponentPlayer);
 
     private EntityTypes() {
     }
@@ -36,8 +36,8 @@ public final class EntityTypes {
         entity.addComponent(EntityComponents.VELOCITY);
     }
 
-    private static EntityType register(int rawId, String name, EntityType.Initializer initializer) {
-        return Registry.register(BuiltinRegistries.ENTITY_TYPE, Identifier.ofBuiltin(name), rawId, new EntityType(initializer));
+    private static EntityType register(String name, EntityType.Initializer initializer) {
+        return Registry.register(Registries.ENTITY_TYPE, Identifier.ofBuiltin(name), new EntityType(initializer));
     }
 
     public static void bootstrap() {
