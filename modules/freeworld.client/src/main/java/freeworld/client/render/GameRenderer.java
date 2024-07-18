@@ -139,62 +139,60 @@ public final class GameRenderer implements GLResource {
         gl.enableDepthTest();
         gl.setDepthFunc(GL10C.LEQUAL);
 
-        try (var _ = RenderSystem.matricesScope()) {
-            final Camera camera = client.camera();
-            final Entity player = client.player();
-            camera.moveToEntity(player);
-            camera.updateLerp(partialTick);
-            RenderSystem.setProjectionViewMatrix(_ -> Matrix4f.setPerspective(
-                (float) Math.toRadians(70.0),
-                (float) client.framebufferWidth() / client.framebufferHeight(),
-                0.01f,
-                1000.0f
-            ), _ -> camera.updateViewMatrix());
-            RenderSystem.setModelMatrix(_ -> Matrix4f.IDENTITY);
+        final Camera camera = client.camera();
+        final Entity player = client.player();
+        camera.moveToEntity(player);
+        camera.updateLerp(partialTick);
+        RenderSystem.setProjectionViewMatrix(Matrix4f.setPerspective(
+            (float) Math.toRadians(70.0),
+            (float) client.framebufferWidth() / client.framebufferHeight(),
+            0.01f,
+            1000.0f
+        ), camera.updateViewMatrix());
+        RenderSystem.setModelMatrix(Matrix4f.IDENTITY);
 
-            RenderSystem.useProgram(positionColorTexProgram);
+        RenderSystem.useProgram(positionColorTexProgram);
+        RenderSystem.updateMatrices();
+
+        final List<ClientChunk> chunks = worldRenderer.renderingChunks(player);
+        worldRenderer.compileChunks(chunks);
+
+        RenderSystem.bindTexture2D(textureManager.getTexture(TextureManager.BLOCK_ATLAS));
+        worldRenderer.renderChunks(gl, chunks);
+
+        hitResult = worldRenderer.selectBlock(player);
+        if (!hitResult.missed()) {
+            final AABBox box = hitResult.blockType().outlineShape().move(hitResult.x(), hitResult.y(), hitResult.z());
+            final float minX = (float) box.minX();
+            final float minY = (float) box.minY();
+            final float minZ = (float) box.minZ();
+            final float maxX = (float) box.maxX();
+            final float maxY = (float) box.maxY();
+            final float maxZ = (float) box.maxZ();
+            final float offset = 0.005f;
+            RenderSystem.bindTexture2D(null);
+            RenderSystem.useProgram(positionColorProgram);
             RenderSystem.updateMatrices();
-
-            final List<ClientChunk> chunks = worldRenderer.renderingChunks(player);
-            worldRenderer.compileChunks(chunks);
-
-            RenderSystem.bindTexture2D(textureManager.getTexture(TextureManager.BLOCK_ATLAS));
-            worldRenderer.renderChunks(gl, chunks);
-
-            hitResult = worldRenderer.selectBlock(player);
-            if (!hitResult.missed()) {
-                final AABBox box = hitResult.blockType().outlineShape().move(hitResult.x(), hitResult.y(), hitResult.z());
-                final float minX = (float) box.minX();
-                final float minY = (float) box.minY();
-                final float minZ = (float) box.minZ();
-                final float maxX = (float) box.maxX();
-                final float maxY = (float) box.maxY();
-                final float maxZ = (float) box.maxZ();
-                final float offset = 0.005f;
-                RenderSystem.bindTexture2D(null);
-                RenderSystem.useProgram(positionColorProgram);
-                RenderSystem.updateMatrices();
-                final Tessellator tessellator = Tessellator.getInstance();
-                tessellator.begin(GLDrawMode.LINES);
-                tessellator.color(0, 0, 0);
-                // -x
-                tessellator.indices(0, 1, 0, 2, 1, 3, 2, 3);
-                // +x
-                tessellator.indices(4, 5, 4, 6, 5, 7, 6, 7);
-                // -z
-                tessellator.indices(0, 4, 2, 6);
-                // +z
-                tessellator.indices(1, 5, 3, 7);
-                tessellator.position(minX - offset, minY - offset, minZ - offset).emit();
-                tessellator.position(minX - offset, minY - offset, maxZ + offset).emit();
-                tessellator.position(minX - offset, maxY + offset, minZ - offset).emit();
-                tessellator.position(minX - offset, maxY + offset, maxZ + offset).emit();
-                tessellator.position(maxX + offset, minY - offset, minZ - offset).emit();
-                tessellator.position(maxX + offset, minY - offset, maxZ + offset).emit();
-                tessellator.position(maxX + offset, maxY + offset, minZ - offset).emit();
-                tessellator.position(maxX + offset, maxY + offset, maxZ + offset).emit();
-                tessellator.end(gl);
-            }
+            final Tessellator tessellator = Tessellator.getInstance();
+            tessellator.begin(GLDrawMode.LINES);
+            tessellator.color(0, 0, 0);
+            // -x
+            tessellator.indices(0, 1, 0, 2, 1, 3, 2, 3);
+            // +x
+            tessellator.indices(4, 5, 4, 6, 5, 7, 6, 7);
+            // -z
+            tessellator.indices(0, 4, 2, 6);
+            // +z
+            tessellator.indices(1, 5, 3, 7);
+            tessellator.position(minX - offset, minY - offset, minZ - offset).emit();
+            tessellator.position(minX - offset, minY - offset, maxZ + offset).emit();
+            tessellator.position(minX - offset, maxY + offset, minZ - offset).emit();
+            tessellator.position(minX - offset, maxY + offset, maxZ + offset).emit();
+            tessellator.position(maxX + offset, minY - offset, minZ - offset).emit();
+            tessellator.position(maxX + offset, minY - offset, maxZ + offset).emit();
+            tessellator.position(maxX + offset, maxY + offset, minZ - offset).emit();
+            tessellator.position(maxX + offset, maxY + offset, maxZ + offset).emit();
+            tessellator.end(gl);
         }
 
         gl.clear(GL10C.DEPTH_BUFFER_BIT);
@@ -203,18 +201,22 @@ public final class GameRenderer implements GLResource {
         gl.disableDepthTest();
         gl.enableBlend();
         gl.setBlendFunc(GL10C.SRC_ALPHA, GL10C.ONE_MINUS_SRC_ALPHA);
-        try (var _ = RenderSystem.matricesScope()) {
-            hudRenderer.update(client.framebufferWidth(), client.framebufferHeight());
-            hudRenderer.render(guiGraphics, gl, partialTick);
-        }
+        hudRenderer.update(client.scaledFramebufferWidth(), client.scaledFramebufferHeight());
+        hudRenderer.render(guiGraphics, gl, partialTick);
 
         gl.disableCullFace();
         gl.disableDepthTest();
         gl.enableBlend();
         gl.setBlendFunc(GL10C.SRC_ALPHA, GL10C.ONE_MINUS_SRC_ALPHA);
-        try (var _ = RenderSystem.matricesScope()) {
-            renderScreen(guiGraphics, gl, partialTick);
-        }
+        RenderSystem.setProjectionViewMatrix(Matrix4f.setOrtho(0.0f,
+                client.scaledFramebufferWidth(),
+                0.0f,
+                client.scaledFramebufferHeight(),
+                -300.0f,
+                300.0f),
+            Matrix4f.IDENTITY);
+        RenderSystem.setModelMatrix(Matrix4f.IDENTITY);
+        renderScreen(guiGraphics, gl, partialTick);
     }
 
     private void renderScreen(GuiGraphics graphics, GLStateMgr gl, double partialTick) {

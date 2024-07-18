@@ -4,27 +4,22 @@
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
- * License as published by the Free Software Foundation; either
- * version 2.1 of the License, or (at your option) any later version.
+ * License as published by the Free Software Foundation;
+ * only version 2.1 of the License.
  */
 
 package freeworld.client.render.gl;
 
 import freeworld.client.Freeworld;
-import overrun.marshal.DirectAccess;
 import overrun.marshal.gen.Skip;
-import overrungl.opengl.*;
+import overrungl.opengl.GL;
+import overrungl.opengl.GLFlags;
 
 /**
  * @author squid233
  * @since 0.1.0
  */
-public abstract class GLStateMgr implements
-    GL10C, GL11C, GL14C, GL15C,
-    GL20C,
-    GL30C,
-    GL41C,
-    DirectAccess {
+public abstract class GLStateMgr implements GL {
     private int arrayBufferBinding = 0;
     private boolean blend = false;
     private int blendSrcRGB = ONE;

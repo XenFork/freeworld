@@ -113,10 +113,6 @@ public final class Freeworld implements AutoCloseable {
         }
 
         glfw.defaultWindowHints();
-        glfw.windowHint(GLFW.OPENGL_PROFILE, GLFW.OPENGL_CORE_PROFILE);
-        glfw.windowHint(GLFW.OPENGL_FORWARD_COMPAT, true);
-        glfw.windowHint(GLFW.CONTEXT_VERSION_MAJOR, 3);
-        glfw.windowHint(GLFW.CONTEXT_VERSION_MINOR, 3);
 
         // center window
         final GLFWVidMode videoMode = glfw.getVideoMode(glfw.getPrimaryMonitor());
@@ -152,7 +148,7 @@ public final class Freeworld implements AutoCloseable {
         blockModelManager.bootstrap();
 
         world = new World("New world", new Random().nextLong());
-        player = world.createEntity(EntityTypes.PLAYER, new Vector3d(0.0, 128.0, 0.0));
+        player = world.createEntity(EntityTypes.PLAYER, new Vector3d(0.0, 64.0, 0.0));
 
         World.forEachChunk(player, WorldRenderer.RENDER_RADIUS, (x, y, z) -> world.getOrCreateChunk(x, y, z));
 
@@ -409,6 +405,14 @@ public final class Freeworld implements AutoCloseable {
 
     public int framebufferHeight() {
         return framebufferHeight;
+    }
+
+    public int scaledFramebufferWidth() {
+        return (int) (framebufferWidth / guiScale);
+    }
+
+    public int scaledFramebufferHeight() {
+        return (int) (framebufferHeight / guiScale);
     }
 
     public Timer timer() {

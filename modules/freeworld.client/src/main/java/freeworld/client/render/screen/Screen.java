@@ -11,10 +11,8 @@
 package freeworld.client.render.screen;
 
 import freeworld.client.Freeworld;
-import freeworld.client.render.RenderSystem;
 import freeworld.client.render.gl.GLStateMgr;
 import freeworld.client.render.gui.GuiGraphics;
-import freeworld.math.Matrix4f;
 
 /**
  * @author squid233
@@ -47,16 +45,11 @@ public class Screen {
         this.height = height;
     }
 
-    protected void setupMatrix() {
-        RenderSystem.setProjectionMatrix(_ -> Matrix4f.setOrtho(0.0f, width, 0.0f, height, -300.0f, 300.0f));
-    }
-
     protected void drawBackground(GuiGraphics graphics, double partialTick) {
         graphics.fillRect(0.0f, 0.0f, width, height, 0.0f, 0.0f, 0.0f, 0.5f);
     }
 
     public void render(GuiGraphics graphics, GLStateMgr gl, double partialTick) {
-        setupMatrix();
     }
 
     public void close() {

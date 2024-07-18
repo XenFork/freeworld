@@ -33,24 +33,25 @@ public final class HudRenderer {
     public static final Identifier HOT_BAR_TEXTURE = Identifier.ofBuiltin("gui/hotbar");
     public static final Identifier HOT_BAR_SELECTED_TEXTURE = Identifier.ofBuiltin("gui/hotbar_selected");
     private final GameRenderer gameRenderer;
-    private float width = 0f;
-    private float height = 0f;
+    private int width = 0;
+    private int height = 0;
 
     public HudRenderer(GameRenderer gameRenderer) {
         this.gameRenderer = gameRenderer;
+        Freeworld client = gameRenderer.client();
+        this.width = client.scaledFramebufferWidth();
+        this.height = client.scaledFramebufferHeight();
     }
 
     public void update(int width, int height) {
-        final float guiScale = gameRenderer.client().guiScale();
-        this.width = width / guiScale;
-        this.height = height / guiScale;
+        this.width = width;
+        this.height = height;
     }
 
     public void render(GuiGraphics graphics, GLStateMgr gl, double partialTick) {
-        RenderSystem.setProjectionMatrix(_ -> Matrix4f
-            .setOrtho(0.0f, width, 0.0f, height, -300.0f, 300.0f));
-        RenderSystem.setModelMatrix(_ -> Matrix4f
-            .translation(width * 0.5f, height * 0.5f, 0.0f));
+        RenderSystem.setProjectionViewMatrix(Matrix4f.setOrtho(0.0f, width, 0.0f, height, -300.0f, 300.0f),
+            Matrix4f.IDENTITY);
+        RenderSystem.setModelMatrix(Matrix4f.translation(width * 0.5f, height * 0.5f, 0.0f));
 
         RenderSystem.useProgram(gameRenderer.positionColorTexProgram());
         RenderSystem.updateMatrices();
@@ -102,25 +103,23 @@ public final class HudRenderer {
     }
 
     private void renderHotBarItems(GLStateMgr gl) {
+        Matrix4f prevModelMatrix = RenderSystem.modelMatrix();
         RenderSystem.bindTexture2D(gameRenderer.textureManager().getTexture(TextureManager.BLOCK_ATLAS));
         final Freeworld client = gameRenderer.client();
         final Tessellator tessellator = Tessellator.getInstance();
         int i = 0;
         for (BlockType blockType : client.hotBar()) {
-            try (var _ = RenderSystem.modelMatrixStack().push()) {
-                int finalI = i;
-                RenderSystem.setModelMatrix(mat -> mat
-                    .translate((finalI - 5) * 20 + 3, 0, 0)
-                    .translate(0, -height * 0.5f + 8, 100)
-                    .rotateX((float) Math.toRadians(30.0))
-                    .rotateY((float) Math.toRadians(45.0))
-                    .scale(10));
-                tessellator.begin(GLDrawMode.TRIANGLES);
-                gameRenderer.blockRenderer().renderBlockModel(tessellator, client.blockModelManager().get(Registries.BLOCK_TYPE.getId(blockType)), 0, 0, 0, _ -> false);
-                tessellator.end(gl);
-                i++;
-            }
+            RenderSystem.setModelMatrix(prevModelMatrix
+                .translate((i - 5) * 20 + 3, -height * 0.5f + 8, 100)
+                .rotateX((float) Math.toRadians(30.0))
+                .rotateY((float) Math.toRadians(45.0))
+                .scale(10));
+            tessellator.begin(GLDrawMode.TRIANGLES);
+            gameRenderer.blockRenderer().renderBlockModel(tessellator, client.blockModelManager().get(Registries.BLOCK_TYPE.getId(blockType)), 0, 0, 0, _ -> false);
+            tessellator.end(gl);
+            i++;
         }
+        RenderSystem.setModelMatrix(prevModelMatrix);
     }
 
     private float hotBarSelectorX(int selection) {
