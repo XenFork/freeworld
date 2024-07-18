@@ -74,12 +74,11 @@ public final class GuiGraphics {
         final float rWidth = width * (1.0f - anchorX);
         final float bHeight = height * anchorY;
         final float tHeight = height * (1.0f - anchorY);
-        tessellator.color(1.0f, 1.0f, 1.0f);
         tessellator.indices(0, 1, 2, 2, 3, 0);
-        tessellator.texCoord(u0, v0).position(x - lWidth, y + tHeight, 0).emit();
-        tessellator.texCoord(u0, v1).position(x - lWidth, y - bHeight, 0).emit();
-        tessellator.texCoord(u1, v1).position(x + rWidth, y - bHeight, 0).emit();
-        tessellator.texCoord(u1, v0).position(x + rWidth, y + tHeight, 0).emit();
+        tessellator.position(x - lWidth, y + tHeight, 0).color(1.0f, 1.0f, 1.0f).texCoord(u0, v0).emit();
+        tessellator.position(x - lWidth, y - bHeight, 0).color(1.0f, 1.0f, 1.0f).texCoord(u0, v1).emit();
+        tessellator.position(x + rWidth, y - bHeight, 0).color(1.0f, 1.0f, 1.0f).texCoord(u1, v1).emit();
+        tessellator.position(x + rWidth, y + tHeight, 0).color(1.0f, 1.0f, 1.0f).texCoord(u1, v0).emit();
     }
 
     public void drawSprite(Texture texture, float x, float y, float anchorX, float anchorY) {
@@ -105,11 +104,10 @@ public final class GuiGraphics {
     public void fillRect(float startX, float startY, float endX, float endY, float red, float green, float blue, float alpha) {
         updateProgram(gameRenderer.positionColorProgram());
         updateTexture(null);
-        tessellator.color(red, green, blue, alpha);
         tessellator.indices(0, 1, 2, 2, 3, 0);
-        tessellator.position(startX, endY, 0.0f).emit();
-        tessellator.position(startX, startY, 0.0f).emit();
-        tessellator.position(endX, startY, 0.0f).emit();
-        tessellator.position(endX, endY, 0.0f).emit();
+        tessellator.position(startX, endY, 0.0f).color(red, green, blue, alpha).texCoord(0f, 0f).emit();
+        tessellator.position(startX, startY, 0.0f).color(red, green, blue, alpha).texCoord(0f, 0f).emit();
+        tessellator.position(endX, startY, 0.0f).color(red, green, blue, alpha).texCoord(0f, 0f).emit();
+        tessellator.position(endX, endY, 0.0f).color(red, green, blue, alpha).texCoord(0f, 0f).emit();
     }
 }

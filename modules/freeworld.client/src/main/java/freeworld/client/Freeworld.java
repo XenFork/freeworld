@@ -154,8 +154,6 @@ public final class Freeworld implements AutoCloseable {
 
         initGL();
         run();
-
-        logger.info("Closing client");
     }
 
     private void onKey(int key, int scancode, int action, int mods) {
@@ -359,6 +357,7 @@ public final class Freeworld implements AutoCloseable {
 
     @Override
     public void close() {
+        logger.info("Closing client");
         gameRenderer.close(gl);
         if (!Unmarshal.isNullPointer(window)) {
             GLFWCallbacks.free(window);

@@ -37,48 +37,49 @@ public final class BlockRenderer {
 
     private void emitVertices(VertexBuilder builder, Vector3f from, Vector3f to, Vector2f uvFrom, Vector2f uvTo, Direction direction) {
         // TODO: 2024/7/6 squid233: color
+        float color;
         switch (direction) {
             case WEST -> {
-                builder.color(0.7f, 0.7f, 0.7f);
-                builder.position(from.x(), to.y(), from.z()).texCoord(uvFrom.x(), uvFrom.y()).emit();
-                builder.position(from.x(), from.y(), from.z()).texCoord(uvFrom.x(), uvTo.y()).emit();
-                builder.position(from.x(), from.y(), to.z()).texCoord(uvTo.x(), uvTo.y()).emit();
-                builder.position(from.x(), to.y(), to.z()).texCoord(uvTo.x(), uvFrom.y()).emit();
+                color = 0.7f;
+                builder.position(from.x(), to.y(), from.z()).color(color, color, color).texCoord(uvFrom.x(), uvFrom.y()).emit();
+                builder.position(from.x(), from.y(), from.z()).color(color, color, color).texCoord(uvFrom.x(), uvTo.y()).emit();
+                builder.position(from.x(), from.y(), to.z()).color(color, color, color).texCoord(uvTo.x(), uvTo.y()).emit();
+                builder.position(from.x(), to.y(), to.z()).color(color, color, color).texCoord(uvTo.x(), uvFrom.y()).emit();
             }
             case EAST -> {
-                builder.color(1.0f, 1.0f, 1.0f);
-                builder.position(to.x(), to.y(), to.z()).texCoord(uvFrom.x(), uvFrom.y()).emit();
-                builder.position(to.x(), from.y(), to.z()).texCoord(uvFrom.x(), uvTo.y()).emit();
-                builder.position(to.x(), from.y(), from.z()).texCoord(uvTo.x(), uvTo.y()).emit();
-                builder.position(to.x(), to.y(), from.z()).texCoord(uvTo.x(), uvFrom.y()).emit();
+                color = 1.0f;
+                builder.position(to.x(), to.y(), to.z()).color(color, color, color).texCoord(uvFrom.x(), uvFrom.y()).emit();
+                builder.position(to.x(), from.y(), to.z()).color(color, color, color).texCoord(uvFrom.x(), uvTo.y()).emit();
+                builder.position(to.x(), from.y(), from.z()).color(color, color, color).texCoord(uvTo.x(), uvTo.y()).emit();
+                builder.position(to.x(), to.y(), from.z()).color(color, color, color).texCoord(uvTo.x(), uvFrom.y()).emit();
             }
             case DOWN -> {
-                builder.color(0.6f, 0.6f, 0.6f);
-                builder.position(from.x(), from.y(), to.z()).texCoord(uvFrom.x(), uvFrom.y()).emit();
-                builder.position(from.x(), from.y(), from.z()).texCoord(uvFrom.x(), uvTo.y()).emit();
-                builder.position(to.x(), from.y(), from.z()).texCoord(uvTo.x(), uvTo.y()).emit();
-                builder.position(to.x(), from.y(), to.z()).texCoord(uvTo.x(), uvFrom.y()).emit();
+                color = 0.6f;
+                builder.position(from.x(), from.y(), to.z()).color(color, color, color).texCoord(uvFrom.x(), uvFrom.y()).emit();
+                builder.position(from.x(), from.y(), from.z()).color(color, color, color).texCoord(uvFrom.x(), uvTo.y()).emit();
+                builder.position(to.x(), from.y(), from.z()).color(color, color, color).texCoord(uvTo.x(), uvTo.y()).emit();
+                builder.position(to.x(), from.y(), to.z()).color(color, color, color).texCoord(uvTo.x(), uvFrom.y()).emit();
             }
             case UP -> {
-                builder.color(0.9f, 0.9f, 0.9f);
-                builder.position(from.x(), to.y(), from.z()).texCoord(uvFrom.x(), uvFrom.y()).emit();
-                builder.position(from.x(), to.y(), to.z()).texCoord(uvFrom.x(), uvTo.y()).emit();
-                builder.position(to.x(), to.y(), to.z()).texCoord(uvTo.x(), uvTo.y()).emit();
-                builder.position(to.x(), to.y(), from.z()).texCoord(uvTo.x(), uvFrom.y()).emit();
+                color = 0.9f;
+                builder.position(from.x(), to.y(), from.z()).color(color, color, color).texCoord(uvFrom.x(), uvFrom.y()).emit();
+                builder.position(from.x(), to.y(), to.z()).color(color, color, color).texCoord(uvFrom.x(), uvTo.y()).emit();
+                builder.position(to.x(), to.y(), to.z()).color(color, color, color).texCoord(uvTo.x(), uvTo.y()).emit();
+                builder.position(to.x(), to.y(), from.z()).color(color, color, color).texCoord(uvTo.x(), uvFrom.y()).emit();
             }
             case NORTH -> {
-                builder.color(0.8f, 0.8f, 0.8f);
-                builder.position(to.x(), to.y(), from.z()).texCoord(uvFrom.x(), uvFrom.y()).emit();
-                builder.position(to.x(), from.y(), from.z()).texCoord(uvFrom.x(), uvTo.y()).emit();
-                builder.position(from.x(), from.y(), from.z()).texCoord(uvTo.x(), uvTo.y()).emit();
-                builder.position(from.x(), to.y(), from.z()).texCoord(uvTo.x(), uvFrom.y()).emit();
+                color = 0.8f;
+                builder.position(to.x(), to.y(), from.z()).color(color, color, color).texCoord(uvFrom.x(), uvFrom.y()).emit();
+                builder.position(to.x(), from.y(), from.z()).color(color, color, color).texCoord(uvFrom.x(), uvTo.y()).emit();
+                builder.position(from.x(), from.y(), from.z()).color(color, color, color).texCoord(uvTo.x(), uvTo.y()).emit();
+                builder.position(from.x(), to.y(), from.z()).color(color, color, color).texCoord(uvTo.x(), uvFrom.y()).emit();
             }
             case SOUTH -> {
-                builder.color(0.8f, 0.8f, 0.8f);
-                builder.position(from.x(), to.y(), to.z()).texCoord(uvFrom.x(), uvFrom.y()).emit();
-                builder.position(from.x(), from.y(), to.z()).texCoord(uvFrom.x(), uvTo.y()).emit();
-                builder.position(to.x(), from.y(), to.z()).texCoord(uvTo.x(), uvTo.y()).emit();
-                builder.position(to.x(), to.y(), to.z()).texCoord(uvTo.x(), uvFrom.y()).emit();
+                color = 0.8f;
+                builder.position(from.x(), to.y(), to.z()).color(color, color, color).texCoord(uvFrom.x(), uvFrom.y()).emit();
+                builder.position(from.x(), from.y(), to.z()).color(color, color, color).texCoord(uvFrom.x(), uvTo.y()).emit();
+                builder.position(to.x(), from.y(), to.z()).color(color, color, color).texCoord(uvTo.x(), uvTo.y()).emit();
+                builder.position(to.x(), to.y(), to.z()).color(color, color, color).texCoord(uvTo.x(), uvFrom.y()).emit();
             }
         }
     }
@@ -106,7 +107,6 @@ public final class BlockRenderer {
                     final Vector2f uvTo = face.uvTo().mul(region.width(), region.height()).add(region.x(), region.y()).div(width, height);
 
                     builder.indices(0, 1, 2, 2, 3, 0);
-                    builder.color(1f, 1f, 1f);
                     emitVertices(builder, from, to, uvFrom, uvTo, e.getKey());
                 }
             }

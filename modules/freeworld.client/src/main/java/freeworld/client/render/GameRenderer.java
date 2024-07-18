@@ -175,7 +175,6 @@ public final class GameRenderer implements GLResource {
             RenderSystem.updateMatrices();
             final Tessellator tessellator = Tessellator.getInstance();
             tessellator.begin(GLDrawMode.LINES);
-            tessellator.color(0, 0, 0);
             // -x
             tessellator.indices(0, 1, 0, 2, 1, 3, 2, 3);
             // +x
@@ -184,14 +183,14 @@ public final class GameRenderer implements GLResource {
             tessellator.indices(0, 4, 2, 6);
             // +z
             tessellator.indices(1, 5, 3, 7);
-            tessellator.position(minX - offset, minY - offset, minZ - offset).emit();
-            tessellator.position(minX - offset, minY - offset, maxZ + offset).emit();
-            tessellator.position(minX - offset, maxY + offset, minZ - offset).emit();
-            tessellator.position(minX - offset, maxY + offset, maxZ + offset).emit();
-            tessellator.position(maxX + offset, minY - offset, minZ - offset).emit();
-            tessellator.position(maxX + offset, minY - offset, maxZ + offset).emit();
-            tessellator.position(maxX + offset, maxY + offset, minZ - offset).emit();
-            tessellator.position(maxX + offset, maxY + offset, maxZ + offset).emit();
+            tessellator.position(minX - offset, minY - offset, minZ - offset).color(0, 0, 0).texCoord(0f, 0f).emit();
+            tessellator.position(minX - offset, minY - offset, maxZ + offset).color(0, 0, 0).texCoord(0f, 0f).emit();
+            tessellator.position(minX - offset, maxY + offset, minZ - offset).color(0, 0, 0).texCoord(0f, 0f).emit();
+            tessellator.position(minX - offset, maxY + offset, maxZ + offset).color(0, 0, 0).texCoord(0f, 0f).emit();
+            tessellator.position(maxX + offset, minY - offset, minZ - offset).color(0, 0, 0).texCoord(0f, 0f).emit();
+            tessellator.position(maxX + offset, minY - offset, maxZ + offset).color(0, 0, 0).texCoord(0f, 0f).emit();
+            tessellator.position(maxX + offset, maxY + offset, minZ - offset).color(0, 0, 0).texCoord(0f, 0f).emit();
+            tessellator.position(maxX + offset, maxY + offset, maxZ + offset).color(0, 0, 0).texCoord(0f, 0f).emit();
             tessellator.end(gl);
         }
 

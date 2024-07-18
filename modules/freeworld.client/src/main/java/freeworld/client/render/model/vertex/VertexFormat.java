@@ -12,8 +12,6 @@ package freeworld.client.render.model.vertex;
 
 import freeworld.client.render.gl.GLDataType;
 
-import java.lang.foreign.SequenceLayout;
-
 /**
  * @author squid233
  * @since 0.1.0
@@ -22,6 +20,14 @@ public interface VertexFormat {
     VertexFormat POSITION = new DefaultVertexFormat("Position", 3, GLDataType.FLOAT, false);
     VertexFormat COLOR = new DefaultVertexFormat("Color", 4, GLDataType.UNSIGNED_BYTE, true);
     VertexFormat UV = new DefaultVertexFormat("UV", 2, GLDataType.FLOAT, false);
+
+    static VertexFormat padding(int size) {
+        return new PaddingVertexFormat(size);
+    }
+
+    default boolean padding() {
+        return false;
+    }
 
     String name();
 
@@ -33,5 +39,7 @@ public interface VertexFormat {
 
     int usedAttribCount();
 
-    SequenceLayout layout();
+    int elementCount();
+
+    int byteSize();
 }

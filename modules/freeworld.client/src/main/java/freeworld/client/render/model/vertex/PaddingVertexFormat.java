@@ -16,10 +16,30 @@ import freeworld.client.render.gl.GLDataType;
  * @author squid233
  * @since 0.1.0
  */
-public record DefaultVertexFormat(String name, int size, GLDataType type, boolean normalized) implements VertexFormat {
+public record PaddingVertexFormat(int size) implements VertexFormat {
+    @Override
+    public boolean padding() {
+        return true;
+    }
+
+    @Override
+    public String name() {
+        return "Padding";
+    }
+
+    @Override
+    public GLDataType type() {
+        return GLDataType.BYTE;
+    }
+
+    @Override
+    public boolean normalized() {
+        return false;
+    }
+
     @Override
     public int usedAttribCount() {
-        return 1;
+        return 0;
     }
 
     @Override
@@ -29,11 +49,11 @@ public record DefaultVertexFormat(String name, int size, GLDataType type, boolea
 
     @Override
     public int byteSize() {
-        return size * type.byteSize();
+        return size;
     }
 
     @Override
     public String toString() {
-        return "default(name=" + name + ", normalized=" + normalized + ")" + type.simpleStringValue() + size;
+        return "padding(" + size + ")";
     }
 }
