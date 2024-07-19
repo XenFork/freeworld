@@ -45,12 +45,6 @@ public final class DefaultVertexBuilder implements VertexBuilder {
     private int currentElement = 0;
     private int currentElementOffset = 0;
     private final MemorySegment elementsBuffer;
-    @Deprecated
-    private float x = 0f, y = 0f, z = 0f;
-    @Deprecated
-    private int r = 0xff, g = 0xff, b = 0xff, a = 0xff;
-    @Deprecated
-    private float u = 0f, v = 0f;
 
     public DefaultVertexBuilder(VertexLayout layout, int vertexCount, int indexCount) {
         Objects.requireNonNull(layout);

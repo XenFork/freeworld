@@ -15,6 +15,7 @@ import freeworld.client.render.gl.GLStateMgr;
 import freeworld.client.render.texture.Texture;
 import freeworld.math.Matrix4f;
 import freeworld.util.Logging;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 
@@ -114,5 +115,10 @@ public final class RenderSystem {
     public static void updateMatrices() {
         updateProjectionViewMatrix();
         updateModelMatrix();
+    }
+
+    @ApiStatus.Internal
+    public static GLStateMgr stateManager() {
+        return stateMgr;
     }
 }

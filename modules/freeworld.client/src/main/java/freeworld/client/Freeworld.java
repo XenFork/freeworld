@@ -33,7 +33,6 @@ import freeworld.world.block.BlockTypes;
 import freeworld.world.entity.Entity;
 import freeworld.world.entity.EntityComponents;
 import freeworld.world.entity.EntityTypes;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import overrun.marshal.Unmarshal;
@@ -387,11 +386,6 @@ public final class Freeworld implements AutoCloseable {
 
     public GLFlags glFlags() {
         return glFlags;
-    }
-
-    @ApiStatus.Internal
-    public GLStateMgr gl() {
-        return gl;
     }
 
     public MemorySegment window() {
