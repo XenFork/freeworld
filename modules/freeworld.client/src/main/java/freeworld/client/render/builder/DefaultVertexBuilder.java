@@ -13,6 +13,7 @@ package freeworld.client.render.builder;
 import freeworld.client.render.model.vertex.VertexFormat;
 import freeworld.client.render.model.vertex.VertexLayout;
 import freeworld.math.Matrix4f;
+import freeworld.math.Vector3f;
 import freeworld.util.Logging;
 import org.slf4j.Logger;
 
@@ -113,6 +114,12 @@ public final class DefaultVertexBuilder implements VertexBuilder {
     @Override
     public DefaultVertexBuilder position(Matrix4f positionMatrix, float x, float y, float z) {
         VertexBuilder.super.position(positionMatrix, x, y, z);
+        return this;
+    }
+
+    @Override
+    public DefaultVertexBuilder position(Matrix4f positionMatrix, Vector3f v) {
+        VertexBuilder.super.position(positionMatrix, v);
         return this;
     }
 

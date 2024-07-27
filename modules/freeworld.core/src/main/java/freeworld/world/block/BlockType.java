@@ -10,7 +10,7 @@
 
 package freeworld.world.block;
 
-import freeworld.core.math.AABBox;
+import freeworld.util.shape.VoxelShape;
 
 /**
  * @author squid233
@@ -48,11 +48,11 @@ public class BlockType { // must be an identity class
         return nonOpaque;
     }
 
-    public AABBox outlineShape() {
-        return AABBox.FULL_CUBE;
+    public VoxelShape outlineShape() {
+        return VoxelShape.fullCube();
     }
 
-    public AABBox collisionShape() {
-        return AABBox.FULL_CUBE;
+    public VoxelShape collisionShape() {
+        return VoxelShape.fullCube();
     }
 }

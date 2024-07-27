@@ -10,13 +10,14 @@
 
 package freeworld.world;
 
-import freeworld.core.math.AABBox;
+import freeworld.math.Vector3i;
+import freeworld.util.math.AABBox;
 import freeworld.math.Vector3d;
 import freeworld.util.Int3Consumer;
 import freeworld.world.block.BlockType;
 import freeworld.world.block.BlockTypes;
 import freeworld.world.chunk.Chunk;
-import freeworld.world.chunk.ChunkPos;
+import freeworld.util.math.ChunkPos;
 import freeworld.world.entity.Entity;
 import freeworld.world.entity.EntityType;
 import freeworld.world.entity.EntityComponents;
@@ -33,7 +34,7 @@ public final class World {
     public static final int TICKING_RADIUS = 5;
     public static final int TICKING_CHUNK_COUNT_CBRT = TICKING_RADIUS * 2 + 1;
     public static final int TICKING_CHUNK_COUNT = TICKING_CHUNK_COUNT_CBRT * TICKING_CHUNK_COUNT_CBRT * TICKING_CHUNK_COUNT_CBRT;
-    public final Map<ChunkPos, Chunk> chunks = new ConcurrentHashMap<>(TICKING_CHUNK_COUNT);
+    public final Map<Vector3i, Chunk> chunks = new ConcurrentHashMap<>(TICKING_CHUNK_COUNT);
     private final List<Entity> entities = new ArrayList<>();
     private final MotionSystem motionSystem = new MotionSystem();
     private final List<WorldListener> listeners = new ArrayList<>();
@@ -76,7 +77,7 @@ public final class World {
     }
 
     public boolean isChunkLoaded(int x, int y, int z) {
-        return chunks.containsKey(new ChunkPos(x, y, z));
+        return chunks.containsKey(new Vector3i(x, y, z));
     }
 
     public boolean isBlockLoaded(int x, int y, int z) {
@@ -89,7 +90,7 @@ public final class World {
 
     public Chunk getOrCreateChunk(int x, int y, int z) {
         return chunks.computeIfAbsent(
-            new ChunkPos(x, y, z),
+            new Vector3i(x, y, z),
             chunkPos -> {
                 final Chunk chunk = new Chunk(this, chunkPos.x(), chunkPos.y(), chunkPos.z());
                 chunk.generateTerrain();
@@ -99,7 +100,7 @@ public final class World {
     }
 
     public Chunk getChunk(int x, int y, int z) {
-        return chunks.get(new ChunkPos(x, y, z));
+        return chunks.get(new Vector3i(x, y, z));
     }
 
     public Chunk getChunkByAbsolutePos(int x, int y, int z) {

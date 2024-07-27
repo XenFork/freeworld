@@ -16,11 +16,11 @@
  */
 module freeworld.core {
     exports freeworld.core;
-    exports freeworld.core.math;
     exports freeworld.core.registry;
     exports freeworld.util;
     exports freeworld.util.file;
     exports freeworld.util.math;
+    exports freeworld.util.shape;
     exports freeworld.world;
     exports freeworld.world.block;
     exports freeworld.world.chunk;

@@ -18,6 +18,7 @@ import freeworld.client.render.gl.GLStateMgr;
 import freeworld.client.render.model.vertex.VertexLayout;
 import freeworld.client.render.model.vertex.VertexLayouts;
 import freeworld.math.Matrix4f;
+import freeworld.math.Vector3f;
 import overrungl.opengl.GL10C;
 import overrungl.opengl.GL15C;
 
@@ -59,6 +60,12 @@ public final class Tessellator implements GLResource, VertexBuilder {
     @Override
     public Tessellator position(Matrix4f positionMatrix, float x, float y, float z) {
         vertexBuilder.position(positionMatrix, x, y, z);
+        return this;
+    }
+
+    @Override
+    public Tessellator position(Matrix4f positionMatrix, Vector3f v) {
+        VertexBuilder.super.position(positionMatrix, v);
         return this;
     }
 

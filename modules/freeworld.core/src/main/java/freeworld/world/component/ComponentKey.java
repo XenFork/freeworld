@@ -19,4 +19,11 @@ import java.util.function.Supplier;
  * @since 0.1.0
  */
 public record ComponentKey<T>(Identifier identifier, Supplier<T> defaultValue) {
+    public ComponentKey(Identifier identifier) {
+        this(identifier, (Supplier<T>) null);
+    }
+
+    public ComponentKey(Identifier identifier, T defaultValue) {
+        this(identifier, () -> defaultValue);
+    }
 }

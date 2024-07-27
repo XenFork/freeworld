@@ -26,15 +26,15 @@ import freeworld.client.render.screen.Screen;
 import freeworld.client.render.texture.TextureAtlas;
 import freeworld.client.render.texture.TextureManager;
 import freeworld.client.render.world.BlockRenderer;
-import freeworld.client.render.world.HitResult;
+import freeworld.client.render.world.BlockHitResult;
 import freeworld.client.render.world.WorldRenderer;
 import freeworld.client.world.chunk.ClientChunk;
 import freeworld.core.Identifier;
 import freeworld.core.ModelResourcePath;
-import freeworld.core.math.AABBox;
 import freeworld.math.Matrix4f;
 import freeworld.util.Direction;
 import freeworld.util.Logging;
+import freeworld.util.math.Lined;
 import freeworld.world.entity.Entity;
 import org.slf4j.Logger;
 import overrungl.opengl.GL10C;
@@ -58,7 +58,7 @@ public final class GameRenderer implements GLResource {
     private HudRenderer hudRenderer;
     private BlockRenderer blockRenderer;
     private WorldRenderer worldRenderer;
-    private HitResult hitResult = new HitResult(true, null, 0, 0, 0, Direction.SOUTH);
+    private BlockHitResult hitResult = new BlockHitResult(true, null, 0, 0, 0, Direction.SOUTH);
 
     public GameRenderer(Freeworld client) {
         this.client = client;
@@ -157,40 +157,33 @@ public final class GameRenderer implements GLResource {
         final List<ClientChunk> chunks = worldRenderer.renderingChunks(player);
         worldRenderer.compileChunks(chunks);
 
-        RenderSystem.bindTexture2D(textureManager.getTexture(TextureManager.BLOCK_ATLAS));
-        worldRenderer.renderChunks(gl, chunks);
-
         hitResult = worldRenderer.selectBlock(player);
+
+        RenderSystem.bindTexture2D(textureManager.getTexture(TextureManager.BLOCK_ATLAS));
         if (!hitResult.missed()) {
-            final AABBox box = hitResult.blockType().outlineShape().move(hitResult.x(), hitResult.y(), hitResult.z());
-            final float minX = (float) box.minX();
-            final float minY = (float) box.minY();
-            final float minZ = (float) box.minZ();
-            final float maxX = (float) box.maxX();
-            final float maxY = (float) box.maxY();
-            final float maxZ = (float) box.maxZ();
-            final float offset = 0.005f;
+            gl.enablePolygonOffsetFill();
+            gl.setPolygonOffset(1.0f, 1.0f);
+            gl.setLineWidth(2.0f);
+        }
+        worldRenderer.renderChunks(gl, chunks);
+        if (!hitResult.missed()) {
+            gl.disablePolygonOffsetFill();
+            gl.setLineWidth(1.0f);
+        }
+
+        if (!hitResult.missed()) {
+            var lines = hitResult.blockType().outlineShape().toLines(Direction.LIST);
+            Matrix4f mat = Matrix4f.translation(hitResult.x(), hitResult.y(), hitResult.z());
             RenderSystem.bindTexture2D(null);
             RenderSystem.useProgram(positionColorProgram);
             RenderSystem.updateMatrices();
             final Tessellator tessellator = Tessellator.getInstance();
             tessellator.begin(GLDrawMode.LINES);
-            // -x
-            tessellator.indices(0, 1, 0, 2, 1, 3, 2, 3);
-            // +x
-            tessellator.indices(4, 5, 4, 6, 5, 7, 6, 7);
-            // -z
-            tessellator.indices(0, 4, 2, 6);
-            // +z
-            tessellator.indices(1, 5, 3, 7);
-            tessellator.position(minX - offset, minY - offset, minZ - offset).color(0, 0, 0).texCoord(0f, 0f).emit();
-            tessellator.position(minX - offset, minY - offset, maxZ + offset).color(0, 0, 0).texCoord(0f, 0f).emit();
-            tessellator.position(minX - offset, maxY + offset, minZ - offset).color(0, 0, 0).texCoord(0f, 0f).emit();
-            tessellator.position(minX - offset, maxY + offset, maxZ + offset).color(0, 0, 0).texCoord(0f, 0f).emit();
-            tessellator.position(maxX + offset, minY - offset, minZ - offset).color(0, 0, 0).texCoord(0f, 0f).emit();
-            tessellator.position(maxX + offset, minY - offset, maxZ + offset).color(0, 0, 0).texCoord(0f, 0f).emit();
-            tessellator.position(maxX + offset, maxY + offset, minZ - offset).color(0, 0, 0).texCoord(0f, 0f).emit();
-            tessellator.position(maxX + offset, maxY + offset, maxZ + offset).color(0, 0, 0).texCoord(0f, 0f).emit();
+            for (Lined line : lines) {
+                tessellator.indices(0, 1);
+                tessellator.position(mat, line.from().toVector3f()).color(0, 0, 0).texCoord(0f, 0f).emit();
+                tessellator.position(mat, line.to().toVector3f()).color(0, 0, 0).texCoord(0f, 0f).emit();
+            }
             tessellator.end(gl);
         }
 
@@ -262,7 +255,7 @@ public final class GameRenderer implements GLResource {
         return blockRenderer;
     }
 
-    public HitResult hitResult() {
+    public BlockHitResult hitResult() {
         return hitResult;
     }
 }

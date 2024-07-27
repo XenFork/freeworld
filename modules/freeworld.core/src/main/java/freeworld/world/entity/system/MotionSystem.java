@@ -10,11 +10,11 @@
 
 package freeworld.world.entity.system;
 
-import freeworld.core.math.AABBox;
+import freeworld.util.math.AABBox;
 import freeworld.math.Vector3d;
 import freeworld.world.World;
 import freeworld.world.block.BlockType;
-import freeworld.world.chunk.ChunkPos;
+import freeworld.util.math.ChunkPos;
 import freeworld.world.entity.Entity;
 import freeworld.world.entity.EntityComponents;
 
@@ -74,8 +74,9 @@ public final class MotionSystem implements EntitySystem {
                             if (blockType.air()) {
                                 continue;
                             }
-                            final AABBox box = blockType.collisionShape().move(x, y, z);
-                            boxes.add(box);
+                            for (AABBox box : blockType.collisionShape().toBoxes()) {
+                                boxes.add(box.move(x, y, z));
+                            }
                         }
                     }
                 }

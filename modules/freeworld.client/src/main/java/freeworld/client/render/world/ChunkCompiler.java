@@ -14,8 +14,9 @@ import freeworld.client.render.builder.VertexBuilder;
 import freeworld.client.render.model.block.BlockModel;
 import freeworld.client.render.model.block.BlockModelManager;
 import freeworld.core.registry.Registries;
+import freeworld.math.Vector3i;
 import freeworld.world.chunk.Chunk;
-import freeworld.world.chunk.ChunkPos;
+import freeworld.util.math.ChunkPos;
 
 import java.lang.foreign.Arena;
 import java.lang.foreign.MemorySegment;
@@ -38,13 +39,12 @@ public final class ChunkCompiler {
         final int cx = chunk.x();
         final int cy = chunk.y();
         final int cz = chunk.z();
+        Vector3i chunkPos = new Vector3i(cx, cy, cz);
 
         for (int x = 0; x < Chunk.SIZE; x++) {
             for (int y = 0; y < Chunk.SIZE; y++) {
                 for (int z = 0; z < Chunk.SIZE; z++) {
-                    int finalX = x;
-                    int finalY = y;
-                    int finalZ = z;
+                    Vector3i finalPos = new Vector3i(x, y, z);
                     final BlockModel model = blockModelManager.get(Registries.BLOCK_TYPE.getId(chunk.getBlockType(x, y, z)));
                     blockRenderer.renderBlockModel(
                         vertexBuilder,
@@ -53,18 +53,14 @@ public final class ChunkCompiler {
                         ChunkPos.relativeToAbsolute(cy, y),
                         ChunkPos.relativeToAbsolute(cz, z),
                         direction -> {
-                            final int nx = finalX + direction.axisX();
-                            final int ny = finalY + direction.axisY();
-                            final int nz = finalZ + direction.axisZ();
-                            final int absNx = ChunkPos.relativeToAbsolute(cx, nx);
-                            final int absNy = ChunkPos.relativeToAbsolute(cy, ny);
-                            final int absNz = ChunkPos.relativeToAbsolute(cz, nz);
+                            Vector3i nPos = direction.axis().add(finalPos);
+                            Vector3i abs = ChunkPos.relativeToAbsolute(chunkPos, nPos);
                             final boolean shouldRender =
-                                (chunk.isInBound(nx, ny, nz) &&
-                                 chunk.getBlockType(nx, ny, nz).nonOpaque()) ||
-                                (chunk.world().isBlockLoaded(absNx, absNy, absNz) &&
-                                 chunk.world().getBlockType(absNx, absNy, absNz).nonOpaque()) ||
-                                !chunk.world().isBlockLoaded(absNx, absNy, absNz) /* TODO: add method world::tryLoading() */;
+                                (chunk.isInBound(nPos.x(), nPos.y(), nPos.z()) &&
+                                 chunk.getBlockType(nPos.x(), nPos.y(), nPos.z()).nonOpaque()) ||
+                                (chunk.world().isBlockLoaded(abs.x(), abs.y(), abs.z()) &&
+                                 chunk.world().getBlockType(abs.x(), abs.y(), abs.z()).nonOpaque()) ||
+                                !chunk.world().isBlockLoaded(abs.x(), abs.y(), abs.z()) /* TODO: add method world::tryLoading() */;
                             return !shouldRender;
                         }
                     );

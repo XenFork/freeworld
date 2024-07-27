@@ -11,7 +11,7 @@
 package freeworld.world.entity;
 
 import freeworld.core.Identifier;
-import freeworld.core.math.AABBox;
+import freeworld.util.math.AABBox;
 import freeworld.math.Vector2d;
 import freeworld.math.Vector3d;
 import freeworld.world.component.ComponentKey;
@@ -23,21 +23,27 @@ import java.util.function.Supplier;
  * @since 0.1.0
  */
 public final class EntityComponents {
-    private static final Supplier<Vector3d> zeroVec3 = () -> Vector3d.ZERO;
-    private static final Supplier<Object> object = () -> Object.class;
-    public static final ComponentKey<Vector3d> ACCELERATION = of("acceleration", zeroVec3);
-    public static final ComponentKey<AABBox> BOUNDING_BOX = of("bounding_box", () -> AABBox.EMPTY);
-    public static final ComponentKey<Vector3d> EYE_POSITION = of("eye_position", () -> new Vector3d(0.0, 0.5, 0.0));
-    public static final ComponentKey<Object> FLYING = of("flying", object);
-    public static final ComponentKey<Object> ON_GROUND = of("on_ground", object);
-    public static final ComponentKey<Vector3d> POSITION = of("position", zeroVec3);
-    public static final ComponentKey<Vector2d> ROTATION = of("rotation", () -> Vector2d.ZERO);
-    public static final ComponentKey<Vector3d> VELOCITY = of("velocity", zeroVec3);
+    public static final ComponentKey<Vector3d> ACCELERATION = of("acceleration", Vector3d.ZERO);
+    public static final ComponentKey<AABBox> BOUNDING_BOX = of("bounding_box");
+    public static final ComponentKey<Vector3d> EYE_POSITION = of("eye_position", new Vector3d(0.0, 0.5, 0.0));
+    public static final ComponentKey<Object> FLYING = of("flying", Object.class);
+    public static final ComponentKey<Object> ON_GROUND = of("on_ground", Object.class);
+    public static final ComponentKey<Vector3d> POSITION = of("position", Vector3d.ZERO);
+    public static final ComponentKey<Vector2d> ROTATION = of("rotation", Vector2d.ZERO);
+    public static final ComponentKey<Vector3d> VELOCITY = of("velocity", Vector3d.ZERO);
 
     private EntityComponents() {
     }
 
     private static <T> ComponentKey<T> of(String name, Supplier<T> defaultValue) {
+        return new ComponentKey<>(Identifier.ofBuiltin(name), defaultValue);
+    }
+
+    private static <T> ComponentKey<T> of(String name) {
+        return new ComponentKey<>(Identifier.ofBuiltin(name));
+    }
+
+    private static <T> ComponentKey<T> of(String name, T defaultValue) {
         return new ComponentKey<>(Identifier.ofBuiltin(name), defaultValue);
     }
 }

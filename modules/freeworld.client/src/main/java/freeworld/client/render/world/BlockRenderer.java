@@ -21,7 +21,9 @@ import freeworld.core.ModelResourcePath;
 import freeworld.math.Matrix4f;
 import freeworld.math.Vector2f;
 import freeworld.math.Vector3f;
+import freeworld.math.Vector4i;
 import freeworld.util.Direction;
+import freeworld.util.math.AABBox;
 
 import java.util.function.Predicate;
 
@@ -38,51 +40,18 @@ public final class BlockRenderer {
 
     private void emitVertices(VertexBuilder builder, Matrix4f matrix, Vector3f from, Vector3f to, Vector2f uvFrom, Vector2f uvTo, Direction direction) {
         // TODO: 2024/7/6 squid233: color
-        float color;
-        switch (direction) {
-            case WEST -> {
-                color = 0.7f;
-                builder.position(matrix, from.x(), to.y(), from.z()).color(color, color, color).texCoord(uvFrom.x(), uvFrom.y()).emit();
-                builder.position(matrix, from.x(), from.y(), from.z()).color(color, color, color).texCoord(uvFrom.x(), uvTo.y()).emit();
-                builder.position(matrix, from.x(), from.y(), to.z()).color(color, color, color).texCoord(uvTo.x(), uvTo.y()).emit();
-                builder.position(matrix, from.x(), to.y(), to.z()).color(color, color, color).texCoord(uvTo.x(), uvFrom.y()).emit();
-            }
-            case EAST -> {
-                color = 1.0f;
-                builder.position(matrix, to.x(), to.y(), to.z()).color(color, color, color).texCoord(uvFrom.x(), uvFrom.y()).emit();
-                builder.position(matrix, to.x(), from.y(), to.z()).color(color, color, color).texCoord(uvFrom.x(), uvTo.y()).emit();
-                builder.position(matrix, to.x(), from.y(), from.z()).color(color, color, color).texCoord(uvTo.x(), uvTo.y()).emit();
-                builder.position(matrix, to.x(), to.y(), from.z()).color(color, color, color).texCoord(uvTo.x(), uvFrom.y()).emit();
-            }
-            case DOWN -> {
-                color = 0.6f;
-                builder.position(matrix, from.x(), from.y(), to.z()).color(color, color, color).texCoord(uvFrom.x(), uvFrom.y()).emit();
-                builder.position(matrix, from.x(), from.y(), from.z()).color(color, color, color).texCoord(uvFrom.x(), uvTo.y()).emit();
-                builder.position(matrix, to.x(), from.y(), from.z()).color(color, color, color).texCoord(uvTo.x(), uvTo.y()).emit();
-                builder.position(matrix, to.x(), from.y(), to.z()).color(color, color, color).texCoord(uvTo.x(), uvFrom.y()).emit();
-            }
-            case UP -> {
-                color = 0.9f;
-                builder.position(matrix, from.x(), to.y(), from.z()).color(color, color, color).texCoord(uvFrom.x(), uvFrom.y()).emit();
-                builder.position(matrix, from.x(), to.y(), to.z()).color(color, color, color).texCoord(uvFrom.x(), uvTo.y()).emit();
-                builder.position(matrix, to.x(), to.y(), to.z()).color(color, color, color).texCoord(uvTo.x(), uvTo.y()).emit();
-                builder.position(matrix, to.x(), to.y(), from.z()).color(color, color, color).texCoord(uvTo.x(), uvFrom.y()).emit();
-            }
-            case NORTH -> {
-                color = 0.8f;
-                builder.position(matrix, to.x(), to.y(), from.z()).color(color, color, color).texCoord(uvFrom.x(), uvFrom.y()).emit();
-                builder.position(matrix, to.x(), from.y(), from.z()).color(color, color, color).texCoord(uvFrom.x(), uvTo.y()).emit();
-                builder.position(matrix, from.x(), from.y(), from.z()).color(color, color, color).texCoord(uvTo.x(), uvTo.y()).emit();
-                builder.position(matrix, from.x(), to.y(), from.z()).color(color, color, color).texCoord(uvTo.x(), uvFrom.y()).emit();
-            }
-            case SOUTH -> {
-                color = 0.8f;
-                builder.position(matrix, from.x(), to.y(), to.z()).color(color, color, color).texCoord(uvFrom.x(), uvFrom.y()).emit();
-                builder.position(matrix, from.x(), from.y(), to.z()).color(color, color, color).texCoord(uvFrom.x(), uvTo.y()).emit();
-                builder.position(matrix, to.x(), from.y(), to.z()).color(color, color, color).texCoord(uvTo.x(), uvTo.y()).emit();
-                builder.position(matrix, to.x(), to.y(), to.z()).color(color, color, color).texCoord(uvTo.x(), uvFrom.y()).emit();
-            }
-        }
+        float color = switch (direction) {
+            case WEST -> 0.7f;
+            case EAST -> 1.0f;
+            case DOWN -> 0.6f;
+            case UP -> 0.9f;
+            case NORTH, SOUTH -> 0.8f;
+        };
+        Vector4i vertexIndices = direction.vertexIndices();
+        builder.position(matrix, AABBox.getPoint(from, to, vertexIndices.x())).color(color, color, color).texCoord(uvFrom.x(), uvFrom.y()).emit();
+        builder.position(matrix, AABBox.getPoint(from, to, vertexIndices.y())).color(color, color, color).texCoord(uvFrom.x(), uvTo.y()).emit();
+        builder.position(matrix, AABBox.getPoint(from, to, vertexIndices.z())).color(color, color, color).texCoord(uvTo.x(), uvTo.y()).emit();
+        builder.position(matrix, AABBox.getPoint(from, to, vertexIndices.w())).color(color, color, color).texCoord(uvTo.x(), uvFrom.y()).emit();
     }
 
     public void renderBlockModel(VertexBuilder builder, BlockModel model, Matrix4f matrix, int x, int y, int z, Predicate<Direction> shouldCullFace) {

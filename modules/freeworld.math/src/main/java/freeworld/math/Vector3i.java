@@ -8,26 +8,24 @@
  * only version 2.1 of the License.
  */
 
-package freeworld.world.block;
-
-import freeworld.util.shape.VoxelShape;
+package freeworld.math;
 
 /**
  * @author squid233
  * @since 0.1.0
  */
-public class AirBlockType extends BlockType {
-    public AirBlockType(Settings settings) {
-        super(settings);
+public record Vector3i(int x, int y, int z) {
+    public static final Vector3i ZERO = new Vector3i(0);
+
+    public Vector3i(int d) {
+        this(d, d, d);
     }
 
-    @Override
-    public VoxelShape outlineShape() {
-        return VoxelShape.empty();
+    public Vector3i add(Vector3i v) {
+        return new Vector3i(x + v.x, y + v.y, z + v.z);
     }
 
-    @Override
-    public VoxelShape collisionShape() {
-        return VoxelShape.empty();
+    public Vector3i mul(int i) {
+        return new Vector3i(x * i, y * i, z * i);
     }
 }

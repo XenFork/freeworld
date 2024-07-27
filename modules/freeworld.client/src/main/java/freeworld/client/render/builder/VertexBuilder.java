@@ -12,6 +12,7 @@ package freeworld.client.render.builder;
 
 import freeworld.client.render.model.vertex.VertexLayout;
 import freeworld.math.Matrix4f;
+import freeworld.math.Vector3f;
 import freeworld.math.Vector4f;
 
 import java.lang.foreign.MemorySegment;
@@ -40,6 +41,10 @@ public interface VertexBuilder {
     default VertexBuilder position(Matrix4f positionMatrix, float x, float y, float z) {
         Vector4f v = new Vector4f(x, y, z, 1).mul(positionMatrix);
         return position(v.x(), v.y(), v.z());
+    }
+
+    default VertexBuilder position(Matrix4f positionMatrix, Vector3f v) {
+        return position(positionMatrix, v.x(), v.y(), v.z());
     }
 
     default VertexBuilder color(int red, int green, int blue, int alpha) {

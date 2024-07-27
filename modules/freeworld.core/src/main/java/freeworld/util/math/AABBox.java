@@ -8,7 +8,10 @@
  * only version 2.1 of the License.
  */
 
-package freeworld.core.math;
+package freeworld.util.math;
+
+import freeworld.math.Vector3d;
+import freeworld.math.Vector3f;
 
 /**
  * @author squid233
@@ -22,10 +25,17 @@ public record AABBox(
     double maxY,
     double maxZ
 ) {
-    public static final AABBox EMPTY = new AABBox(0.0, 0.0, 0.0, 0.0, 0.0, 0.0);
-    public static final AABBox FULL_CUBE = new AABBox(0.0, 0.0, 0.0, 1.0, 1.0, 1.0);
+    public static final int NX_NY_NZ = 0b000;
+    public static final int NX_NY_PZ = 0b001;
+    public static final int NX_PY_NZ = 0b010;
+    public static final int NX_PY_PZ = 0b011;
+    public static final int PX_NY_NZ = 0b100;
+    public static final int PX_NY_PZ = 0b101;
+    public static final int PX_PY_NZ = 0b110;
+    public static final int PX_PY_PZ = 0b111;
 
     public AABBox {
+        // autofix
         if (minX > maxX) {
             double _minX = minX;
             minX = maxX;
@@ -41,6 +51,32 @@ public record AABBox(
             minZ = maxZ;
             maxZ = _minZ;
         }
+    }
+
+    public static Vector3f getPoint(Vector3f min, Vector3f max, int index) {
+        int ix = (index >> 2) & 1;
+        int iy = (index >> 1) & 1;
+        int iz = index & 1;
+        return new Vector3f(
+            ix == 0 ? min.x() : max.x(),
+            iy == 0 ? min.y() : max.y(),
+            iz == 0 ? min.z() : max.z()
+        );
+    }
+
+    public static Vector3d getPoint(Vector3d min, Vector3d max, int index) {
+        int ix = (index >> 2) & 1;
+        int iy = (index >> 1) & 1;
+        int iz = index & 1;
+        return new Vector3d(
+            ix == 0 ? min.x() : max.x(),
+            iy == 0 ? min.y() : max.y(),
+            iz == 0 ? min.z() : max.z()
+        );
+    }
+
+    public Vector3d getPoint(int index) {
+        return getPoint(new Vector3d(minX, minY, minZ), new Vector3d(maxX, maxY, maxZ), index);
     }
 
     public AABBox move(double x, double y, double z) {

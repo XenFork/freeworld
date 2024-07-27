@@ -30,6 +30,10 @@ public abstract class GLStateMgr implements GL {
     private int currentProgram = 0;
     private int depthFunc = LESS;
     private boolean depthTest = false;
+    private float lineWidth = 1.0f;
+    private boolean polygonOffsetFill = false;
+    private float polygonOffsetFactor = 0.0f;
+    private float polygonOffsetUnits = 0.0f;
     private int textureBinding2D = 0;
     private int vertexArrayBinding = 0;
 
@@ -172,6 +176,60 @@ public abstract class GLStateMgr implements GL {
     @Skip
     public boolean depthTest() {
         return depthTest;
+    }
+
+    @Skip
+    public void setLineWidth(float width) {
+        if (this.lineWidth != width) {
+            this.lineWidth = width;
+            lineWidth(width);
+        }
+    }
+
+    @Skip
+    public float lineWidth() {
+        return lineWidth;
+    }
+
+    @Skip
+    public void enablePolygonOffsetFill() {
+        if (!this.polygonOffsetFill) {
+            this.polygonOffsetFill = true;
+            enable(POLYGON_OFFSET_FILL);
+        }
+    }
+
+    @Skip
+    public void disablePolygonOffsetFill() {
+        if (this.polygonOffsetFill) {
+            this.polygonOffsetFill = false;
+            disable(POLYGON_OFFSET_FILL);
+        }
+    }
+
+    @Skip
+    public boolean polygonOffsetFill() {
+        return polygonOffsetFill;
+    }
+
+    @Skip
+    public void setPolygonOffset(float factor, float units) {
+        if (this.polygonOffsetFactor != factor ||
+            this.polygonOffsetUnits != units) {
+            this.polygonOffsetFactor = factor;
+            this.polygonOffsetUnits = units;
+            polygonOffset(factor, units);
+        }
+    }
+
+    @Skip
+    public float polygonOffsetFactor() {
+        return polygonOffsetFactor;
+    }
+
+    @Skip
+    public float polygonOffsetUnits() {
+        return polygonOffsetUnits;
     }
 
     @Skip

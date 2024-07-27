@@ -18,11 +18,12 @@ import freeworld.client.render.model.block.BlockModelManager;
 import freeworld.client.render.screen.ingame.CreativeTabScreen;
 import freeworld.client.render.screen.ingame.PauseScreen;
 import freeworld.client.render.screen.Screen;
-import freeworld.client.render.world.HitResult;
+import freeworld.client.render.world.BlockHitResult;
 import freeworld.client.render.world.WorldRenderer;
 import freeworld.core.registry.Registries;
 import freeworld.math.Vector2d;
 import freeworld.math.Vector3d;
+import freeworld.math.Vector3i;
 import freeworld.util.Direction;
 import freeworld.util.Logging;
 import freeworld.util.math.MathUtil;
@@ -296,7 +297,7 @@ public final class Freeworld implements AutoCloseable {
                     MathUtil.moveRelative(xo, 0.0, zo, player.getComponent(EntityComponents.ROTATION).y(), speed));
 
                 if (blockDestroyTimer >= 2) {
-                    final HitResult hitResult = gameRenderer.hitResult();
+                    final BlockHitResult hitResult = gameRenderer.hitResult();
                     if (!hitResult.missed() &&
                         glfw.getMouseButton(window, GLFW.MOUSE_BUTTON_LEFT) == GLFW.PRESS) {
                         world.setBlockType(hitResult.x(), hitResult.y(), hitResult.z(), BlockTypes.AIR);
@@ -304,16 +305,17 @@ public final class Freeworld implements AutoCloseable {
                     }
                 }
                 if (blockPlaceTimer >= 2) {
-                    final HitResult hitResult = gameRenderer.hitResult();
+                    final BlockHitResult hitResult = gameRenderer.hitResult();
                     if (!hitResult.missed() &&
                         glfw.getMouseButton(window, GLFW.MOUSE_BUTTON_RIGHT) == GLFW.PRESS) {
                         final Direction face = hitResult.face();
                         final BlockType type = hotBar[hotBarSelection];
                         if (!type.air()) {
+                            Vector3i axis = face.axis();
                             world.setBlockType(
-                                hitResult.x() + face.axisX(),
-                                hitResult.y() + face.axisY(),
-                                hitResult.z() + face.axisZ(),
+                                hitResult.x() + axis.x(),
+                                hitResult.y() + axis.y(),
+                                hitResult.z() + axis.z(),
                                 type
                             );
                         }
