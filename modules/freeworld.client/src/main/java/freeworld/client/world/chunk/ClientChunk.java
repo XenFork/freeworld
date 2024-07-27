@@ -13,7 +13,7 @@ package freeworld.client.world.chunk;
 import freeworld.client.render.GameRenderer;
 import freeworld.client.render.RenderSystem;
 import freeworld.client.render.gl.GLStateMgr;
-import freeworld.client.render.model.vertex.VertexLayout;
+import freeworld.client.render.vertex.VertexLayout;
 import freeworld.client.render.world.ChunkCompiler;
 import freeworld.client.render.world.ChunkVertexData;
 import freeworld.client.render.world.WorldRenderer;

@@ -20,17 +20,16 @@ import freeworld.client.render.gui.HudRenderer;
 import freeworld.client.render.model.block.BlockModel;
 import freeworld.client.render.model.block.BlockModelFace;
 import freeworld.client.render.model.block.BlockModelPart;
-import freeworld.client.render.model.vertex.VertexLayout;
-import freeworld.client.render.model.vertex.VertexLayouts;
 import freeworld.client.render.screen.Screen;
 import freeworld.client.render.texture.TextureAtlas;
 import freeworld.client.render.texture.TextureManager;
-import freeworld.client.render.world.BlockRenderer;
+import freeworld.client.render.vertex.VertexLayout;
+import freeworld.client.render.vertex.VertexLayouts;
 import freeworld.client.render.world.BlockHitResult;
+import freeworld.client.render.world.BlockRenderer;
 import freeworld.client.render.world.WorldRenderer;
 import freeworld.client.world.chunk.ClientChunk;
 import freeworld.core.Identifier;
-import freeworld.core.ModelResourcePath;
 import freeworld.math.Matrix4f;
 import freeworld.util.Direction;
 import freeworld.util.Logging;
@@ -99,11 +98,7 @@ public final class GameRenderer implements GLResource {
             final BlockModel model = e.getValue();
             for (BlockModelPart part : model.parts()) {
                 for (BlockModelFace face : part.faces().values()) {
-                    final ModelResourcePath path = face.texture();
-                    switch (path.type()) {
-                        case DIRECT -> list.add(path.identifier());
-                        case VARIABLE -> list.add(model.textureDefinitions().get(path.identifier()));
-                    }
+                    list.add(model.textureDefinitions().get(face.textureKey()));
                 }
             }
         }

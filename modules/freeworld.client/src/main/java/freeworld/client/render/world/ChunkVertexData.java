@@ -10,7 +10,7 @@
 
 package freeworld.client.render.world;
 
-import freeworld.client.render.model.vertex.VertexLayout;
+import freeworld.client.render.vertex.VertexLayout;
 
 import java.lang.foreign.MemorySegment;
 

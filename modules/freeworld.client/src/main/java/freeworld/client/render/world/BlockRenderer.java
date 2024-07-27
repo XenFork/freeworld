@@ -10,14 +10,13 @@
 
 package freeworld.client.render.world;
 
-import freeworld.client.render.builder.VertexBuilder;
 import freeworld.client.render.model.block.BlockModel;
 import freeworld.client.render.model.block.BlockModelFace;
 import freeworld.client.render.model.block.BlockModelPart;
 import freeworld.client.render.texture.TextureAtlas;
 import freeworld.client.render.texture.TextureManager;
 import freeworld.client.render.texture.TextureRegion;
-import freeworld.core.ModelResourcePath;
+import freeworld.client.render.vertex.VertexBuilder;
 import freeworld.math.Matrix4f;
 import freeworld.math.Vector2f;
 import freeworld.math.Vector3f;
@@ -65,11 +64,9 @@ public final class BlockRenderer {
             for (var e : part.faces().entrySet()) {
                 final BlockModelFace face = e.getValue();
                 if (face != null && (face.cullFace() == null || !shouldCullFace.test(face.cullFace()))) {
-                    final ModelResourcePath path = face.texture();
-                    final TextureRegion region = texture.getRegion(switch (path.type()) {
-                        case DIRECT -> path.identifier();
-                        case VARIABLE -> model.textureDefinitions().get(path.identifier());
-                    });
+                    final TextureRegion region = texture.getRegion(
+                        model.textureDefinitions().get(face.textureKey())
+                    );
                     if (region == null) {
                         continue;
                     }

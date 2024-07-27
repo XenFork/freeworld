@@ -10,7 +10,7 @@
 
 package freeworld.client.render.world;
 
-import freeworld.client.render.builder.VertexBuilder;
+import freeworld.client.render.vertex.VertexBuilder;
 import freeworld.client.render.model.block.BlockModel;
 import freeworld.client.render.model.block.BlockModelManager;
 import freeworld.core.registry.Registries;

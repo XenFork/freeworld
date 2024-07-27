@@ -8,15 +8,17 @@
  * only version 2.1 of the License.
  */
 
-package freeworld.client.render.model.block;
+package freeworld.client.render.model;
 
 import freeworld.core.Identifier;
-import freeworld.math.Vector2f;
-import freeworld.util.Direction;
 
 /**
  * @author squid233
  * @since 0.1.0
  */
-public record BlockModelFace(Vector2f uvFrom, Vector2f uvTo, Identifier textureKey, Direction cullFace) {
+public final class TextureKeys {
+    public static final Identifier ALL = Identifier.ofBuiltin("all");
+    public static final Identifier TOP = Identifier.ofBuiltin("top");
+    public static final Identifier SIDE = Identifier.ofBuiltin("side");
+    public static final Identifier BOTTOM = Identifier.ofBuiltin("bottom");
 }

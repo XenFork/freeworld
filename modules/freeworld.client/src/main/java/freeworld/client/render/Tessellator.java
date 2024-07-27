@@ -11,12 +11,12 @@
 package freeworld.client.render;
 
 import freeworld.client.render.gl.GLDrawMode;
-import freeworld.client.render.builder.DefaultVertexBuilder;
-import freeworld.client.render.builder.VertexBuilder;
+import freeworld.client.render.vertex.DefaultVertexBuilder;
+import freeworld.client.render.vertex.VertexBuilder;
 import freeworld.client.render.gl.GLResource;
 import freeworld.client.render.gl.GLStateMgr;
-import freeworld.client.render.model.vertex.VertexLayout;
-import freeworld.client.render.model.vertex.VertexLayouts;
+import freeworld.client.render.vertex.VertexLayout;
+import freeworld.client.render.vertex.VertexLayouts;
 import freeworld.math.Matrix4f;
 import freeworld.math.Vector3f;
 import overrungl.opengl.GL10C;

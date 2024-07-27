@@ -8,9 +8,8 @@
  * only version 2.1 of the License.
  */
 
-package freeworld.client.render.builder;
+package freeworld.client.render.vertex;
 
-import freeworld.client.render.model.vertex.VertexLayout;
 import freeworld.math.Matrix4f;
 import freeworld.math.Vector3f;
 import freeworld.math.Vector4f;

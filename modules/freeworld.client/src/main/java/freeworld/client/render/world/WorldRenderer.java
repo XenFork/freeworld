@@ -12,10 +12,10 @@ package freeworld.client.render.world;
 
 import freeworld.client.render.GameRenderer;
 import freeworld.client.render.RenderSystem;
-import freeworld.client.render.builder.DefaultVertexBuilder;
+import freeworld.client.render.vertex.DefaultVertexBuilder;
 import freeworld.client.render.gl.GLResource;
 import freeworld.client.render.gl.GLStateMgr;
-import freeworld.client.render.model.vertex.VertexLayouts;
+import freeworld.client.render.vertex.VertexLayouts;
 import freeworld.client.world.chunk.ClientChunk;
 import freeworld.util.math.AABBox;
 import freeworld.math.*;
