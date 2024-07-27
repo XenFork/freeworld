@@ -31,6 +31,10 @@ public interface VoxelShape {
         return SingleVoxelShape.FULL_CUBE;
     }
 
+    static VoxelShape cuboid(double minX, double minY, double minZ, double maxX, double maxY, double maxZ) {
+        return new SingleVoxelShape(new AABBox(minX, minY, minZ, maxX, maxY, maxZ));
+    }
+
     HitResult rayCast(Vector3d origin, Vector3d dir);
 
     List<AABBox> toBoxes();

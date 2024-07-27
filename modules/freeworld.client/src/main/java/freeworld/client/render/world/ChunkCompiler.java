@@ -57,9 +57,9 @@ public final class ChunkCompiler {
                             Vector3i abs = ChunkPos.relativeToAbsolute(chunkPos, nPos);
                             final boolean shouldRender =
                                 (chunk.isInBound(nPos.x(), nPos.y(), nPos.z()) &&
-                                 chunk.getBlockType(nPos.x(), nPos.y(), nPos.z()).nonOpaque()) ||
+                                 chunk.getBlockType(nPos.x(), nPos.y(), nPos.z()).hasSidedTransparency()) ||
                                 (chunk.world().isBlockLoaded(abs.x(), abs.y(), abs.z()) &&
-                                 chunk.world().getBlockType(abs.x(), abs.y(), abs.z()).nonOpaque()) ||
+                                 chunk.world().getBlockType(abs.x(), abs.y(), abs.z()).hasSidedTransparency()) ||
                                 !chunk.world().isBlockLoaded(abs.x(), abs.y(), abs.z()) /* TODO: add method world::tryLoading() */;
                             return !shouldRender;
                         }

@@ -88,7 +88,7 @@ public final class Freeworld implements AutoCloseable {
         BlockTypes.STONE,
         BlockTypes.DIRT,
         BlockTypes.GRASS_BLOCK,
-        BlockTypes.AIR,
+        BlockTypes.STONE_SLAB,
         BlockTypes.AIR,
         BlockTypes.AIR,
         BlockTypes.AIR,

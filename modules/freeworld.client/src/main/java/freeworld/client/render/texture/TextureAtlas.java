@@ -49,9 +49,12 @@ public final class TextureAtlas extends Texture {
         try (Arena arena = Arena.ofConfined()) {
             final Map<Identifier, NativeImage> imageMap = HashMap.newHashMap(numIds);
             identifierList.forEach(identifier -> {
-                final NativeImage load = NativeImage.load(arena, identifier.toResourcePath(Identifier.ROOT_ASSETS, Identifier.RES_TEXTURE, Identifier.EXT_PNG));
+                boolean missing = MISSING.equals(identifier);
+                final NativeImage load = missing ?
+                    NativeImage.fail() :
+                    NativeImage.load(arena, identifier.toResourcePath(Identifier.ROOT_ASSETS, Identifier.RES_TEXTURE, Identifier.EXT_PNG));
                 imageMap.put(identifier, load);
-                if (load.failed() && !MISSING.equals(identifier)) {
+                if (load.failed() && !missing) {
                     logger.error("Failed to load texture {}", identifier);
                 }
             });

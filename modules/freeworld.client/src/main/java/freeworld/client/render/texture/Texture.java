@@ -43,8 +43,9 @@ public sealed class Texture implements GLResource permits TextureAtlas {
     public static Texture load(GLStateMgr gl, Identifier identifier) {
         try (Arena arena = Arena.ofConfined()) {
             final String path = identifier.toResourcePath(Identifier.ROOT_ASSETS, Identifier.RES_TEXTURE, Identifier.EXT_PNG);
-            final NativeImage image = NativeImage.load(arena, path);
-            if (image.failed() && !MISSING.equals(identifier)) {
+            boolean missing = MISSING.equals(identifier);
+            final NativeImage image = missing ? NativeImage.fail() : NativeImage.load(arena, path);
+            if (image.failed() && !missing) {
                 logger.error("Failed to load texture {}", identifier);
             }
             final int width = image.width();

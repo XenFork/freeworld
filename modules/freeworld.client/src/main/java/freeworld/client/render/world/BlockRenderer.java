@@ -64,7 +64,7 @@ public final class BlockRenderer {
             final Vector3f to = part.to().add(x, y, z);
             for (var e : part.faces().entrySet()) {
                 final BlockModelFace face = e.getValue();
-                if (face != null && !shouldCullFace.test(face.cullFace())) {
+                if (face != null && (face.cullFace() == null || !shouldCullFace.test(face.cullFace()))) {
                     final ModelResourcePath path = face.texture();
                     final TextureRegion region = texture.getRegion(switch (path.type()) {
                         case DIRECT -> path.identifier();

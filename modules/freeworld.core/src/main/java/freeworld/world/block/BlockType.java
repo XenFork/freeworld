@@ -18,34 +18,30 @@ import freeworld.util.shape.VoxelShape;
  */
 public class BlockType { // must be an identity class
     private final boolean air;
-    private final boolean nonOpaque;
 
     public BlockType(Settings settings) {
         this.air = settings.air;
-        this.nonOpaque = settings.nonOpaque;
     }
 
     public static final class Settings {
         private boolean air = false;
-        private boolean nonOpaque = false;
 
         public Settings air() {
             this.air = true;
             return this;
         }
+    }
 
-        public Settings nonOpaque() {
-            this.nonOpaque = true;
-            return this;
-        }
+    public static VoxelShape createCuboidShape(double minX, double minY, double minZ, double maxX, double maxY, double maxZ) {
+        return VoxelShape.cuboid(minX / 16.0, minY / 16.0, minZ / 16.0, maxX / 16.0, maxY / 16.0, maxZ / 16.0);
     }
 
     public boolean air() {
         return air;
     }
 
-    public boolean nonOpaque() {
-        return nonOpaque;
+    public boolean hasSidedTransparency() {
+        return false;
     }
 
     public VoxelShape outlineShape() {
@@ -53,6 +49,6 @@ public class BlockType { // must be an identity class
     }
 
     public VoxelShape collisionShape() {
-        return VoxelShape.fullCube();
+        return outlineShape();
     }
 }
