@@ -48,22 +48,8 @@ final class SingleVoxelShape implements VoxelShape {
         Vector3d v2 = box.getPoint(vertexIndices.z());
         Vector3d v3 = box.getPoint(vertexIndices.w());
         double v = Math.max(
-            Intersectiond.intersectRayTriangleFront(
-                origin.x(), origin.y(), origin.z(),
-                dir.x(), dir.y(), dir.z(),
-                v0.x(), v0.y(), v0.z(),
-                v1.x(), v1.y(), v1.z(),
-                v2.x(), v2.y(), v2.z(),
-                epsilon
-            ),
-            Intersectiond.intersectRayTriangleFront(
-                origin.x(), origin.y(), origin.z(),
-                dir.x(), dir.y(), dir.z(),
-                v2.x(), v2.y(), v2.z(),
-                v3.x(), v3.y(), v3.z(),
-                v0.x(), v0.y(), v0.z(),
-                epsilon
-            )
+            Intersectiond.intersectRayTriangleFront(origin, dir, v0, v1, v2, epsilon),
+            Intersectiond.intersectRayTriangleFront(origin, dir, v2, v3, v0, epsilon)
         );
         if (v == -1.0) {
             return RayCastFace.MISSED;
