@@ -4,19 +4,26 @@
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
- * License as published by the Free Software Foundation; either
- * version 2.1 of the License, or (at your option) any later version.
+ * License as published by the Free Software Foundation;
+ * only version 2.1 of the License.
  */
 
-package freeworld.world.chunk;
+package freeworld.util.math;
+
+import freeworld.math.Vector3i;
+import freeworld.world.chunk.Chunk;
 
 /**
  * @author squid233
  * @since 0.1.0
  */
-public record ChunkPos(int x, int y, int z) {
+public final class ChunkPos {
     public static int relativeToAbsolute(int chunkPos, int relativePos) {
         return chunkPos * Chunk.SIZE + relativePos;
+    }
+
+    public static Vector3i relativeToAbsolute(Vector3i chunkPos, Vector3i relativePos) {
+        return chunkPos.mul(Chunk.SIZE).add(relativePos);
     }
 
     public static int absoluteToRelative(int absolutePos) {

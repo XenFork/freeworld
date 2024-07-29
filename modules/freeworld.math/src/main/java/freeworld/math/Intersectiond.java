@@ -4,8 +4,8 @@
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
- * License as published by the Free Software Foundation; either
- * version 2.1 of the License, or (at your option) any later version.
+ * License as published by the Free Software Foundation;
+ * only version 2.1 of the License.
  */
 
 package freeworld.math;
@@ -94,5 +94,20 @@ public final class Intersectiond {
             return -1.0;
         double invDet = 1.0 / det;
         return (edge2X * qvecX + edge2Y * qvecY + edge2Z * qvecZ) * invDet;
+    }
+
+    public static double intersectRayTriangleFront(
+        Vector3d origin, Vector3d dir,
+        Vector3d v0, Vector3d v1, Vector3d v2,
+        double epsilon
+    ) {
+        return intersectRayTriangleFront(
+            origin.x(), origin.y(), origin.z(),
+            dir.x(), dir.y(), dir.z(),
+            v0.x(), v0.y(), v0.z(),
+            v1.x(), v1.y(), v1.z(),
+            v2.x(), v2.y(), v2.z(),
+            epsilon
+        );
     }
 }

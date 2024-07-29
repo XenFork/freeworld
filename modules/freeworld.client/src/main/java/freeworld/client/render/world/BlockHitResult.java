@@ -10,20 +10,19 @@
 
 package freeworld.client.render.world;
 
-import freeworld.client.render.vertex.VertexLayout;
-
-import java.lang.foreign.MemorySegment;
+import freeworld.util.Direction;
+import freeworld.world.block.BlockType;
 
 /**
  * @author squid233
  * @since 0.1.0
  */
-public record ChunkVertexData(
-    VertexLayout vertexLayout,
-    int indexCount,
-    MemorySegment vertexData,
-    MemorySegment indexData,
-    boolean shouldReallocateVertexData,
-    boolean shouldReallocateIndexData
+public record BlockHitResult(
+    boolean missed,
+    BlockType blockType,
+    int x,
+    int y,
+    int z,
+    Direction face
 ) {
 }

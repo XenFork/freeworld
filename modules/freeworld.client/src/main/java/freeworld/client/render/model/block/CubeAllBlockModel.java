@@ -10,8 +10,8 @@
 
 package freeworld.client.render.model.block;
 
+import freeworld.client.render.model.TextureKeys;
 import freeworld.core.Identifier;
-import freeworld.core.ModelResourcePath;
 import freeworld.math.Vector2f;
 import freeworld.math.Vector3f;
 import freeworld.util.Direction;
@@ -25,19 +25,17 @@ import java.util.Map;
  * @since 0.1.0
  */
 public final class CubeAllBlockModel implements BlockModel {
-    private static final Identifier ALL = Identifier.ofBuiltin("all");
-    private static final ModelResourcePath MRP = new ModelResourcePath(ModelResourcePath.Type.VARIABLE, ALL);
     private static final List<BlockModelPart> LIST;
     private final Map<Identifier, Identifier> textureDef;
 
     public CubeAllBlockModel(Identifier texture) {
-        this.textureDef = Map.of(ALL, texture);
+        this.textureDef = Map.of(TextureKeys.ALL, texture);
     }
 
     static {
         final Map<Direction, BlockModelFace> map = HashMap.newHashMap(6);
         for (Direction direction : Direction.LIST) {
-            map.put(direction, new BlockModelFace(Vector2f.ZERO, new Vector2f(1.0f), MRP, direction));
+            map.put(direction, new BlockModelFace(Vector2f.ZERO, new Vector2f(1.0f), TextureKeys.ALL, direction));
         }
         LIST = List.of(new BlockModelPart(Vector3f.ZERO, new Vector3f(1.0f), map));
     }

@@ -14,12 +14,10 @@ import freeworld.client.render.gl.GLProgram;
 import freeworld.client.render.gl.GLStateMgr;
 import freeworld.client.render.texture.Texture;
 import freeworld.math.Matrix4f;
-import freeworld.math.Matrix4fStack;
 import freeworld.util.Logging;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
-
-import java.util.function.UnaryOperator;
 
 /**
  * @author squid233
@@ -30,9 +28,9 @@ public final class RenderSystem {
     private static GLStateMgr stateMgr = null;
     private static GLProgram currentProgram = null;
     private static Texture textureBinding2D = null;
-    private static final Matrix4fStack projectionMatrixStack = new Matrix4fStack(32);
-    private static final Matrix4fStack viewMatrixStack = new Matrix4fStack(32);
-    private static final Matrix4fStack modelMatrixStack = new Matrix4fStack(32);
+    private static Matrix4f projectionMatrix = Matrix4f.IDENTITY;
+    private static Matrix4f viewMatrix = Matrix4f.IDENTITY;
+    private static Matrix4f modelMatrix = Matrix4f.IDENTITY;
 
     public static void initialize(GLStateMgr gl) {
         logger.info("Initializing render system");
@@ -65,23 +63,23 @@ public final class RenderSystem {
         return textureBinding2D;
     }
 
-    public static void setProjectionMatrix(UnaryOperator<Matrix4f> matrix) {
-        projectionMatrixStack.withCurr(matrix);
+    public static void setProjectionMatrix(Matrix4f matrix) {
+        projectionMatrix = matrix;
     }
 
-    public static Matrix4fStack projectionMatrixStack() {
-        return projectionMatrixStack;
+    public static Matrix4f projectionMatrix() {
+        return projectionMatrix;
     }
 
-    public static void setViewMatrix(UnaryOperator<Matrix4f> matrix) {
-        viewMatrixStack.withCurr(matrix);
+    public static void setViewMatrix(Matrix4f matrix) {
+        viewMatrix = matrix;
     }
 
-    public static Matrix4fStack viewMatrixStack() {
-        return viewMatrixStack;
+    public static Matrix4f viewMatrix() {
+        return viewMatrix;
     }
 
-    public static void setProjectionViewMatrix(UnaryOperator<Matrix4f> projection, UnaryOperator<Matrix4f> view) {
+    public static void setProjectionViewMatrix(Matrix4f projection, Matrix4f view) {
         setProjectionMatrix(projection);
         setViewMatrix(view);
         updateProjectionViewMatrix();
@@ -95,23 +93,23 @@ public final class RenderSystem {
     }
 
     public static Matrix4f projectionViewMatrix() {
-        return projectionMatrixStack.curr().mul(viewMatrixStack.curr());
+        return projectionMatrix.mul(viewMatrix);
     }
 
-    public static void setModelMatrix(UnaryOperator<Matrix4f> matrix) {
-        modelMatrixStack.withCurr(matrix);
+    public static void setModelMatrix(Matrix4f matrix) {
+        modelMatrix = matrix;
         updateModelMatrix();
     }
 
     public static void updateModelMatrix() {
         if (currentProgram != null && currentProgram.hasUniform(GLProgram.UNIFORM_MODEL_MATRIX)) {
-            currentProgram.getUniform(GLProgram.UNIFORM_MODEL_MATRIX).set(modelMatrixStack.curr());
+            currentProgram.getUniform(GLProgram.UNIFORM_MODEL_MATRIX).set(modelMatrix);
             currentProgram.uploadUniforms(stateMgr);
         }
     }
 
-    public static Matrix4fStack modelMatrixStack() {
-        return modelMatrixStack;
+    public static Matrix4f modelMatrix() {
+        return modelMatrix;
     }
 
     public static void updateMatrices() {
@@ -119,32 +117,8 @@ public final class RenderSystem {
         updateModelMatrix();
     }
 
-    public static void pushMatrices() {
-        projectionMatrixStack.push();
-        viewMatrixStack.push();
-        modelMatrixStack.push();
-    }
-
-    public static void popMatrices() {
-        projectionMatrixStack.pop();
-        viewMatrixStack.pop();
-        modelMatrixStack.pop();
-    }
-
-    public static MatricesScope matricesScope() {
-        pushMatrices();
-        return MatricesScope.INSTANCE;
-    }
-
-    public static final class MatricesScope implements AutoCloseable {
-        public static final MatricesScope INSTANCE = new MatricesScope();
-
-        private MatricesScope() {
-        }
-
-        @Override
-        public void close() {
-            popMatrices();
-        }
+    @ApiStatus.Internal
+    public static GLStateMgr stateManager() {
+        return stateMgr;
     }
 }

@@ -18,11 +18,12 @@ import freeworld.client.render.model.block.BlockModelManager;
 import freeworld.client.render.screen.ingame.CreativeTabScreen;
 import freeworld.client.render.screen.ingame.PauseScreen;
 import freeworld.client.render.screen.Screen;
-import freeworld.client.render.world.HitResult;
+import freeworld.client.render.world.BlockHitResult;
 import freeworld.client.render.world.WorldRenderer;
 import freeworld.core.registry.Registries;
 import freeworld.math.Vector2d;
 import freeworld.math.Vector3d;
+import freeworld.math.Vector3i;
 import freeworld.util.Direction;
 import freeworld.util.Logging;
 import freeworld.util.math.MathUtil;
@@ -33,7 +34,6 @@ import freeworld.world.block.BlockTypes;
 import freeworld.world.entity.Entity;
 import freeworld.world.entity.EntityComponents;
 import freeworld.world.entity.EntityTypes;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import overrun.marshal.Unmarshal;
@@ -88,7 +88,7 @@ public final class Freeworld implements AutoCloseable {
         BlockTypes.STONE,
         BlockTypes.DIRT,
         BlockTypes.GRASS_BLOCK,
-        BlockTypes.AIR,
+        BlockTypes.STONE_SLAB,
         BlockTypes.AIR,
         BlockTypes.AIR,
         BlockTypes.AIR,
@@ -113,10 +113,6 @@ public final class Freeworld implements AutoCloseable {
         }
 
         glfw.defaultWindowHints();
-        glfw.windowHint(GLFW.OPENGL_PROFILE, GLFW.OPENGL_CORE_PROFILE);
-        glfw.windowHint(GLFW.OPENGL_FORWARD_COMPAT, true);
-        glfw.windowHint(GLFW.CONTEXT_VERSION_MAJOR, 3);
-        glfw.windowHint(GLFW.CONTEXT_VERSION_MINOR, 3);
 
         // center window
         final GLFWVidMode videoMode = glfw.getVideoMode(glfw.getPrimaryMonitor());
@@ -152,14 +148,12 @@ public final class Freeworld implements AutoCloseable {
         blockModelManager.bootstrap();
 
         world = new World("New world", new Random().nextLong());
-        player = world.createEntity(EntityTypes.PLAYER, new Vector3d(0.0, 128.0, 0.0));
+        player = world.createEntity(EntityTypes.PLAYER, new Vector3d(0.0, 64.0, 0.0));
 
         World.forEachChunk(player, WorldRenderer.RENDER_RADIUS, (x, y, z) -> world.getOrCreateChunk(x, y, z));
 
         initGL();
         run();
-
-        logger.info("Closing client");
     }
 
     private void onKey(int key, int scancode, int action, int mods) {
@@ -303,7 +297,7 @@ public final class Freeworld implements AutoCloseable {
                     MathUtil.moveRelative(xo, 0.0, zo, player.getComponent(EntityComponents.ROTATION).y(), speed));
 
                 if (blockDestroyTimer >= 2) {
-                    final HitResult hitResult = gameRenderer.hitResult();
+                    final BlockHitResult hitResult = gameRenderer.hitResult();
                     if (!hitResult.missed() &&
                         glfw.getMouseButton(window, GLFW.MOUSE_BUTTON_LEFT) == GLFW.PRESS) {
                         world.setBlockType(hitResult.x(), hitResult.y(), hitResult.z(), BlockTypes.AIR);
@@ -311,16 +305,17 @@ public final class Freeworld implements AutoCloseable {
                     }
                 }
                 if (blockPlaceTimer >= 2) {
-                    final HitResult hitResult = gameRenderer.hitResult();
+                    final BlockHitResult hitResult = gameRenderer.hitResult();
                     if (!hitResult.missed() &&
                         glfw.getMouseButton(window, GLFW.MOUSE_BUTTON_RIGHT) == GLFW.PRESS) {
                         final Direction face = hitResult.face();
                         final BlockType type = hotBar[hotBarSelection];
                         if (!type.air()) {
+                            Vector3i axis = face.axis();
                             world.setBlockType(
-                                hitResult.x() + face.axisX(),
-                                hitResult.y() + face.axisY(),
-                                hitResult.z() + face.axisZ(),
+                                hitResult.x() + axis.x(),
+                                hitResult.y() + axis.y(),
+                                hitResult.z() + axis.z(),
                                 type
                             );
                         }
@@ -363,6 +358,7 @@ public final class Freeworld implements AutoCloseable {
 
     @Override
     public void close() {
+        logger.info("Closing client");
         gameRenderer.close(gl);
         if (!Unmarshal.isNullPointer(window)) {
             GLFWCallbacks.free(window);
@@ -394,11 +390,6 @@ public final class Freeworld implements AutoCloseable {
         return glFlags;
     }
 
-    @ApiStatus.Internal
-    public GLStateMgr gl() {
-        return gl;
-    }
-
     public MemorySegment window() {
         return window;
     }
@@ -409,6 +400,14 @@ public final class Freeworld implements AutoCloseable {
 
     public int framebufferHeight() {
         return framebufferHeight;
+    }
+
+    public int scaledFramebufferWidth() {
+        return (int) (framebufferWidth / guiScale);
+    }
+
+    public int scaledFramebufferHeight() {
+        return (int) (framebufferHeight / guiScale);
     }
 
     public Timer timer() {

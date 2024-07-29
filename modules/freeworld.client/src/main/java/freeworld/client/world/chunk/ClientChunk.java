@@ -11,19 +11,14 @@
 package freeworld.client.world.chunk;
 
 import freeworld.client.render.GameRenderer;
+import freeworld.client.render.RenderSystem;
 import freeworld.client.render.gl.GLStateMgr;
-import freeworld.client.render.model.vertex.VertexLayout;
+import freeworld.client.render.vertex.VertexLayout;
 import freeworld.client.render.world.ChunkCompiler;
 import freeworld.client.render.world.ChunkVertexData;
 import freeworld.client.render.world.WorldRenderer;
-import freeworld.math.Vector2d;
-import freeworld.math.Vector3d;
-import freeworld.util.Logging;
 import freeworld.world.World;
 import freeworld.world.chunk.Chunk;
-import freeworld.world.entity.Entity;
-import freeworld.world.entity.EntityComponents;
-import org.slf4j.Logger;
 import overrungl.opengl.GL15C;
 import reactor.core.Disposable;
 import reactor.core.publisher.Flux;
@@ -38,7 +33,6 @@ import java.util.concurrent.atomic.AtomicReference;
  * @since 0.1.0
  */
 public final class ClientChunk extends Chunk implements AutoCloseable {
-    private static final Logger logger = Logging.caller();
     private static final Cleaner CLEANER = Cleaner.create();
     private final Cleaner.Cleanable cleanable;
     private final State state;
@@ -54,7 +48,7 @@ public final class ClientChunk extends Chunk implements AutoCloseable {
         super(world, x, y, z);
         final GameRenderer gameRenderer = worldRenderer.gameRenderer();
         // Get OpenGL context directly
-        this.state = new State(gameRenderer.client().gl());
+        this.state = new State(RenderSystem.stateManager());
         this.cleanable = CLEANER.register(this, state);
         this.dataFlux = worldRenderer.vertexBuilderPool()
             .withPoolable(vertexBuilder -> Mono.fromSupplier(() -> {
@@ -147,22 +141,6 @@ public final class ClientChunk extends Chunk implements AutoCloseable {
         } else {
             gl.bufferSubData(GL15C.ELEMENT_ARRAY_BUFFER, 0L, indexData);
         }
-    }
-
-    public double xzDistanceToPlayerSquared(Entity player) {
-        if (!player.hasComponent(EntityComponents.POSITION)) {
-            return 0.0;
-        }
-        final Vector3d value = player.getComponent(EntityComponents.POSITION);
-        return Vector2d.distanceSquared(x(), value.x(), z(), value.z());
-    }
-
-    public double yDistanceToPlayer(Entity player) {
-        if (!player.hasComponent(EntityComponents.POSITION)) {
-            return 0.0;
-        }
-        final Vector3d value = player.getComponent(EntityComponents.POSITION);
-        return Math.abs(value.y() - y());
     }
 
     @Override

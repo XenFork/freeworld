@@ -10,17 +10,19 @@
 
 package freeworld.client.render.world;
 
-import freeworld.client.render.builder.VertexBuilder;
 import freeworld.client.render.model.block.BlockModel;
 import freeworld.client.render.model.block.BlockModelFace;
 import freeworld.client.render.model.block.BlockModelPart;
 import freeworld.client.render.texture.TextureAtlas;
 import freeworld.client.render.texture.TextureManager;
 import freeworld.client.render.texture.TextureRegion;
-import freeworld.core.ModelResourcePath;
+import freeworld.client.render.vertex.VertexBuilder;
+import freeworld.math.Matrix4f;
 import freeworld.math.Vector2f;
 import freeworld.math.Vector3f;
+import freeworld.math.Vector4i;
 import freeworld.util.Direction;
+import freeworld.util.math.AABBox;
 
 import java.util.function.Predicate;
 
@@ -35,55 +37,23 @@ public final class BlockRenderer {
         this.textureManager = textureManager;
     }
 
-    private void emitVertices(VertexBuilder builder, Vector3f from, Vector3f to, Vector2f uvFrom, Vector2f uvTo, Direction direction) {
+    private void emitVertices(VertexBuilder builder, Matrix4f matrix, Vector3f from, Vector3f to, Vector2f uvFrom, Vector2f uvTo, Direction direction) {
         // TODO: 2024/7/6 squid233: color
-        switch (direction) {
-            case WEST -> {
-                builder.color(0.7f, 0.7f, 0.7f);
-                builder.position(from.x(), to.y(), from.z()).texCoord(uvFrom.x(), uvFrom.y()).emit();
-                builder.position(from.x(), from.y(), from.z()).texCoord(uvFrom.x(), uvTo.y()).emit();
-                builder.position(from.x(), from.y(), to.z()).texCoord(uvTo.x(), uvTo.y()).emit();
-                builder.position(from.x(), to.y(), to.z()).texCoord(uvTo.x(), uvFrom.y()).emit();
-            }
-            case EAST -> {
-                builder.color(1.0f, 1.0f, 1.0f);
-                builder.position(to.x(), to.y(), to.z()).texCoord(uvFrom.x(), uvFrom.y()).emit();
-                builder.position(to.x(), from.y(), to.z()).texCoord(uvFrom.x(), uvTo.y()).emit();
-                builder.position(to.x(), from.y(), from.z()).texCoord(uvTo.x(), uvTo.y()).emit();
-                builder.position(to.x(), to.y(), from.z()).texCoord(uvTo.x(), uvFrom.y()).emit();
-            }
-            case DOWN -> {
-                builder.color(0.6f, 0.6f, 0.6f);
-                builder.position(from.x(), from.y(), to.z()).texCoord(uvFrom.x(), uvFrom.y()).emit();
-                builder.position(from.x(), from.y(), from.z()).texCoord(uvFrom.x(), uvTo.y()).emit();
-                builder.position(to.x(), from.y(), from.z()).texCoord(uvTo.x(), uvTo.y()).emit();
-                builder.position(to.x(), from.y(), to.z()).texCoord(uvTo.x(), uvFrom.y()).emit();
-            }
-            case UP -> {
-                builder.color(0.9f, 0.9f, 0.9f);
-                builder.position(from.x(), to.y(), from.z()).texCoord(uvFrom.x(), uvFrom.y()).emit();
-                builder.position(from.x(), to.y(), to.z()).texCoord(uvFrom.x(), uvTo.y()).emit();
-                builder.position(to.x(), to.y(), to.z()).texCoord(uvTo.x(), uvTo.y()).emit();
-                builder.position(to.x(), to.y(), from.z()).texCoord(uvTo.x(), uvFrom.y()).emit();
-            }
-            case NORTH -> {
-                builder.color(0.8f, 0.8f, 0.8f);
-                builder.position(to.x(), to.y(), from.z()).texCoord(uvFrom.x(), uvFrom.y()).emit();
-                builder.position(to.x(), from.y(), from.z()).texCoord(uvFrom.x(), uvTo.y()).emit();
-                builder.position(from.x(), from.y(), from.z()).texCoord(uvTo.x(), uvTo.y()).emit();
-                builder.position(from.x(), to.y(), from.z()).texCoord(uvTo.x(), uvFrom.y()).emit();
-            }
-            case SOUTH -> {
-                builder.color(0.8f, 0.8f, 0.8f);
-                builder.position(from.x(), to.y(), to.z()).texCoord(uvFrom.x(), uvFrom.y()).emit();
-                builder.position(from.x(), from.y(), to.z()).texCoord(uvFrom.x(), uvTo.y()).emit();
-                builder.position(to.x(), from.y(), to.z()).texCoord(uvTo.x(), uvTo.y()).emit();
-                builder.position(to.x(), to.y(), to.z()).texCoord(uvTo.x(), uvFrom.y()).emit();
-            }
-        }
+        float color = switch (direction) {
+            case WEST -> 0.7f;
+            case EAST -> 1.0f;
+            case DOWN -> 0.6f;
+            case UP -> 0.9f;
+            case NORTH, SOUTH -> 0.8f;
+        };
+        Vector4i vertexIndices = direction.vertexIndices();
+        builder.position(matrix, AABBox.getPoint(from, to, vertexIndices.x())).color(color, color, color).texCoord(uvFrom.x(), uvFrom.y()).emit();
+        builder.position(matrix, AABBox.getPoint(from, to, vertexIndices.y())).color(color, color, color).texCoord(uvFrom.x(), uvTo.y()).emit();
+        builder.position(matrix, AABBox.getPoint(from, to, vertexIndices.z())).color(color, color, color).texCoord(uvTo.x(), uvTo.y()).emit();
+        builder.position(matrix, AABBox.getPoint(from, to, vertexIndices.w())).color(color, color, color).texCoord(uvTo.x(), uvFrom.y()).emit();
     }
 
-    public void renderBlockModel(VertexBuilder builder, BlockModel model, int x, int y, int z, Predicate<Direction> shouldCullFace) {
+    public void renderBlockModel(VertexBuilder builder, BlockModel model, Matrix4f matrix, int x, int y, int z, Predicate<Direction> shouldCullFace) {
         final TextureAtlas texture = textureManager.getTexture(TextureManager.BLOCK_ATLAS);
         final int width = texture.width();
         final int height = texture.height();
@@ -93,12 +63,10 @@ public final class BlockRenderer {
             final Vector3f to = part.to().add(x, y, z);
             for (var e : part.faces().entrySet()) {
                 final BlockModelFace face = e.getValue();
-                if (face != null && !shouldCullFace.test(face.cullFace())) {
-                    final ModelResourcePath path = face.texture();
-                    final TextureRegion region = texture.getRegion(switch (path.type()) {
-                        case DIRECT -> path.identifier();
-                        case VARIABLE -> model.textureDefinitions().get(path.identifier());
-                    });
+                if (face != null && (face.cullFace() == null || !shouldCullFace.test(face.cullFace()))) {
+                    final TextureRegion region = texture.getRegion(
+                        model.textureDefinitions().get(face.textureKey())
+                    );
                     if (region == null) {
                         continue;
                     }
@@ -106,10 +74,13 @@ public final class BlockRenderer {
                     final Vector2f uvTo = face.uvTo().mul(region.width(), region.height()).add(region.x(), region.y()).div(width, height);
 
                     builder.indices(0, 1, 2, 2, 3, 0);
-                    builder.color(1f, 1f, 1f);
-                    emitVertices(builder, from, to, uvFrom, uvTo, e.getKey());
+                    emitVertices(builder, matrix, from, to, uvFrom, uvTo, e.getKey());
                 }
             }
         }
+    }
+
+    public void renderBlockModel(VertexBuilder builder, BlockModel model, int x, int y, int z, Predicate<Direction> shouldCullFace) {
+        renderBlockModel(builder, model, Matrix4f.IDENTITY, x, y, z, shouldCullFace);
     }
 }

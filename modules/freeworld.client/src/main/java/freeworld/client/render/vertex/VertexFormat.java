@@ -8,11 +8,9 @@
  * only version 2.1 of the License.
  */
 
-package freeworld.client.render.model.vertex;
+package freeworld.client.render.vertex;
 
 import freeworld.client.render.gl.GLDataType;
-
-import java.lang.foreign.SequenceLayout;
 
 /**
  * @author squid233
@@ -22,6 +20,14 @@ public interface VertexFormat {
     VertexFormat POSITION = new DefaultVertexFormat("Position", 3, GLDataType.FLOAT, false);
     VertexFormat COLOR = new DefaultVertexFormat("Color", 4, GLDataType.UNSIGNED_BYTE, true);
     VertexFormat UV = new DefaultVertexFormat("UV", 2, GLDataType.FLOAT, false);
+
+    static VertexFormat padding(int size) {
+        return new PaddingVertexFormat(size);
+    }
+
+    default boolean padding() {
+        return false;
+    }
 
     String name();
 
@@ -33,5 +39,7 @@ public interface VertexFormat {
 
     int usedAttribCount();
 
-    SequenceLayout layout();
+    int elementCount();
+
+    int byteSize();
 }

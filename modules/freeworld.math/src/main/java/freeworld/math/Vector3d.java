@@ -52,4 +52,8 @@ public record Vector3d(double x, double y, double z) {
     public Vector3d withZ(double z) {
         return new Vector3d(x(), y(), z);
     }
+
+    public Vector3f toVector3f() {
+        return new Vector3f((float) x, (float) y, (float) z);
+    }
 }

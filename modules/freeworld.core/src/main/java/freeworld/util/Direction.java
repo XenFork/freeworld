@@ -4,39 +4,42 @@
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
- * License as published by the Free Software Foundation; either
- * version 2.1 of the License, or (at your option) any later version.
+ * License as published by the Free Software Foundation;
+ * only version 2.1 of the License.
  */
 
 package freeworld.util;
 
+import freeworld.math.Vector3i;
+import freeworld.math.Vector4i;
+
 import java.util.List;
+
+import static freeworld.util.math.AABBox.*;
 
 /**
  * @author squid233
  * @since 0.1.0
  */
 public enum Direction {
-    WEST(0, 1, -1, 0, 0),
-    EAST(1, 0, 1, 0, 0),
-    DOWN(2, 3, 0, -1, 0),
-    UP(3, 2, 0, 1, 0),
-    NORTH(4, 5, 0, 0, -1),
-    SOUTH(5, 4, 0, 0, 1);
+    WEST(0, 1, new Vector3i(-1, 0, 0), new Vector4i(NX_PY_NZ, NX_NY_NZ, NX_NY_PZ, NX_PY_PZ)),
+    EAST(1, 0, new Vector3i(1, 0, 0), new Vector4i(PX_PY_PZ, PX_NY_PZ, PX_NY_NZ, PX_PY_NZ)),
+    DOWN(2, 3, new Vector3i(0, -1, 0), new Vector4i(NX_NY_PZ, NX_NY_NZ, PX_NY_NZ, PX_NY_PZ)),
+    UP(3, 2, new Vector3i(0, 1, 0), new Vector4i(NX_PY_NZ, NX_PY_PZ, PX_PY_PZ, PX_PY_NZ)),
+    NORTH(4, 5, new Vector3i(0, 0, -1), new Vector4i(PX_PY_NZ, PX_NY_NZ, NX_NY_NZ, NX_PY_NZ)),
+    SOUTH(5, 4, new Vector3i(0, 0, 1), new Vector4i(NX_PY_PZ, NX_NY_PZ, PX_NY_PZ, PX_PY_PZ));
 
     public static final List<Direction> LIST = List.of(values());
     private final int id;
     private final int oppositeId;
-    private final int axisX;
-    private final int axisY;
-    private final int axisZ;
+    private final Vector3i axis;
+    private final Vector4i vertexIndices;
 
-    Direction(int id, int oppositeId, int axisX, int axisY, int axisZ) {
+    Direction(int id, int oppositeId, Vector3i axis, Vector4i vertexIndices) {
         this.id = id;
         this.oppositeId = oppositeId;
-        this.axisX = axisX;
-        this.axisY = axisY;
-        this.axisZ = axisZ;
+        this.axis = axis;
+        this.vertexIndices = vertexIndices;
     }
 
     public static Direction fromId(int id) {
@@ -63,15 +66,11 @@ public enum Direction {
         return oppositeId;
     }
 
-    public int axisX() {
-        return axisX;
+    public Vector3i axis() {
+        return axis;
     }
 
-    public int axisY() {
-        return axisY;
-    }
-
-    public int axisZ() {
-        return axisZ;
+    public Vector4i vertexIndices() {
+        return vertexIndices;
     }
 }

@@ -8,15 +8,16 @@
  * only version 2.1 of the License.
  */
 
-package freeworld.core;
+package freeworld.math;
 
 /**
  * @author squid233
  * @since 0.1.0
  */
-public record ModelResourcePath(Type type, Identifier identifier) {
-    public enum Type {
-        DIRECT,
-        VARIABLE
+public record Vector4i(int x, int y, int z, int w) {
+    public static final Vector4i ZERO = new Vector4i(0);
+
+    public Vector4i(int d) {
+        this(d, d, d, d);
     }
 }

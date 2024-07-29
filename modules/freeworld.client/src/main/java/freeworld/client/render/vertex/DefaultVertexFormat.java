@@ -8,12 +8,9 @@
  * only version 2.1 of the License.
  */
 
-package freeworld.client.render.model.vertex;
+package freeworld.client.render.vertex;
 
 import freeworld.client.render.gl.GLDataType;
-
-import java.lang.foreign.MemoryLayout;
-import java.lang.foreign.SequenceLayout;
 
 /**
  * @author squid233
@@ -26,7 +23,17 @@ public record DefaultVertexFormat(String name, int size, GLDataType type, boolea
     }
 
     @Override
-    public SequenceLayout layout() {
-        return MemoryLayout.sequenceLayout(size, type.layout());
+    public int elementCount() {
+        return size;
+    }
+
+    @Override
+    public int byteSize() {
+        return size * type.byteSize();
+    }
+
+    @Override
+    public String toString() {
+        return "default(name=" + name + ", normalized=" + normalized + ")" + type.simpleStringValue() + size;
     }
 }

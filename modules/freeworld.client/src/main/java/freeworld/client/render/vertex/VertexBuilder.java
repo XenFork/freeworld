@@ -8,9 +8,11 @@
  * only version 2.1 of the License.
  */
 
-package freeworld.client.render.builder;
+package freeworld.client.render.vertex;
 
-import freeworld.client.render.model.vertex.VertexLayout;
+import freeworld.math.Matrix4f;
+import freeworld.math.Vector3f;
+import freeworld.math.Vector4f;
 
 import java.lang.foreign.MemorySegment;
 import java.lang.foreign.ValueLayout;
@@ -28,9 +30,29 @@ public interface VertexBuilder {
 
     VertexBuilder indices(int... indices);
 
-    VertexBuilder position(float x, float y, float z);
+    default VertexBuilder position(float x, float y, float z) {
+        nextElement(x);
+        nextElement(y);
+        nextElement(z);
+        return this;
+    }
 
-    VertexBuilder color(int red, int green, int blue, int alpha);
+    default VertexBuilder position(Matrix4f positionMatrix, float x, float y, float z) {
+        Vector4f v = new Vector4f(x, y, z, 1).mul(positionMatrix);
+        return position(v.x(), v.y(), v.z());
+    }
+
+    default VertexBuilder position(Matrix4f positionMatrix, Vector3f v) {
+        return position(positionMatrix, v.x(), v.y(), v.z());
+    }
+
+    default VertexBuilder color(int red, int green, int blue, int alpha) {
+        nextElement((byte) red);
+        nextElement((byte) green);
+        nextElement((byte) blue);
+        nextElement((byte) alpha);
+        return this;
+    }
 
     default VertexBuilder color(int red, int green, int blue) {
         return color(red, green, blue, 0xff);
@@ -44,7 +66,19 @@ public interface VertexBuilder {
         return color(colorToInt(red), colorToInt(green), colorToInt(blue), 0xff);
     }
 
-    VertexBuilder texCoord(float u, float v);
+    default VertexBuilder texCoord(float u, float v) {
+        nextElement(u);
+        nextElement(v);
+        return this;
+    }
+
+    void nextElement(byte b);
+
+    void nextElement(float f);
+
+    void nextElement(int i);
+
+    void nextPadding(int size);
 
     void emit();
 
@@ -56,7 +90,9 @@ public interface VertexBuilder {
 
     MemorySegment indexData();
 
-    MemorySegment vertexDataSlice();
+    default MemorySegment vertexDataSlice() {
+        return vertexData().asSlice(0L, (long) vertexLayout().stride() * vertexCount());
+    }
 
     default MemorySegment indexDataSlice() {
         return indexData().asSlice(0L, ValueLayout.JAVA_INT.scale(0L, indexCount()));

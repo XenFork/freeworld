@@ -8,7 +8,7 @@
  * only version 2.1 of the License.
  */
 
-package freeworld.client.render.model.vertex;
+package freeworld.client.render.vertex;
 
 /**
  * Vertex layouts

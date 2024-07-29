@@ -8,13 +8,11 @@
  * only version 2.1 of the License.
  */
 
-package freeworld.client.render.model.vertex;
+package freeworld.client.render.vertex;
 
 import freeworld.client.render.gl.GLStateMgr;
 
-import java.lang.foreign.MemoryLayout;
 import java.lang.foreign.MemorySegment;
-import java.lang.foreign.StructLayout;
 import java.util.*;
 
 /**
@@ -24,22 +22,23 @@ import java.util.*;
 public final class VertexLayout {
     private final List<VertexFormat> formats;
     private final Map<String, Integer> attribLocationMap;
-    private final StructLayout layout;
+    private final int stride;
 
     public VertexLayout(List<VertexFormat> formats) {
         this.formats = List.copyOf(formats);
         this.attribLocationMap = HashMap.newHashMap(this.formats.size());
-        final List<MemoryLayout> elements = new ArrayList<>(this.formats.size());
 
         int i = 0;
+        int stride = 0;
         for (var format : this.formats) {
-            final String name = format.name();
-            this.attribLocationMap.put(name, i);
-            elements.add(format.layout().withName(name));
-            i += format.usedAttribCount();
+            if (!format.padding()) {
+                final String name = format.name();
+                this.attribLocationMap.put(name, i);
+                i += format.usedAttribCount();
+            }
+            stride += format.byteSize();
         }
-
-        this.layout = MemoryLayout.structLayout(elements.toArray(MemoryLayout[]::new));
+        this.stride = stride;
     }
 
     public VertexLayout(VertexFormat... formats) {
@@ -57,16 +56,17 @@ public final class VertexLayout {
     }
 
     public void specifyAttribPointers(GLStateMgr gl) {
-        final int stride = Math.toIntExact(layout().byteSize());
         long offset = 0L;
         for (var format : formats) {
-            gl.vertexAttribPointer(attribLocationMap.get(format.name()),
-                format.size(),
-                format.type().value(),
-                format.normalized(),
-                stride,
-                MemorySegment.ofAddress(offset));
-            offset += format.layout().byteSize();
+            if (!format.padding()) {
+                gl.vertexAttribPointer(attribLocationMap.get(format.name()),
+                    format.size(),
+                    format.type().value(),
+                    format.normalized(),
+                    stride,
+                    MemorySegment.ofAddress(offset));
+            }
+            offset += format.byteSize();
         }
     }
 
@@ -78,28 +78,24 @@ public final class VertexLayout {
         return formats;
     }
 
-    public StructLayout layout() {
-        return layout;
+    public int stride() {
+        return stride;
     }
 
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (!(o instanceof VertexLayout that)) return false;
-        return Objects.equals(formats, that.formats) && Objects.equals(attribLocationMap, that.attribLocationMap) && Objects.equals(layout, that.layout);
+        return stride == that.stride && Objects.equals(formats, that.formats) && Objects.equals(attribLocationMap, that.attribLocationMap);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(formats, attribLocationMap, layout);
+        return Objects.hash(formats, attribLocationMap, stride);
     }
 
     @Override
     public String toString() {
-        return new StringJoiner(", ", VertexLayout.class.getSimpleName() + "[", "]")
-            .add("formats=" + formats)
-            .add("attribLocationMap=" + attribLocationMap)
-            .add("layout=" + layout)
-            .toString();
+        return "VertexLayout" + formats + "b" + stride;
     }
 }

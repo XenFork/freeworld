@@ -16,8 +16,10 @@ import freeworld.util.shape.VoxelShape;
  * @author squid233
  * @since 0.1.0
  */
-public class AirBlockType extends BlockType {
-    public AirBlockType(Settings settings) {
+public class SlabBlockType extends BlockType {
+    private static final VoxelShape SHAPE = createCuboidShape(0.0, 0.0, 0.0, 16.0, 8.0, 16.0);
+
+    public SlabBlockType(Settings settings) {
         super(settings);
     }
 
@@ -28,11 +30,6 @@ public class AirBlockType extends BlockType {
 
     @Override
     public VoxelShape outlineShape() {
-        return VoxelShape.empty();
-    }
-
-    @Override
-    public VoxelShape collisionShape() {
-        return VoxelShape.empty();
+        return SHAPE;
     }
 }

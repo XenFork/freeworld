@@ -24,4 +24,12 @@ public record Vector3f(float x, float y, float z) {
     public Vector3f add(float x, float y, float z) {
         return new Vector3f(x() + x, y() + y, z() + z);
     }
+
+    public Vector3f sub(float x, float y, float z) {
+        return new Vector3f(x() - x, y() - y, z() - z);
+    }
+
+    public Vector3d toVector3d() {
+        return new Vector3d(x, y, z);
+    }
 }

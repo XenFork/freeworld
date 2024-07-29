@@ -10,6 +10,7 @@
 
 package freeworld.world.chunk;
 
+import freeworld.util.math.ChunkPos;
 import freeworld.util.math.SimplexNoiseUtil;
 import freeworld.world.World;
 import freeworld.world.block.BlockType;

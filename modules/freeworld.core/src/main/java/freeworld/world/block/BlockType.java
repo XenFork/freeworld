@@ -10,7 +10,7 @@
 
 package freeworld.world.block;
 
-import freeworld.core.math.AABBox;
+import freeworld.util.shape.VoxelShape;
 
 /**
  * @author squid233
@@ -18,41 +18,37 @@ import freeworld.core.math.AABBox;
  */
 public class BlockType { // must be an identity class
     private final boolean air;
-    private final boolean nonOpaque;
 
     public BlockType(Settings settings) {
         this.air = settings.air;
-        this.nonOpaque = settings.nonOpaque;
     }
 
     public static final class Settings {
         private boolean air = false;
-        private boolean nonOpaque = false;
 
         public Settings air() {
             this.air = true;
             return this;
         }
+    }
 
-        public Settings nonOpaque() {
-            this.nonOpaque = true;
-            return this;
-        }
+    public static VoxelShape createCuboidShape(double minX, double minY, double minZ, double maxX, double maxY, double maxZ) {
+        return VoxelShape.cuboid(minX / 16.0, minY / 16.0, minZ / 16.0, maxX / 16.0, maxY / 16.0, maxZ / 16.0);
     }
 
     public boolean air() {
         return air;
     }
 
-    public boolean nonOpaque() {
-        return nonOpaque;
+    public boolean hasSidedTransparency() {
+        return false;
     }
 
-    public AABBox outlineShape() {
-        return AABBox.FULL_CUBE;
+    public VoxelShape outlineShape() {
+        return VoxelShape.fullCube();
     }
 
-    public AABBox collisionShape() {
-        return AABBox.FULL_CUBE;
+    public VoxelShape collisionShape() {
+        return outlineShape();
     }
 }

@@ -18,6 +18,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
+import java.util.function.Supplier;
 import java.util.function.UnaryOperator;
 
 /**
@@ -46,7 +47,12 @@ public final class Entity {
     }
 
     public <T> void addComponent(ComponentKey<T> key) {
-        addComponent(key, key.defaultValue().get());
+        Supplier<T> defaultValue = key.defaultValue();
+        if (defaultValue != null) {
+            addComponent(key, defaultValue.get());
+        } else {
+            throw new IllegalStateException("No default value for component key " + key);
+        }
     }
 
     public <T> void setComponent(ComponentKey<T> key, T component) {

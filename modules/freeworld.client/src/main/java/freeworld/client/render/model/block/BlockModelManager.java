@@ -10,10 +10,10 @@
 
 package freeworld.client.render.model.block;
 
-import freeworld.client.render.texture.TextureAtlas;
+import freeworld.client.render.texture.Texture;
 import freeworld.core.Identifier;
-import freeworld.core.registry.Registries;
 import freeworld.core.registry.DefaultedRegistry;
+import freeworld.core.registry.Registries;
 import freeworld.core.registry.Registry;
 import freeworld.world.block.BlockType;
 import freeworld.world.block.BlockTypes;
@@ -61,11 +61,12 @@ public final class BlockModelManager {
     }
 
     public void bootstrap() {
-        register(TextureAtlas.MISSING, missing());
+        register(Texture.MISSING, missing());
         register(BlockTypes.AIR, empty());
         register(BlockTypes.GRASS_BLOCK, new CubeAllBlockModel(Identifier.ofBuiltin("block/grass_block")));
         register(BlockTypes.DIRT, new CubeAllBlockModel(Identifier.ofBuiltin("block/dirt")));
         register(BlockTypes.STONE, new CubeAllBlockModel(Identifier.ofBuiltin("block/stone")));
+        register(BlockTypes.STONE_SLAB, new SlabBlockModel(Identifier.ofBuiltin("block/stone"), Identifier.ofBuiltin("block/stone"), Identifier.ofBuiltin("block/stone")));
     }
 
     public BlockModel get(Identifier identifier) {

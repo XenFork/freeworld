@@ -8,22 +8,17 @@
  * only version 2.1 of the License.
  */
 
-package freeworld.world.component;
+package freeworld.client.render.model;
 
 import freeworld.core.Identifier;
-
-import java.util.function.Supplier;
 
 /**
  * @author squid233
  * @since 0.1.0
  */
-public record ComponentKey<T>(Identifier identifier, Supplier<T> defaultValue) {
-    public ComponentKey(Identifier identifier) {
-        this(identifier, (Supplier<T>) null);
-    }
-
-    public ComponentKey(Identifier identifier, T defaultValue) {
-        this(identifier, () -> defaultValue);
-    }
+public final class TextureKeys {
+    public static final Identifier ALL = Identifier.ofBuiltin("all");
+    public static final Identifier TOP = Identifier.ofBuiltin("top");
+    public static final Identifier SIDE = Identifier.ofBuiltin("side");
+    public static final Identifier BOTTOM = Identifier.ofBuiltin("bottom");
 }

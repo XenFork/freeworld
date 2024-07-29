@@ -8,15 +8,13 @@
  * only version 2.1 of the License.
  */
 
-package freeworld.client.render.model.block;
+package freeworld.util.math;
 
-import freeworld.core.Identifier;
-import freeworld.math.Vector2f;
-import freeworld.util.Direction;
+import freeworld.math.Vector3d;
 
 /**
  * @author squid233
  * @since 0.1.0
  */
-public record BlockModelFace(Vector2f uvFrom, Vector2f uvTo, Identifier textureKey, Direction cullFace) {
+public record Lined(Vector3d from, Vector3d to) {
 }

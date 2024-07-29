@@ -11,12 +11,14 @@
 package freeworld.client.render;
 
 import freeworld.client.render.gl.GLDrawMode;
-import freeworld.client.render.builder.DefaultVertexBuilder;
-import freeworld.client.render.builder.VertexBuilder;
+import freeworld.client.render.vertex.DefaultVertexBuilder;
+import freeworld.client.render.vertex.VertexBuilder;
 import freeworld.client.render.gl.GLResource;
 import freeworld.client.render.gl.GLStateMgr;
-import freeworld.client.render.model.vertex.VertexLayout;
-import freeworld.client.render.model.vertex.VertexLayouts;
+import freeworld.client.render.vertex.VertexLayout;
+import freeworld.client.render.vertex.VertexLayouts;
+import freeworld.math.Matrix4f;
+import freeworld.math.Vector3f;
 import overrungl.opengl.GL10C;
 import overrungl.opengl.GL15C;
 
@@ -56,6 +58,18 @@ public final class Tessellator implements GLResource, VertexBuilder {
     }
 
     @Override
+    public Tessellator position(Matrix4f positionMatrix, float x, float y, float z) {
+        vertexBuilder.position(positionMatrix, x, y, z);
+        return this;
+    }
+
+    @Override
+    public Tessellator position(Matrix4f positionMatrix, Vector3f v) {
+        VertexBuilder.super.position(positionMatrix, v);
+        return this;
+    }
+
+    @Override
     public Tessellator color(int red, int green, int blue, int alpha) {
         vertexBuilder.color(red, green, blue, alpha);
         return this;
@@ -83,6 +97,26 @@ public final class Tessellator implements GLResource, VertexBuilder {
     public Tessellator texCoord(float u, float v) {
         vertexBuilder.texCoord(u, v);
         return this;
+    }
+
+    @Override
+    public void nextElement(byte b) {
+        vertexBuilder.nextElement(b);
+    }
+
+    @Override
+    public void nextElement(float f) {
+        vertexBuilder.nextElement(f);
+    }
+
+    @Override
+    public void nextElement(int i) {
+        vertexBuilder.nextElement(i);
+    }
+
+    @Override
+    public void nextPadding(int size) {
+        vertexBuilder.nextPadding(size);
     }
 
     @Override
@@ -174,6 +208,11 @@ public final class Tessellator implements GLResource, VertexBuilder {
     @Override
     public MemorySegment vertexDataSlice() {
         return vertexBuilder.vertexDataSlice();
+    }
+
+    @Override
+    public MemorySegment indexDataSlice() {
+        return vertexBuilder.indexDataSlice();
     }
 
     @Override

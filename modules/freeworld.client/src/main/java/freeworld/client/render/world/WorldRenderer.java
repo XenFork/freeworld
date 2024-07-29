@@ -12,19 +12,20 @@ package freeworld.client.render.world;
 
 import freeworld.client.render.GameRenderer;
 import freeworld.client.render.RenderSystem;
-import freeworld.client.render.builder.DefaultVertexBuilder;
+import freeworld.client.render.vertex.DefaultVertexBuilder;
 import freeworld.client.render.gl.GLResource;
 import freeworld.client.render.gl.GLStateMgr;
-import freeworld.client.render.model.vertex.VertexLayouts;
+import freeworld.client.render.vertex.VertexLayouts;
 import freeworld.client.world.chunk.ClientChunk;
-import freeworld.core.math.AABBox;
+import freeworld.util.math.AABBox;
 import freeworld.math.*;
 import freeworld.util.Direction;
 import freeworld.util.Logging;
+import freeworld.util.math.HitResult;
 import freeworld.world.World;
 import freeworld.world.WorldListener;
 import freeworld.world.block.BlockType;
-import freeworld.world.chunk.ChunkPos;
+import freeworld.util.math.ChunkPos;
 import freeworld.world.entity.Entity;
 import freeworld.world.entity.EntityComponents;
 import org.slf4j.Logger;
@@ -57,7 +58,7 @@ public final class WorldRenderer implements GLResource, WorldListener {
     private final Pool<DefaultVertexBuilder> vertexBuilderPool = PoolBuilder
         .from(Mono.fromSupplier(WorldRenderer::createVertexBuilder).subscribeOn(scheduler))
         .buildPool();
-    private final Map<ChunkPos, ClientChunk> chunks = new ConcurrentHashMap<>(RENDER_CHUNK_COUNT);
+    private final Map<Vector3i, ClientChunk> chunks = new ConcurrentHashMap<>(RENDER_CHUNK_COUNT);
     private final Disposable chunkGC;
     private int playerChunkX = 0;
     private int playerChunkY = 0;
@@ -76,8 +77,8 @@ public final class WorldRenderer implements GLResource, WorldListener {
     }
 
     private void uninstallChunks() {
-        final List<ChunkPos> list = new ArrayList<>(RENDER_CHUNK_COUNT);
-        World.forEachChunk(gameRenderer.client().player(), RENDER_RADIUS, (x, y, z) -> list.add(new ChunkPos(x, y, z)));
+        final List<Vector3i> list = new ArrayList<>(RENDER_CHUNK_COUNT);
+        World.forEachChunk(gameRenderer.client().player(), RENDER_RADIUS, (x, y, z) -> list.add(new Vector3i(x, y, z)));
         final var it = chunks.entrySet().iterator();
         while (it.hasNext()) {
             final var e = it.next();
@@ -134,7 +135,7 @@ public final class WorldRenderer implements GLResource, WorldListener {
         }
     }
 
-    public HitResult selectBlock(Entity player) {
+    public BlockHitResult selectBlock(Entity player) {
         final FrustumRayBuilder frustumRayBuilder = new FrustumRayBuilder(RenderSystem.projectionViewMatrix());
         final Vector3f frustumRayOrigin = frustumRayBuilder.origin();
         final Vector3f frustumRayDir = frustumRayBuilder.dir(0.5f, 0.5f);
@@ -163,205 +164,35 @@ public final class WorldRenderer implements GLResource, WorldListener {
             final float vx = x + 0.5f - ox;
             final float xSquared = vx * vx;
             for (int y = y0; y <= y1; y++) {
+                final float vy = y + 0.5f - oy;
+                final float ySquared = vy * vy;
                 for (int z = z0; z <= z1; z++) {
                     if (!world.isBlockLoaded(x, y, z)) {
                         continue;
                     }
                     final float vz = z + 0.5f - oz;
                     final float zSquared = vz * vz;
-                    if ((xSquared + zSquared) <= radiusSquared) {
+                    if ((xSquared + ySquared + zSquared) <= radiusSquared) {
                         final BlockType blockType = world.getBlockType(x, y, z);
                         if (blockType.air()) {
                             continue;
                         }
-                        final AABBox box = blockType.outlineShape().move(x, y, z);
-                        final Intersectiond.RayAab blockIntersectionResult = Intersectiond.intersectRayAab(
-                            ox,
-                            oy,
-                            oz,
-                            frustumRayDir.x(),
-                            frustumRayDir.y(),
-                            frustumRayDir.z(),
-                            box.minX(),
-                            box.minY(),
-                            box.minZ(),
-                            box.maxX(),
-                            box.maxY(),
-                            box.maxZ()
-                        );
-                        if (blockIntersectionResult.intersected() &&
-                            blockIntersectionResult.result().x() < nearestBlockDistance) {
-                            nearestBlockDistance = blockIntersectionResult.result().x();
+                        HitResult hitResult = blockType.outlineShape().rayCast(frustumRayOrigin.sub(x, y, z).toVector3d(), frustumRayDir.toVector3d());
+                        if (!hitResult.missed() &&
+                            hitResult.distance() < nearestBlockDistance) {
+                            nearestBlockDistance = hitResult.distance();
                             nearestBlock = blockType;
                             nearestX = x;
                             nearestY = y;
                             nearestZ = z;
-                            face = detectFace(
-                                ox,
-                                oy,
-                                oz,
-                                frustumRayDir.x(),
-                                frustumRayDir.y(),
-                                frustumRayDir.z(),
-                                box
-                            );
+                            face = hitResult.face();
                         }
                     }
                 }
             }
         }
 
-        return new HitResult(nearestBlock == null, nearestBlock, nearestX, nearestY, nearestZ, face);
-    }
-
-    private Direction detectFace(
-        double originX,
-        double originY,
-        double originZ,
-        double dirX,
-        double dirY,
-        double dirZ,
-        AABBox box
-    ) {
-        double t = -1.0;
-        Direction direction = Direction.SOUTH;
-        for (Direction dir : Direction.LIST) {
-            final double v = rayFace(dir, originX, originY, originZ, dirX, dirY, dirZ, box);
-            if (v > t) {
-                t = v;
-                direction = dir;
-            }
-        }
-        return direction;
-    }
-
-    private double rayFace(
-        Direction direction,
-        double originX,
-        double originY,
-        double originZ,
-        double dirX,
-        double dirY,
-        double dirZ,
-        AABBox box
-    ) {
-        final double epsilon = 0.001;
-        final double minX = box.minX();
-        final double minY = box.minY();
-        final double minZ = box.minZ();
-        final double maxX = box.maxX();
-        final double maxY = box.maxY();
-        final double maxZ = box.maxZ();
-        return switch (direction) {
-            case WEST -> Math.max(
-                Intersectiond.intersectRayTriangleFront(
-                    originX, originY, originZ,
-                    dirX, dirY, dirZ,
-                    minX, maxY, minZ,
-                    minX, minY, minZ,
-                    minX, minY, maxZ,
-                    epsilon
-                ),
-                Intersectiond.intersectRayTriangleFront(
-                    originX, originY, originZ,
-                    dirX, dirY, dirZ,
-                    minX, minY, maxZ,
-                    minX, maxY, maxZ,
-                    minX, maxY, minZ,
-                    epsilon
-                )
-            );
-            case EAST -> Math.max(
-                Intersectiond.intersectRayTriangleFront(
-                    originX, originY, originZ,
-                    dirX, dirY, dirZ,
-                    maxX, maxY, maxZ,
-                    maxX, minY, maxZ,
-                    maxX, minY, minZ,
-                    epsilon
-                ),
-                Intersectiond.intersectRayTriangleFront(
-                    originX, originY, originZ,
-                    dirX, dirY, dirZ,
-                    maxX, minY, minZ,
-                    maxX, maxY, minZ,
-                    maxX, maxY, maxZ,
-                    epsilon
-                )
-            );
-            case DOWN -> Math.max(
-                Intersectiond.intersectRayTriangleFront(
-                    originX, originY, originZ,
-                    dirX, dirY, dirZ,
-                    minX, minY, maxZ,
-                    minX, minY, minZ,
-                    maxX, minY, minZ,
-                    epsilon
-                ),
-                Intersectiond.intersectRayTriangleFront(
-                    originX, originY, originZ,
-                    dirX, dirY, dirZ,
-                    maxX, minY, minZ,
-                    maxX, minY, maxZ,
-                    minX, minY, maxZ,
-                    epsilon
-                )
-            );
-            case UP -> Math.max(
-                Intersectiond.intersectRayTriangleFront(
-                    originX, originY, originZ,
-                    dirX, dirY, dirZ,
-                    minX, maxY, minZ,
-                    minX, maxY, maxZ,
-                    maxX, maxY, maxZ,
-                    epsilon
-                ),
-                Intersectiond.intersectRayTriangleFront(
-                    originX, originY, originZ,
-                    dirX, dirY, dirZ,
-                    maxX, maxY, maxZ,
-                    maxX, maxY, minZ,
-                    minX, maxY, minZ,
-                    epsilon
-                )
-            );
-            case NORTH -> Math.max(
-                Intersectiond.intersectRayTriangleFront(
-                    originX, originY, originZ,
-                    dirX, dirY, dirZ,
-                    maxX, maxY, minZ,
-                    maxX, minY, minZ,
-                    minX, minY, minZ,
-                    epsilon
-                ),
-                Intersectiond.intersectRayTriangleFront(
-                    originX, originY, originZ,
-                    dirX, dirY, dirZ,
-                    minX, minY, minZ,
-                    minX, maxY, minZ,
-                    maxX, maxY, minZ,
-                    epsilon
-                )
-            );
-            case SOUTH -> Math.max(
-                Intersectiond.intersectRayTriangleFront(
-                    originX, originY, originZ,
-                    dirX, dirY, dirZ,
-                    minX, maxY, maxZ,
-                    minX, minY, maxZ,
-                    maxX, minY, maxZ,
-                    epsilon
-                ),
-                Intersectiond.intersectRayTriangleFront(
-                    originX, originY, originZ,
-                    dirX, dirY, dirZ,
-                    maxX, minY, maxZ,
-                    maxX, maxY, maxZ,
-                    minX, maxY, maxZ,
-                    epsilon
-                )
-            );
-        };
+        return new BlockHitResult(nearestBlock == null, nearestBlock, nearestX, nearestY, nearestZ, face);
     }
 
     @Override
@@ -371,10 +202,11 @@ public final class WorldRenderer implements GLResource, WorldListener {
             chunk.markDirty();
         }
         for (Direction direction : Direction.LIST) {
+            Vector3i axis = direction.axis();
             final ClientChunk chunk1 = getChunkByAbsolutePos(
-                x + direction.axisX(),
-                y + direction.axisY(),
-                z + direction.axisZ()
+                x + axis.x(),
+                y + axis.y(),
+                z + axis.z()
             );
             if (chunk1 != null) {
                 chunk1.markDirty();
@@ -383,11 +215,11 @@ public final class WorldRenderer implements GLResource, WorldListener {
     }
 
     private ClientChunk getChunk(int x, int y, int z) {
-        return chunks.get(new ChunkPos(x, y, z));
+        return chunks.get(new Vector3i(x, y, z));
     }
 
     private ClientChunk getChunkOrCreate(int x, int y, int z) {
-        return chunks.computeIfAbsent(new ChunkPos(x, y, z),
+        return chunks.computeIfAbsent(new Vector3i(x, y, z),
             chunkPos -> new ClientChunk(world, this, chunkPos.x(), chunkPos.y(), chunkPos.z()));
     }
 
