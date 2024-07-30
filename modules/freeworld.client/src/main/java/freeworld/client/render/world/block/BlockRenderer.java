@@ -8,7 +8,7 @@
  * only version 2.1 of the License.
  */
 
-package freeworld.client.render.world;
+package freeworld.client.render.world.block;
 
 import freeworld.client.render.model.block.BlockModel;
 import freeworld.client.render.model.block.BlockModelFace;
@@ -47,6 +47,7 @@ public final class BlockRenderer {
             case NORTH, SOUTH -> 0.8f;
         };
         Vector4i vertexIndices = direction.vertexIndices();
+        builder.indices(0, 1, 2, 2, 3, 0);
         builder.position(matrix, AABBox.getPoint(from, to, vertexIndices.x())).color(color, color, color).texCoord(uvFrom.x(), uvFrom.y()).emit();
         builder.position(matrix, AABBox.getPoint(from, to, vertexIndices.y())).color(color, color, color).texCoord(uvFrom.x(), uvTo.y()).emit();
         builder.position(matrix, AABBox.getPoint(from, to, vertexIndices.z())).color(color, color, color).texCoord(uvTo.x(), uvTo.y()).emit();
@@ -73,7 +74,6 @@ public final class BlockRenderer {
                     final Vector2f uvFrom = face.uvFrom().mul(region.width(), region.height()).add(region.x(), region.y()).div(width, height);
                     final Vector2f uvTo = face.uvTo().mul(region.width(), region.height()).add(region.x(), region.y()).div(width, height);
 
-                    builder.indices(0, 1, 2, 2, 3, 0);
                     emitVertices(builder, matrix, from, to, uvFrom, uvTo, e.getKey());
                 }
             }

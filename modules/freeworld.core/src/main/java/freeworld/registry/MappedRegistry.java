@@ -33,7 +33,7 @@ public class MappedRegistry<T> implements MutableRegistry<T> {
     private final Map<Identifier, T> idToEntryMap = HashMap.newHashMap(DEFAULT_CAPACITY);
     private final Map<T, Identifier> entryToIdMap = HashMap.newHashMap(DEFAULT_CAPACITY);
     private final Map<Integer, T> rawIdToEntryMap = HashMap.newHashMap(DEFAULT_CAPACITY);
-    private final Map<Identifier, Integer> idToRawIdMap = HashMap.newHashMap(DEFAULT_CAPACITY);
+    protected final Map<Identifier, Integer> idToRawIdMap = HashMap.newHashMap(DEFAULT_CAPACITY);
     private int nextId = -1;
 
     public MappedRegistry(Identifier registryName) {
@@ -80,7 +80,7 @@ public class MappedRegistry<T> implements MutableRegistry<T> {
     }
 
     @Override
-    public T get(Identifier identifier) {
+    public T getById(Identifier identifier) {
         return idToEntryMap.get(identifier);
     }
 
@@ -92,6 +92,11 @@ public class MappedRegistry<T> implements MutableRegistry<T> {
     @Override
     public Identifier getId(T entry) {
         return entryToIdMap.get(entry);
+    }
+
+    @Override
+    public int getRawId(Identifier identifier) {
+        return idToRawIdMap.get(identifier);
     }
 
     @Override

@@ -35,8 +35,8 @@ public class DefaultedRegistry<T> extends MappedRegistry<T> {
     }
 
     @Override
-    public T get(Identifier identifier) {
-        final T t = super.get(identifier);
+    public T getById(Identifier identifier) {
+        final T t = super.getById(identifier);
         return t != null ? t : getDefaultValue();
     }
 
@@ -50,5 +50,10 @@ public class DefaultedRegistry<T> extends MappedRegistry<T> {
     public Identifier getId(T entry) {
         final Identifier id = super.getId(entry);
         return id != null ? id : super.getId(getDefaultValue());
+    }
+
+    @Override
+    public int getRawId(Identifier identifier) {
+        return idToRawIdMap.containsKey(identifier) ? idToRawIdMap.get(identifier) : super.getRawId(getId(getDefaultValue()));
     }
 }

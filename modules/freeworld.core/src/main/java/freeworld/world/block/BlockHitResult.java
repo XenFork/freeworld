@@ -8,11 +8,10 @@
  * only version 2.1 of the License.
  */
 
-package freeworld.client.render.world;
+package freeworld.world.block;
 
 import freeworld.math.Vector3i;
 import freeworld.util.Direction;
-import freeworld.world.block.BlockType;
 
 /**
  * @author squid233

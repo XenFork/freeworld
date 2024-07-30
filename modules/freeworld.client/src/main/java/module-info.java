@@ -29,6 +29,8 @@ module freeworld.client {
     exports freeworld.client.render.texture;
     exports freeworld.client.render.vertex;
     exports freeworld.client.render.world;
+    exports freeworld.client.render.world.block;
+    exports freeworld.client.render.world.chunk;
     exports freeworld.client.util;
     exports freeworld.client.world.chunk;
 

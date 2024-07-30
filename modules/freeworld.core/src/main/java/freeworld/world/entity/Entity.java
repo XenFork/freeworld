@@ -30,7 +30,9 @@ public class Entity {
     public Vector3d eyePosition;
     public boolean flying = false;
     public boolean onGround = false;
-    public Vector3d position = Vector3d.ZERO;
+    private Vector3d previousPosition = Vector3d.ZERO;
+    private Vector3d position = Vector3d.ZERO;
+    private Vector3d interpolatedPosition = Vector3d.ZERO;
     public Vector2d rotation = Vector2d.ZERO;
     public Vector3d velocity = Vector3d.ZERO;
 
@@ -60,6 +62,18 @@ public class Entity {
     public final void init(Vector3d position) {
         this.position = position;
         this.boundingBox = boundingBox(position, entityType.dimension());
+    }
+
+    public void updatePreviousPosition() {
+        this.previousPosition = position;
+    }
+
+    public void setPosition(Vector3d position) {
+        this.position = position;
+    }
+
+    public void interpolatePosition(double partialTick) {
+        interpolatedPosition = previousPosition.lerp(position, partialTick);
     }
 
     public World world() {
@@ -94,8 +108,16 @@ public class Entity {
         return onGround;
     }
 
+    public Vector3d previousPosition() {
+        return previousPosition;
+    }
+
     public Vector3d position() {
         return position;
+    }
+
+    public Vector3d interpolatedPosition() {
+        return interpolatedPosition;
     }
 
     public Vector2d rotation() {

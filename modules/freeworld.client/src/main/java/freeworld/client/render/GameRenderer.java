@@ -25,16 +25,18 @@ import freeworld.client.render.texture.TextureAtlas;
 import freeworld.client.render.texture.TextureManager;
 import freeworld.client.render.vertex.VertexLayout;
 import freeworld.client.render.vertex.VertexLayouts;
-import freeworld.client.render.world.BlockHitResult;
-import freeworld.client.render.world.BlockRenderer;
 import freeworld.client.render.world.WorldRenderer;
+import freeworld.client.render.world.block.BlockRenderer;
+import freeworld.client.render.world.entity.EntityRenderers;
 import freeworld.client.world.chunk.ClientChunk;
-import freeworld.util.Identifier;
 import freeworld.math.Matrix4f;
 import freeworld.math.Vector3i;
+import freeworld.registry.Registries;
 import freeworld.util.Direction;
+import freeworld.util.Identifier;
 import freeworld.util.Logging;
 import freeworld.util.math.Lined;
+import freeworld.world.block.BlockHitResult;
 import freeworld.world.entity.Entity;
 import org.slf4j.Logger;
 import overrungl.opengl.GL10C;
@@ -193,6 +195,20 @@ public final class GameRenderer implements GLResource {
                 tessellator.position(mat, line.to().toVector3f()).color(0, 0, 0).texCoord(0f, 0f).emit();
             }
             tessellator.end(gl);
+        }
+
+        renderWorldEntities(gl, partialTick);
+    }
+
+    private void renderWorldEntities(GLStateMgr gl, double partialTick) {
+        RenderSystem.useProgram(positionColorProgram);
+        RenderSystem.updateMatrices();
+        for (Entity entity : client.world().entities()) {
+            entity.interpolatePosition(partialTick);
+            var factory = EntityRenderers.registry().getById(Registries.ENTITY_TYPE.getId(entity.entityType()));
+            if (factory != null) {
+                factory.create(client).render(gl, partialTick, Matrix4f.translation(entity.interpolatedPosition().toVector3f()), entity);
+            }
         }
     }
 

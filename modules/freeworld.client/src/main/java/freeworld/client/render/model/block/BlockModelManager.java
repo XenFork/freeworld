@@ -70,7 +70,7 @@ public final class BlockModelManager {
     }
 
     public BlockModel get(Identifier identifier) {
-        return registry.get(identifier);
+        return registry.getById(identifier);
     }
 
     public DefaultedRegistry<BlockModel> registry() {

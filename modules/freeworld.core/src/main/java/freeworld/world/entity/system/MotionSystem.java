@@ -99,7 +99,8 @@ public final class MotionSystem implements EntitySystem {
             }
             entity.velocity = new Vector3d(fvx, fvy, fvz);
 
-            entity.position = entity.position().add(moveX, moveY, moveZ);
+            entity.updatePreviousPosition();
+            entity.setPosition(entity.position().add(moveX, moveY, moveZ));
             entity.boundingBox = Entity.boundingBox(entity.position(), entity.boundingBox().dimension());
 
             if (entity.flying()) {

@@ -19,7 +19,8 @@ import freeworld.client.render.model.block.BlockModelManager;
 import freeworld.client.render.screen.Screen;
 import freeworld.client.render.screen.ingame.CreativeTabScreen;
 import freeworld.client.render.screen.ingame.PauseScreen;
-import freeworld.client.render.world.BlockHitResult;
+import freeworld.client.render.world.entity.EntityRenderers;
+import freeworld.world.block.BlockHitResult;
 import freeworld.client.render.world.WorldRenderer;
 import freeworld.math.Vector2d;
 import freeworld.math.Vector3d;
@@ -124,11 +125,6 @@ public final class Freeworld implements AutoCloseable {
 
         BlockTypes.bootstrap();
         EntityTypes.bootstrap();
-
-        blockModelManager = new BlockModelManager();
-        blockModelManager.bootstrap();
-
-        setScreen(new PauseScreen(this));
         world = new World("New world", new Random().nextLong());
         player = world.createEntity(EntityTypes.PLAYER, new Vector3d(0.0, 64.0, 0.0));
 
@@ -236,65 +232,73 @@ public final class Freeworld implements AutoCloseable {
         }
     }
 
+    private void worldInput() {
+        double speed;
+        if (player.flying()) {
+            speed = 0.5; // TODO: this value is only for test
+        } else {
+            if (player.onGround()) {
+                speed = 0.1;
+            } else {
+                speed = 0.02;
+            }
+        }
+        if (glfw.getKey(window, GLFW.KEY_LEFT_CONTROL) == GLFW.PRESS) speed *= 2.0;
+        double xo = 0.0;
+        double yo = 0.0;
+        double zo = 0.0;
+        if (glfw.getKey(window, GLFW.KEY_W) == GLFW.PRESS) zo -= 1.0;
+        if (glfw.getKey(window, GLFW.KEY_S) == GLFW.PRESS) zo += 1.0;
+        if (glfw.getKey(window, GLFW.KEY_A) == GLFW.PRESS) xo -= 1.0;
+        if (glfw.getKey(window, GLFW.KEY_D) == GLFW.PRESS) xo += 1.0;
+        if ((player.onGround() || player.flying()) && glfw.getKey(window, GLFW.KEY_SPACE) == GLFW.PRESS) {
+            yo += 1.0;
+        }
+        if (player.flying() && glfw.getKey(window, GLFW.KEY_LEFT_SHIFT) == GLFW.PRESS) {
+            yo -= 1.0;
+        }
+        player.acceleration = MathUtil.moveRelative(xo, yo * (player.flying() ? speed : 0.5), zo, player.rotation().y(), speed);
+
+        if (blockDestroyTimer >= 2) {
+            final BlockHitResult hitResult = gameRenderer.hitResult();
+            if (!hitResult.missed() &&
+                glfw.getMouseButton(window, GLFW.MOUSE_BUTTON_LEFT) == GLFW.PRESS) {
+                Vector3i position = hitResult.position();
+                world.setBlockType(position.x(), position.y(), position.z(), BlockTypes.AIR);
+                blockDestroyTimer = 0;
+            }
+        }
+        if (blockPlaceTimer >= 2) {
+            final BlockHitResult hitResult = gameRenderer.hitResult();
+            if (!hitResult.missed() &&
+                glfw.getMouseButton(window, GLFW.MOUSE_BUTTON_RIGHT) == GLFW.PRESS) {
+                final Direction face = hitResult.face();
+                final BlockType type = player.getHandItem();
+                if (!type.air()) {
+                    Vector3i axis = face.axis();
+                    Vector3i position = hitResult.position();
+                    Vector3i add = position.add(axis);
+                    if (world.getBlockType(position.x(), position.y(), position.z()).replaceable() ||
+                        world.getBlockType(add.x(), add.y(), add.z()).replaceable()) {
+                        world.setBlockType(add.x(), add.y(), add.z(), type);
+                    }
+                }
+                blockPlaceTimer = 0;
+            }
+        }
+        blockDestroyTimer++;
+        blockPlaceTimer++;
+
+        if (glfw.getKey(window, GLFW.KEY_G) == GLFW.PRESS) {
+            world.createEntity(EntityTypes.CUBE, player.position());
+        }
+    }
+
     private void tick() {
         if (world != null) {
             camera.preUpdate();
             if (screen == null) {
-                double speed;
-                if (player.flying()) {
-                    speed = 0.5; // TODO: this value is only for test
-                } else {
-                    if (player.onGround()) {
-                        speed = 0.1;
-                    } else {
-                        speed = 0.02;
-                    }
-                }
-                if (glfw.getKey(window, GLFW.KEY_LEFT_CONTROL) == GLFW.PRESS) speed *= 2.0;
-                double xo = 0.0;
-                double yo = 0.0;
-                double zo = 0.0;
-                if (glfw.getKey(window, GLFW.KEY_W) == GLFW.PRESS) zo -= 1.0;
-                if (glfw.getKey(window, GLFW.KEY_S) == GLFW.PRESS) zo += 1.0;
-                if (glfw.getKey(window, GLFW.KEY_A) == GLFW.PRESS) xo -= 1.0;
-                if (glfw.getKey(window, GLFW.KEY_D) == GLFW.PRESS) xo += 1.0;
-                if ((player.onGround() || player.flying()) && glfw.getKey(window, GLFW.KEY_SPACE) == GLFW.PRESS) {
-                    yo += 1.0;
-                }
-                if (player.flying() && glfw.getKey(window, GLFW.KEY_LEFT_SHIFT) == GLFW.PRESS) {
-                    yo -= 1.0;
-                }
-                player.acceleration = MathUtil.moveRelative(xo, yo * (player.flying() ? speed : 0.5), zo, player.rotation().y(), speed);
-
-                if (blockDestroyTimer >= 2) {
-                    final BlockHitResult hitResult = gameRenderer.hitResult();
-                    if (!hitResult.missed() &&
-                        glfw.getMouseButton(window, GLFW.MOUSE_BUTTON_LEFT) == GLFW.PRESS) {
-                        Vector3i position = hitResult.position();
-                        world.setBlockType(position.x(), position.y(), position.z(), BlockTypes.AIR);
-                        blockDestroyTimer = 0;
-                    }
-                }
-                if (blockPlaceTimer >= 2) {
-                    final BlockHitResult hitResult = gameRenderer.hitResult();
-                    if (!hitResult.missed() &&
-                        glfw.getMouseButton(window, GLFW.MOUSE_BUTTON_RIGHT) == GLFW.PRESS) {
-                        final Direction face = hitResult.face();
-                        final BlockType type = player.getHandItem();
-                        if (!type.air()) {
-                            Vector3i axis = face.axis();
-                            Vector3i position = hitResult.position();
-                            Vector3i add = position.add(axis);
-                            if (world.getBlockType(position.x(), position.y(), position.z()).replaceable() ||
-                                world.getBlockType(add.x(), add.y(), add.z()).replaceable()) {
-                                world.setBlockType(add.x(), add.y(), add.z(), type);
-                            }
-                        }
-                        blockPlaceTimer = 0;
-                    }
-                }
-                blockDestroyTimer++;
-                blockPlaceTimer++;
+                worldInput();
             }
             world.tick();
         }
@@ -310,8 +314,15 @@ public final class Freeworld implements AutoCloseable {
 
         RenderSystem.initialize(gl);
 
+        blockModelManager = new BlockModelManager();
+        blockModelManager.bootstrap();
+
+        EntityRenderers.bootstrap();
+
         gameRenderer = new GameRenderer(this);
         gameRenderer.init(gl);
+
+        setScreen(new PauseScreen(this));
     }
 
     public void run() {

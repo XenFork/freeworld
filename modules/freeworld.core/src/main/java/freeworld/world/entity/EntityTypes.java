@@ -24,7 +24,7 @@ public final class EntityTypes {
     /**
      * A cube entity is for test.
      */
-    public static final EntityType<Entity> CUBE = register("cube", new EntityType<>(new EntityType.Settings().dimension(new Vector3d(1.0)), CubeEntity::new));
+    public static final EntityType<CubeEntity> CUBE = register("cube", new EntityType<>(new EntityType.Settings().dimension(new Vector3d(1.0)), CubeEntity::new));
 
     private EntityTypes() {
     }

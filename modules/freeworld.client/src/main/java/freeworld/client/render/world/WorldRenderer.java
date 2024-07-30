@@ -25,6 +25,7 @@ import freeworld.util.math.ChunkPos;
 import freeworld.util.math.HitResult;
 import freeworld.world.World;
 import freeworld.world.WorldListener;
+import freeworld.world.block.BlockHitResult;
 import freeworld.world.block.BlockType;
 import freeworld.world.entity.Entity;
 import org.slf4j.Logger;

@@ -46,7 +46,7 @@ public final class World {
     }
 
     public static void forInChunkRange(Entity player, int chunkRadius, Int3Consumer consumer) {
-        Vector3i chunkPos = ChunkPos.absoluteToChunk(player.position.toVector3iFloor());
+        Vector3i chunkPos = ChunkPos.absoluteToChunk(player.position().toVector3iFloor());
         int minX = chunkPos.x() - chunkRadius;
         int maxX = chunkPos.x() + chunkRadius;
         int minY = chunkPos.y() - chunkRadius;
@@ -146,5 +146,9 @@ public final class World {
 
     public long seed() {
         return seed;
+    }
+
+    public List<Entity> entities() {
+        return entities;
     }
 }

@@ -8,7 +8,7 @@
  * only version 2.1 of the License.
  */
 
-package freeworld.client.render.world;
+package freeworld.client.world.chunk;
 
 import freeworld.client.render.vertex.VertexLayout;
 

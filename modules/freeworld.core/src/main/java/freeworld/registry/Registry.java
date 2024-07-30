@@ -37,11 +37,13 @@ public interface Registry<T> extends Iterable<Map.Entry<Identifier, T>> {
      *
      * @param identifier the identifier
      */
-    T get(Identifier identifier);
+    T getById(Identifier identifier);
 
     T getByRawId(int rawId);
 
     Identifier getId(T entry);
+
+    int getRawId(Identifier identifier);
 
     int size();
 }
