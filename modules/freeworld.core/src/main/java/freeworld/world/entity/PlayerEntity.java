@@ -11,6 +11,8 @@
 package freeworld.world.entity;
 
 import freeworld.world.World;
+import freeworld.world.block.BlockType;
+import freeworld.world.block.BlockTypes;
 
 import java.util.UUID;
 
@@ -19,7 +21,37 @@ import java.util.UUID;
  * @since 0.1.0
  */
 public class PlayerEntity extends Entity {
+    private final BlockType[] hotBar = {
+        BlockTypes.STONE,
+        BlockTypes.DIRT,
+        BlockTypes.GRASS_BLOCK,
+        BlockTypes.STONE_SLAB,
+        BlockTypes.AIR,
+        BlockTypes.AIR,
+        BlockTypes.AIR,
+        BlockTypes.AIR,
+        BlockTypes.AIR,
+        BlockTypes.AIR
+    };
+    private int selectedHotBar = 0;
+
     public PlayerEntity(World world, UUID uuid) {
         super(world, uuid, EntityTypes.PLAYER);
+    }
+
+    public void selectHotBar(int index) {
+        selectedHotBar = Math.clamp(index, 0, 9);
+    }
+
+    public int selectedHotBar() {
+        return selectedHotBar;
+    }
+
+    public BlockType getHotBarItem(int index) {
+        return hotBar[Math.clamp(index, 0, 9)];
+    }
+
+    public BlockType getHandItem() {
+        return hotBar[selectedHotBar];
     }
 }

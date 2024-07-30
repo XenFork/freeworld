@@ -31,8 +31,8 @@ import freeworld.util.math.MathUtil;
 import freeworld.world.World;
 import freeworld.world.block.BlockType;
 import freeworld.world.block.BlockTypes;
-import freeworld.world.entity.Entity;
 import freeworld.world.entity.EntityTypes;
+import freeworld.world.entity.PlayerEntity;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import overrun.marshal.Unmarshal;
@@ -72,25 +72,12 @@ public final class Freeworld implements AutoCloseable {
     private GameRenderer gameRenderer;
     private BlockModelManager blockModelManager;
     private World world;
-    private Entity player;
+    private PlayerEntity player;
     @Nullable
     private Screen screen = null;
     private final float guiScale = 2;
     private int blockDestroyTimer = 0;
     private int blockPlaceTimer = 0;
-    private int hotBarSelection = 0;
-    private final BlockType[] hotBar = {
-        BlockTypes.STONE,
-        BlockTypes.DIRT,
-        BlockTypes.GRASS_BLOCK,
-        BlockTypes.STONE_SLAB,
-        BlockTypes.AIR,
-        BlockTypes.AIR,
-        BlockTypes.AIR,
-        BlockTypes.AIR,
-        BlockTypes.AIR,
-        BlockTypes.AIR
-    };
     private int gameTick = 0;
     private int spaceTick = 0;
 
@@ -145,7 +132,7 @@ public final class Freeworld implements AutoCloseable {
         world = new World("New world", new Random().nextLong());
         player = world.createEntity(EntityTypes.PLAYER, new Vector3d(0.0, 64.0, 0.0));
 
-        World.forEachChunk(player, WorldRenderer.RENDER_RADIUS, (x, y, z) -> world.getOrCreateChunk(x, y, z));
+        World.forInChunkRange(player, WorldRenderer.RENDER_RADIUS, (x, y, z) -> world.getOrCreateChunk(x, y, z));
 
         initGL();
         run();
@@ -168,16 +155,16 @@ public final class Freeworld implements AutoCloseable {
                         if (screen == null) {
                             if (world != null) {
                                 switch (key) {
-                                    case GLFW.KEY_1 -> hotBarSelection = 0;
-                                    case GLFW.KEY_2 -> hotBarSelection = 1;
-                                    case GLFW.KEY_3 -> hotBarSelection = 2;
-                                    case GLFW.KEY_4 -> hotBarSelection = 3;
-                                    case GLFW.KEY_5 -> hotBarSelection = 4;
-                                    case GLFW.KEY_6 -> hotBarSelection = 5;
-                                    case GLFW.KEY_7 -> hotBarSelection = 6;
-                                    case GLFW.KEY_8 -> hotBarSelection = 7;
-                                    case GLFW.KEY_9 -> hotBarSelection = 8;
-                                    case GLFW.KEY_0 -> hotBarSelection = 9;
+                                    case GLFW.KEY_1 -> player.selectHotBar(0);
+                                    case GLFW.KEY_2 -> player.selectHotBar(1);
+                                    case GLFW.KEY_3 -> player.selectHotBar(2);
+                                    case GLFW.KEY_4 -> player.selectHotBar(3);
+                                    case GLFW.KEY_5 -> player.selectHotBar(4);
+                                    case GLFW.KEY_6 -> player.selectHotBar(5);
+                                    case GLFW.KEY_7 -> player.selectHotBar(6);
+                                    case GLFW.KEY_8 -> player.selectHotBar(7);
+                                    case GLFW.KEY_9 -> player.selectHotBar(8);
+                                    case GLFW.KEY_0 -> player.selectHotBar(9);
                                     case GLFW.KEY_E -> setScreen(new CreativeTabScreen(this));
                                     case GLFW.KEY_SPACE -> {
                                         if (gameTick - spaceTick < 5) {
@@ -231,15 +218,21 @@ public final class Freeworld implements AutoCloseable {
     }
 
     private void onScroll(double x, double y) {
-        if (y < 0.0) {
-            hotBarSelection++;
-        } else if (y > 0.0) {
-            hotBarSelection--;
-        }
-        if (hotBarSelection > 9) {
-            hotBarSelection = 0;
-        } else if (hotBarSelection < 0) {
-            hotBarSelection = 9;
+        if (screen == null) {
+            if (world != null) {
+                int hotBarSelection = player.selectedHotBar();
+                if (y < 0.0) {
+                    hotBarSelection++;
+                } else if (y > 0.0) {
+                    hotBarSelection--;
+                }
+                if (hotBarSelection > 9) {
+                    hotBarSelection = 0;
+                } else if (hotBarSelection < 0) {
+                    hotBarSelection = 9;
+                }
+                player.selectHotBar(hotBarSelection);
+            }
         }
     }
 
@@ -248,34 +241,30 @@ public final class Freeworld implements AutoCloseable {
             camera.preUpdate();
             if (screen == null) {
                 double speed;
-                if (player.onGround()) {
-                    speed = 0.1;
-                } else if (player.flying()) {
-                    speed = 0.5;
+                if (player.flying()) {
+                    speed = 0.5; // TODO: this value is only for test
                 } else {
-                    speed = 0.02;
+                    if (player.onGround()) {
+                        speed = 0.1;
+                    } else {
+                        speed = 0.02;
+                    }
                 }
                 if (glfw.getKey(window, GLFW.KEY_LEFT_CONTROL) == GLFW.PRESS) speed *= 2.0;
                 double xo = 0.0;
                 double yo = 0.0;
-                boolean changedYo = false;
                 double zo = 0.0;
                 if (glfw.getKey(window, GLFW.KEY_W) == GLFW.PRESS) zo -= 1.0;
                 if (glfw.getKey(window, GLFW.KEY_S) == GLFW.PRESS) zo += 1.0;
                 if (glfw.getKey(window, GLFW.KEY_A) == GLFW.PRESS) xo -= 1.0;
                 if (glfw.getKey(window, GLFW.KEY_D) == GLFW.PRESS) xo += 1.0;
                 if ((player.onGround() || player.flying()) && glfw.getKey(window, GLFW.KEY_SPACE) == GLFW.PRESS) {
-                    yo += 0.5;
-                    changedYo = true;
+                    yo += 1.0;
                 }
                 if (player.flying() && glfw.getKey(window, GLFW.KEY_LEFT_SHIFT) == GLFW.PRESS) {
-                    yo -= 0.5;
-                    changedYo = true;
+                    yo -= 1.0;
                 }
-                if (changedYo) {
-                    player.velocity = player.velocity().withY(yo);
-                }
-                player.acceleration = MathUtil.moveRelative(xo, 0.0, zo, player.rotation().y(), speed);
+                player.acceleration = MathUtil.moveRelative(xo, yo * (player.flying() ? speed : 0.5), zo, player.rotation().y(), speed);
 
                 if (blockDestroyTimer >= 2) {
                     final BlockHitResult hitResult = gameRenderer.hitResult();
@@ -291,7 +280,7 @@ public final class Freeworld implements AutoCloseable {
                     if (!hitResult.missed() &&
                         glfw.getMouseButton(window, GLFW.MOUSE_BUTTON_RIGHT) == GLFW.PRESS) {
                         final Direction face = hitResult.face();
-                        final BlockType type = hotBar[hotBarSelection];
+                        final BlockType type = player.getHandItem();
                         if (!type.air()) {
                             Vector3i axis = face.axis();
                             Vector3i position = hitResult.position();
@@ -416,16 +405,8 @@ public final class Freeworld implements AutoCloseable {
         return world;
     }
 
-    public Entity player() {
+    public PlayerEntity player() {
         return player;
-    }
-
-    public int hotBarSelection() {
-        return hotBarSelection;
-    }
-
-    public BlockType[] hotBar() {
-        return hotBar;
     }
 
     public float guiScale() {

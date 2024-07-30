@@ -91,7 +91,7 @@ public final class HudRenderer {
         );
         graphics.drawSprite(
             atlas.getRegion(HOT_BAR_SELECTED_TEXTURE),
-            hotBarSelectorX(gameRenderer.client().hotBarSelection()),
+            hotBarSelectorX(gameRenderer.client().player().selectedHotBar()),
             -height * 0.5f,
             0.0f,
             0.0f
@@ -106,11 +106,11 @@ public final class HudRenderer {
         RenderSystem.bindTexture2D(gameRenderer.textureManager().getTexture(TextureManager.BLOCK_ATLAS));
         final Freeworld client = gameRenderer.client();
         final Tessellator tessellator = Tessellator.getInstance();
-        int i = 0;
-        for (BlockType blockType : client.hotBar()) {
+        for (int i = 0; i < 10; i++) {
+            BlockType item = client.player().getHotBarItem(i);
             tessellator.begin(GLDrawMode.TRIANGLES);
             gameRenderer.blockRenderer().renderBlockModel(tessellator,
-                client.blockModelManager().get(Registries.BLOCK_TYPE.getId(blockType)),
+                client.blockModelManager().get(Registries.BLOCK_TYPE.getId(item)),
                 Matrix4f.translation((i - 5) * 20 + 3, -height * 0.5f + 8, 100)
                     .rotateX((float) Math.toRadians(30.0))
                     .rotateY((float) Math.toRadians(45.0))
@@ -120,7 +120,6 @@ public final class HudRenderer {
                 0,
                 _ -> false);
             tessellator.end(gl);
-            i++;
         }
     }
 

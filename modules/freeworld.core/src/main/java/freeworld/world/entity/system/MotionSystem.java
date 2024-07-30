@@ -10,11 +10,12 @@
 
 package freeworld.world.entity.system;
 
-import freeworld.util.math.AABBox;
+import freeworld.math.Maths;
 import freeworld.math.Vector3d;
+import freeworld.util.math.AABBox;
+import freeworld.util.math.ChunkPos;
 import freeworld.world.World;
 import freeworld.world.block.BlockType;
-import freeworld.util.math.ChunkPos;
 import freeworld.world.entity.Entity;
 
 import java.util.ArrayList;
@@ -26,7 +27,7 @@ import java.util.List;
  */
 public final class MotionSystem implements EntitySystem {
     @Override
-    public void process(World world, List<Entity> entities) {
+    public void process(World world, List<? extends Entity> entities) {
         for (Entity entity : entities) {
             double g = 0.08;
             if (entity.flying()) {
@@ -41,12 +42,12 @@ public final class MotionSystem implements EntitySystem {
 
             final AABBox range = entity.boundingBox().expand(moveX, moveY, moveZ);
             final List<AABBox> boxes = new ArrayList<>();
-            final int x0 = (int) Math.floor(range.minX());
-            final int y0 = (int) Math.floor(range.minY());
-            final int z0 = (int) Math.floor(range.minZ());
-            final int x1 = (int) Math.ceil(range.maxX() + 1.0);
-            final int y1 = (int) Math.ceil(range.maxY() + 1.0);
-            final int z1 = (int) Math.ceil(range.maxZ() + 1.0);
+            final int x0 = Maths.floorToInt(range.minX());
+            final int y0 = Maths.floorToInt(range.minY());
+            final int z0 = Maths.floorToInt(range.minZ());
+            final int x1 = Maths.ceilToInt(range.maxX() + 1.0);
+            final int y1 = Maths.ceilToInt(range.maxY() + 1.0);
+            final int z1 = Maths.ceilToInt(range.maxZ() + 1.0);
             for (int x = x0; x < x1; x++) {
                 for (int y = y0; y < y1; y++) {
                     for (int z = z0; z < z1; z++) {
@@ -101,15 +102,14 @@ public final class MotionSystem implements EntitySystem {
             entity.position = entity.position().add(moveX, moveY, moveZ);
             entity.boundingBox = Entity.boundingBox(entity.position(), entity.boundingBox().dimension());
 
-            // TODO: 2024/7/30 squid233: flying use acceleration
-            if (!entity.flying()) {
-                entity.velocity = entity.velocity().mul(0.91, 0.98, 0.91);
-            } else {
+            if (entity.flying()) {
                 entity.velocity = Vector3d.ZERO;
-            }
-            if (entity.onGround()) {
-                final double fiction = 0.7;
-                entity.velocity = entity.velocity().mul(fiction, 1.0, fiction);
+            } else {
+                entity.velocity = entity.velocity().mul(0.91, 0.98, 0.91);
+                if (entity.onGround()) {
+                    final double fiction = 0.7;
+                    entity.velocity = entity.velocity().mul(fiction, 1.0, fiction);
+                }
             }
         }
     }

@@ -37,4 +37,12 @@ public final class Maths {
     public static float lerp(float a, float b, float t) {
         return fma(b - a, t, a);
     }
+
+    public static int floorToInt(double a) {
+        return (int) Math.floor(a);
+    }
+
+    public static int ceilToInt(double a) {
+        return (int) Math.ceil(a);
+    }
 }

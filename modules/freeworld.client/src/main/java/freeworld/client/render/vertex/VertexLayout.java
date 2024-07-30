@@ -59,12 +59,14 @@ public final class VertexLayout {
         long offset = 0L;
         for (var format : formats) {
             if (!format.padding()) {
-                gl.vertexAttribPointer(attribLocationMap.get(format.name()),
+                gl.vertexAttribPointer(
+                    getLocation(format.name()),
                     format.size(),
                     format.type().value(),
                     format.normalized(),
                     stride,
-                    MemorySegment.ofAddress(offset));
+                    MemorySegment.ofAddress(offset)
+                );
             }
             offset += format.byteSize();
         }

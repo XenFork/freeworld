@@ -20,5 +20,5 @@ import java.util.List;
  * @since 0.1.0
  */
 public interface EntitySystem {
-    void process(World world, List<Entity> entities);
+    void process(World world, List<? extends Entity> entities);
 }

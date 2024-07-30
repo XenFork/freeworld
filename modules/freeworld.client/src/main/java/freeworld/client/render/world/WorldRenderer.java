@@ -37,10 +37,8 @@ import reactor.pool.Pool;
 import reactor.pool.PoolBuilder;
 
 import java.time.Duration;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.*;
+import java.util.concurrent.LinkedBlockingQueue;
 
 /**
  * @author squid233
@@ -49,26 +47,23 @@ import java.util.concurrent.ConcurrentHashMap;
 public final class WorldRenderer implements GLResource, WorldListener {
     private static final Logger logger = Logging.caller();
     public static final int RENDER_RADIUS = 5;
-    public static final int RENDER_CHUNK_COUNT_CBRT = RENDER_RADIUS * 2 + 1;
-    public static final int RENDER_CHUNK_COUNT = RENDER_CHUNK_COUNT_CBRT * RENDER_CHUNK_COUNT_CBRT * RENDER_CHUNK_COUNT_CBRT;
     private final GameRenderer gameRenderer;
     private final World world;
     private final Scheduler scheduler = Schedulers.newParallel("WorldRenderer-Worker");
     private final Pool<DefaultVertexBuilder> vertexBuilderPool = PoolBuilder
         .from(Mono.fromSupplier(WorldRenderer::createVertexBuilder).subscribeOn(scheduler))
         .buildPool();
-    private final Map<Vector3i, ClientChunk> chunks = new ConcurrentHashMap<>(RENDER_CHUNK_COUNT);
+    private final Map<Vector3i, ClientChunk> chunks = new HashMap<>(2048);
     private final Disposable chunkGC;
-    private int playerChunkX = 0;
-    private int playerChunkY = 0;
-    private int playerChunkZ = 0;
+    private final Queue<Runnable> chunkGCQueue = new LinkedBlockingQueue<>();
+    private Vector3i playerChunkPos = Vector3i.ZERO;
 
     public WorldRenderer(GameRenderer gameRenderer, World world) {
         this.gameRenderer = gameRenderer;
         this.world = world;
         world.addListener(this);
         this.chunkGC = Flux.interval(Duration.ofSeconds(45))
-            .subscribe(_ -> uninstallChunks());
+            .subscribe(_ -> chunkGCQueue.offer(this::uninstallChunks));
     }
 
     private static DefaultVertexBuilder createVertexBuilder() {
@@ -76,8 +71,8 @@ public final class WorldRenderer implements GLResource, WorldListener {
     }
 
     private void uninstallChunks() {
-        final List<Vector3i> list = new ArrayList<>(RENDER_CHUNK_COUNT);
-        World.forEachChunk(gameRenderer.client().player(), RENDER_RADIUS, (x, y, z) -> list.add(new Vector3i(x, y, z)));
+        final List<Vector3i> list = new ArrayList<>(512);
+        World.forInChunkRange(gameRenderer.client().player(), RENDER_RADIUS, (x, y, z) -> list.add(new Vector3i(x, y, z)));
         final var it = chunks.entrySet().iterator();
         while (it.hasNext()) {
             final var e = it.next();
@@ -89,8 +84,8 @@ public final class WorldRenderer implements GLResource, WorldListener {
     }
 
     public List<ClientChunk> renderingChunks(Entity player) {
-        final List<ClientChunk> chunks = new ArrayList<>(RENDER_CHUNK_COUNT);
-        World.forEachChunk(player, RENDER_RADIUS, (x, y, z) -> chunks.add(getChunkOrCreate(x, y, z)));
+        final List<ClientChunk> chunks = new ArrayList<>(2048);
+        World.forInChunkRange(player, RENDER_RADIUS, (x, y, z) -> chunks.add(getChunkOrCreate(x, y, z)));
         return chunks;
     }
 
@@ -101,19 +96,6 @@ public final class WorldRenderer implements GLResource, WorldListener {
     }
 
     public void renderChunks(GLStateMgr gl, List<ClientChunk> renderingChunks) {
-        Vector3d playerPos = gameRenderer.client().player().position();
-        int playerChunkX = ChunkPos.absoluteToChunk((int) Math.floor(playerPos.x()));
-        int playerChunkY = ChunkPos.absoluteToChunk((int) Math.floor(playerPos.y()));
-        int playerChunkZ = ChunkPos.absoluteToChunk((int) Math.floor(playerPos.z()));
-        if (playerChunkX != this.playerChunkX ||
-            playerChunkY != this.playerChunkY ||
-            playerChunkZ != this.playerChunkZ) {
-            this.playerChunkX = playerChunkX;
-            this.playerChunkY = playerChunkY;
-            this.playerChunkZ = playerChunkZ;
-            uninstallChunks();
-        }
-
         int builtChunkCount = 0;
         FrustumIntersection frustumIntersection = new FrustumIntersection(RenderSystem.projectionViewMatrix());
         for (ClientChunk chunk : renderingChunks) {
@@ -131,6 +113,18 @@ public final class WorldRenderer implements GLResource, WorldListener {
                 }
                 chunk.render(gl);
             }
+        }
+
+        Vector3d playerPos = gameRenderer.client().player().position();
+        Vector3i playerChunkPos = ChunkPos.absoluteToChunk(playerPos.toVector3iFloor());
+        if (!this.playerChunkPos.equals(playerChunkPos)) {
+            this.playerChunkPos = playerChunkPos;
+            uninstallChunks();
+        }
+
+        Runnable chunkGCTask;
+        while ((chunkGCTask = chunkGCQueue.poll()) != null) {
+            chunkGCTask.run();
         }
     }
 
@@ -152,12 +146,12 @@ public final class WorldRenderer implements GLResource, WorldListener {
         final float radius = 5.0f;
         final float radiusSquared = radius * radius;
         final AABBox range = player.boundingBox().grow(radius, radius, radius);
-        final int x0 = (int) Math.floor(range.minX());
-        final int y0 = (int) Math.floor(range.minY());
-        final int z0 = (int) Math.floor(range.minZ());
-        final int x1 = (int) Math.ceil(range.maxX());
-        final int y1 = (int) Math.ceil(range.maxY());
-        final int z1 = (int) Math.ceil(range.maxZ());
+        final int x0 = Maths.floorToInt(range.minX());
+        final int y0 = Maths.floorToInt(range.minY());
+        final int z0 = Maths.floorToInt(range.minZ());
+        final int x1 = Maths.ceilToInt(range.maxX());
+        final int y1 = Maths.ceilToInt(range.maxY());
+        final int z1 = Maths.ceilToInt(range.maxZ());
         for (int x = x0; x <= x1; x++) {
             final float vx = x + 0.5f - ox;
             final float xSquared = vx * vx;
@@ -251,5 +245,6 @@ public final class WorldRenderer implements GLResource, WorldListener {
         scheduler.dispose();
         vertexBuilderPool.dispose();
         chunkGC.dispose();
+        chunkGCQueue.clear();
     }
 }

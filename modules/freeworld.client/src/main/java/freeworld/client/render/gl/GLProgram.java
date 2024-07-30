@@ -46,14 +46,12 @@ public final class GLProgram implements GLResource {
     private static final Logger logger = Logging.caller();
     private final int id;
     private final Identifier identifier;
-    private final VertexLayout vertexLayout;
     private final Map<String, GLUniform> uniformMap;
     private final Arena uniformArena;
 
-    private GLProgram(int id, Identifier identifier, VertexLayout vertexLayout, Map<String, GLUniform> uniformMap, Arena uniformArena) {
+    private GLProgram(int id, Identifier identifier, Map<String, GLUniform> uniformMap, Arena uniformArena) {
         this.id = id;
         this.identifier = identifier;
-        this.vertexLayout = vertexLayout;
         this.uniformMap = uniformMap;
         this.uniformArena = uniformArena;
     }
@@ -198,7 +196,7 @@ public final class GLProgram implements GLResource {
         final Map<String, GLUniform> uniformMap = hasUniform ? HashMap.newHashMap(uniformTypeMap.size()) : Map.of();
         final Arena uniformArena = hasUniform ? Arena.ofConfined() : null;
 
-        final GLProgram program = new GLProgram(id, identifier, vertexLayout, uniformMap, uniformArena);
+        final GLProgram program = new GLProgram(id, identifier, uniformMap, uniformArena);
 
         if (hasUniform) {
             try {
@@ -259,7 +257,7 @@ public final class GLProgram implements GLResource {
     }
 
     private static void malformedJson(Identifier identifier, String file, String msg) {
-        logger.error("Failed to load GLProgram {}: Malformed JSON from file {}: {}", identifier, file, msg);
+        logger.error("Failed to load GLProgram {}: malformed JSON from file {}: {}", identifier, file, msg);
     }
 
     private static int compileShader(GLStateMgr gl, int type, String name, String src) {
@@ -311,9 +309,5 @@ public final class GLProgram implements GLResource {
 
     public Identifier identifier() {
         return identifier;
-    }
-
-    public VertexLayout vertexLayout() {
-        return vertexLayout;
     }
 }

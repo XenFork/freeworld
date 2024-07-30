@@ -33,4 +33,8 @@ public final class ChunkPos {
     public static int absoluteToChunk(int absolutePos) {
         return Math.floorDiv(absolutePos, Chunk.SIZE);
     }
+
+    public static Vector3i absoluteToChunk(Vector3i absolutePos) {
+        return absolutePos.floorDiv(Chunk.SIZE);
+    }
 }

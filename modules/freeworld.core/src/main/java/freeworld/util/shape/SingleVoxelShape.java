@@ -38,7 +38,7 @@ final class SingleVoxelShape implements VoxelShape {
     }
 
     private record RayCastFace(boolean missed, double distance) {
-        private static final RayCastFace MISSED = new RayCastFace(true, 0.0);
+        private static final RayCastFace MISSED = new RayCastFace(true, -1.0);
     }
 
     private RayCastFace rayCastFace(Direction direction, Vector3d origin, Vector3d dir) {
