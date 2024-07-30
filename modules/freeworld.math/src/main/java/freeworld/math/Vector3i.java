@@ -28,4 +28,8 @@ public record Vector3i(int x, int y, int z) {
     public Vector3i mul(int i) {
         return new Vector3i(x * i, y * i, z * i);
     }
+
+    public Vector3f toVector3f() {
+        return new Vector3f(x, y, z);
+    }
 }

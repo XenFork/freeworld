@@ -75,6 +75,22 @@ public record AABBox(
         );
     }
 
+    public double width() {
+        return maxX - minX;
+    }
+
+    public double height() {
+        return maxY - minY;
+    }
+
+    public double depth() {
+        return maxZ - minZ;
+    }
+
+    public Vector3d dimension() {
+        return new Vector3d(width(), height(), depth());
+    }
+
     public Vector3d getPoint(int index) {
         return getPoint(new Vector3d(minX, minY, minZ), new Vector3d(maxX, maxY, maxZ), index);
     }

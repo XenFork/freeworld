@@ -10,36 +10,56 @@
 
 package freeworld.world.entity;
 
-import freeworld.util.math.AABBox;
 import freeworld.math.Vector3d;
 import freeworld.world.World;
+
+import java.util.Objects;
+import java.util.UUID;
 
 /**
  * @author squid233
  * @since 0.1.0
  */
-public record EntityType(Initializer initializer) {
-    public interface Initializer {
-        void setup(World world, Entity entity, Vector3d position);
+public class EntityType<T extends Entity> {
+    private final Factory<T> factory;
+    private final Vector3d dimension;
+    private final Vector3d eyePosition;
+
+    public EntityType(Settings settings, Factory<T> factory) {
+        this.factory = factory;
+        this.dimension = Objects.requireNonNull(settings.dimension);
+        this.eyePosition = Objects.requireNonNull(settings.eyePosition);
     }
 
-    public static AABBox boundingBox(
-        double x,
-        double y,
-        double z,
-        double width,
-        double height,
-        double depth
-    ) {
-        final double hw = width * 0.5;
-        final double hd = depth * 0.5;
-        return new AABBox(
-            x - hw,
-            y,
-            z - hd,
-            x + hw,
-            y + height,
-            z + hd
-        );
+    @FunctionalInterface
+    public interface Factory<T extends Entity> {
+        T create(World world, UUID uuid);
+    }
+
+    public static final class Settings {
+        private Vector3d dimension;
+        private Vector3d eyePosition = new Vector3d(0.0, 0.5, 0.0);
+
+        public Settings dimension(Vector3d dimension) {
+            this.dimension = dimension;
+            return this;
+        }
+
+        public Settings eyePosition(Vector3d eyePosition) {
+            this.eyePosition = eyePosition;
+            return this;
+        }
+    }
+
+    public Factory<T> factory() {
+        return factory;
+    }
+
+    public Vector3d dimension() {
+        return dimension;
+    }
+
+    public Vector3d eyePosition() {
+        return eyePosition;
     }
 }

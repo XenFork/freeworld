@@ -12,7 +12,6 @@ package freeworld.world.entity.system;
 
 import freeworld.world.World;
 import freeworld.world.entity.Entity;
-import freeworld.world.component.ComponentKey;
 
 import java.util.List;
 
@@ -22,15 +21,4 @@ import java.util.List;
  */
 public interface EntitySystem {
     void process(World world, List<Entity> entities);
-
-    static boolean hasAllComponents(Entity entity, ComponentKey<?>... componentIds) {
-        if (entity == null) return false;
-
-        for (var id : componentIds) {
-            if (!entity.hasComponent(id)) {
-                return false;
-            }
-        }
-        return true;
-    }
 }

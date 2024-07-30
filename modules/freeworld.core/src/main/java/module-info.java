@@ -24,7 +24,6 @@ module freeworld.core {
     exports freeworld.world;
     exports freeworld.world.block;
     exports freeworld.world.chunk;
-    exports freeworld.world.component;
     exports freeworld.world.entity;
     exports freeworld.world.entity.system;
 

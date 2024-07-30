@@ -10,70 +10,56 @@
 
 package freeworld.world.entity;
 
+import freeworld.math.Vector2d;
 import freeworld.math.Vector3d;
+import freeworld.util.math.AABBox;
 import freeworld.world.World;
-import freeworld.world.component.ComponentKey;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Objects;
 import java.util.UUID;
-import java.util.function.Supplier;
-import java.util.function.UnaryOperator;
 
 /**
  * @author squid233
  * @since 0.1.0
  */
-public final class Entity {
+public class Entity {
     private final World world;
     private final UUID uuid;
-    private final EntityType entityType;
-    private final Map<ComponentKey<?>, Object> componentMap = new HashMap<>();
+    private final EntityType<? extends Entity> entityType;
+    public Vector3d acceleration = Vector3d.ZERO;
+    public AABBox boundingBox;
+    public Vector3d eyePosition;
+    public boolean flying = false;
+    public boolean onGround = false;
+    public Vector3d position = Vector3d.ZERO;
+    public Vector2d rotation = Vector2d.ZERO;
+    public Vector3d velocity = Vector3d.ZERO;
 
-    public Entity(World world, UUID uuid, Vector3d position, EntityType entityType) {
+    public Entity(World world, UUID uuid, EntityType<? extends Entity> entityType) {
         this.world = world;
         this.uuid = uuid;
         this.entityType = entityType;
-        entityType.initializer().setup(world, this, position);
+        this.eyePosition = entityType.eyePosition();
     }
 
-    public <T> void addComponent(ComponentKey<T> key, T component) {
-        Objects.requireNonNull(component);
-        if (componentMap.containsKey(key)) {
-            return;
-        }
-        componentMap.put(key, component);
+    public static AABBox boundingBox(
+        Vector3d position,
+        Vector3d dimension
+    ) {
+        final double hw = dimension.x() * 0.5;
+        final double hd = dimension.z() * 0.5;
+        return new AABBox(
+            position.x() - hw,
+            position.y(),
+            position.z() - hd,
+            position.x() + hw,
+            position.y() + dimension.y(),
+            position.z() + hd
+        );
     }
 
-    public <T> void addComponent(ComponentKey<T> key) {
-        Supplier<T> defaultValue = key.defaultValue();
-        if (defaultValue != null) {
-            addComponent(key, defaultValue.get());
-        } else {
-            throw new IllegalStateException("No default value for component key " + key);
-        }
-    }
-
-    public <T> void setComponent(ComponentKey<T> key, T component) {
-        componentMap.put(key, component);
-    }
-
-    public <T> void withComponent(ComponentKey<T> key, UnaryOperator<T> component) {
-        setComponent(key, component.apply(getComponent(key)));
-    }
-
-    public void removeComponent(ComponentKey<?> id) {
-        componentMap.remove(id);
-    }
-
-    @SuppressWarnings("unchecked")
-    public <T> T getComponent(ComponentKey<T> id) {
-        return (T) componentMap.get(id);
-    }
-
-    public boolean hasComponent(ComponentKey<?> id) {
-        return componentMap.containsKey(id);
+    public final void init(Vector3d position) {
+        this.position = position;
+        this.boundingBox = boundingBox(position, entityType.dimension());
     }
 
     public World world() {
@@ -84,7 +70,39 @@ public final class Entity {
         return uuid;
     }
 
-    public EntityType entityType() {
+    public EntityType<? extends Entity> entityType() {
         return entityType;
+    }
+
+    public Vector3d acceleration() {
+        return acceleration;
+    }
+
+    public AABBox boundingBox() {
+        return boundingBox;
+    }
+
+    public Vector3d eyePosition() {
+        return eyePosition;
+    }
+
+    public boolean flying() {
+        return flying;
+    }
+
+    public boolean onGround() {
+        return onGround;
+    }
+
+    public Vector3d position() {
+        return position;
+    }
+
+    public Vector2d rotation() {
+        return rotation;
+    }
+
+    public Vector3d velocity() {
+        return velocity;
     }
 }

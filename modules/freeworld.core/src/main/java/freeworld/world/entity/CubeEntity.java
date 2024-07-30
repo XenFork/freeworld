@@ -8,20 +8,18 @@
  * only version 2.1 of the License.
  */
 
-package freeworld.client.render.world;
+package freeworld.world.entity;
 
-import freeworld.math.Vector3i;
-import freeworld.util.Direction;
-import freeworld.world.block.BlockType;
+import freeworld.world.World;
+
+import java.util.UUID;
 
 /**
  * @author squid233
  * @since 0.1.0
  */
-public record BlockHitResult(
-    boolean missed,
-    BlockType blockType,
-    Vector3i position,
-    Direction face
-) {
+public class CubeEntity extends Entity {
+    public CubeEntity(World world, UUID uuid) {
+        super(world, uuid, EntityTypes.CUBE);
+    }
 }

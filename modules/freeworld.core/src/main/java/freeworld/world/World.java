@@ -10,20 +10,22 @@
 
 package freeworld.world;
 
-import freeworld.math.Vector3i;
-import freeworld.util.math.AABBox;
 import freeworld.math.Vector3d;
+import freeworld.math.Vector3i;
 import freeworld.util.Int3Consumer;
+import freeworld.util.math.AABBox;
+import freeworld.util.math.ChunkPos;
 import freeworld.world.block.BlockType;
 import freeworld.world.block.BlockTypes;
 import freeworld.world.chunk.Chunk;
-import freeworld.util.math.ChunkPos;
 import freeworld.world.entity.Entity;
 import freeworld.world.entity.EntityType;
-import freeworld.world.entity.EntityComponents;
 import freeworld.world.entity.system.MotionSystem;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -46,7 +48,7 @@ public final class World {
 
     public static void forEachChunk(Entity player, int chunkRadius, Int3Consumer consumer) {
         final int radius = chunkRadius * Chunk.SIZE;
-        final AABBox box = player.getComponent(EntityComponents.BOUNDING_BOX).grow(radius, radius, radius);
+        final AABBox box = player.boundingBox().grow(radius, radius, radius);
         final int minX = ChunkPos.absoluteToChunk((int) Math.floor(box.minX()));
         final int minY = ChunkPos.absoluteToChunk((int) Math.floor(box.minY()));
         final int minZ = ChunkPos.absoluteToChunk((int) Math.floor(box.minZ()));
@@ -70,8 +72,9 @@ public final class World {
         motionSystem.process(this, entities);
     }
 
-    public Entity createEntity(EntityType type, Vector3d position) {
-        final Entity entity = new Entity(this, UUID.randomUUID(), position, type);
+    public <T extends Entity> T createEntity(EntityType<T> type, Vector3d position) {
+        final T entity = type.factory().create(this, UUID.randomUUID());
+        entity.init(position);
         entities.add(entity);
         return entity;
     }

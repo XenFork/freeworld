@@ -32,7 +32,6 @@ import freeworld.world.World;
 import freeworld.world.block.BlockType;
 import freeworld.world.block.BlockTypes;
 import freeworld.world.entity.Entity;
-import freeworld.world.entity.EntityComponents;
 import freeworld.world.entity.EntityTypes;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
@@ -194,11 +193,7 @@ public final class Freeworld implements AutoCloseable {
                                     case GLFW.KEY_E -> openScreen(new CreativeTabScreen(this, null));
                                     case GLFW.KEY_SPACE -> {
                                         if (gameTick - spaceTick < 5) {
-                                            if (player.hasComponent(EntityComponents.FLYING)) {
-                                                player.removeComponent(EntityComponents.FLYING);
-                                            } else {
-                                                player.addComponent(EntityComponents.FLYING);
-                                            }
+                                            player.flying = !player.flying();
                                         }
                                         spaceTick = gameTick;
                                     }
@@ -229,9 +224,8 @@ public final class Freeworld implements AutoCloseable {
         if (disableCursor) {
             final double pitch = -cursorDeltaY * MOUSE_SENSITIVITY;
             final double yaw = -cursorDeltaX * MOUSE_SENSITIVITY;
-            final Vector2d rotation = player.getComponent(EntityComponents.ROTATION);
-            final double updateX = Math.clamp(rotation.x() + pitch, -90.0, 90.0);
-            double updateY = rotation.y() + yaw;
+            final double updateX = Math.clamp(player.rotation().x() + pitch, -90.0, 90.0);
+            double updateY = player.rotation().y() + yaw;
 
             if (updateY < 0.0) {
                 updateY += 360.0;
@@ -239,7 +233,7 @@ public final class Freeworld implements AutoCloseable {
                 updateY -= 360.0;
             }
 
-            player.setComponent(EntityComponents.ROTATION, new Vector2d(updateX, updateY));
+            player.rotation = new Vector2d(updateX, updateY);
         }
         cursorX = x;
         cursorY = y;
@@ -262,12 +256,10 @@ public final class Freeworld implements AutoCloseable {
         if (world != null) {
             camera.preUpdate();
             if (screen == null) {
-                final boolean onGround = player.hasComponent(EntityComponents.ON_GROUND);
-                final boolean flying = player.hasComponent(EntityComponents.FLYING);
                 double speed;
-                if (onGround) {
+                if (player.onGround()) {
                     speed = 0.1;
-                } else if (flying) {
+                } else if (player.flying()) {
                     speed = 0.5;
                 } else {
                     speed = 0.02;
@@ -281,26 +273,25 @@ public final class Freeworld implements AutoCloseable {
                 if (glfw.getKey(window, GLFW.KEY_S) == GLFW.PRESS) zo += 1.0;
                 if (glfw.getKey(window, GLFW.KEY_A) == GLFW.PRESS) xo -= 1.0;
                 if (glfw.getKey(window, GLFW.KEY_D) == GLFW.PRESS) xo += 1.0;
-                if ((onGround || flying) && glfw.getKey(window, GLFW.KEY_SPACE) == GLFW.PRESS) {
+                if ((player.onGround() || player.flying()) && glfw.getKey(window, GLFW.KEY_SPACE) == GLFW.PRESS) {
                     yo += 0.5;
                     changedYo = true;
                 }
-                if (flying && glfw.getKey(window, GLFW.KEY_LEFT_SHIFT) == GLFW.PRESS) {
+                if (player.flying() && glfw.getKey(window, GLFW.KEY_LEFT_SHIFT) == GLFW.PRESS) {
                     yo -= 0.5;
                     changedYo = true;
                 }
                 if (changedYo) {
-                    double finalYo = yo;
-                    player.withComponent(EntityComponents.VELOCITY, v -> v.withY(finalYo));
+                    player.velocity = player.velocity().withY(yo);
                 }
-                player.setComponent(EntityComponents.ACCELERATION,
-                    MathUtil.moveRelative(xo, 0.0, zo, player.getComponent(EntityComponents.ROTATION).y(), speed));
+                player.acceleration = MathUtil.moveRelative(xo, 0.0, zo, player.rotation().y(), speed);
 
                 if (blockDestroyTimer >= 2) {
                     final BlockHitResult hitResult = gameRenderer.hitResult();
                     if (!hitResult.missed() &&
                         glfw.getMouseButton(window, GLFW.MOUSE_BUTTON_LEFT) == GLFW.PRESS) {
-                        world.setBlockType(hitResult.x(), hitResult.y(), hitResult.z(), BlockTypes.AIR);
+                        Vector3i position = hitResult.position();
+                        world.setBlockType(position.x(), position.y(), position.z(), BlockTypes.AIR);
                         blockDestroyTimer = 0;
                     }
                 }
@@ -312,12 +303,12 @@ public final class Freeworld implements AutoCloseable {
                         final BlockType type = hotBar[hotBarSelection];
                         if (!type.air()) {
                             Vector3i axis = face.axis();
-                            world.setBlockType(
-                                hitResult.x() + axis.x(),
-                                hitResult.y() + axis.y(),
-                                hitResult.z() + axis.z(),
-                                type
-                            );
+                            Vector3i position = hitResult.position();
+                            Vector3i add = position.add(axis);
+                            if (world.getBlockType(position.x(), position.y(), position.z()).replaceable() ||
+                                world.getBlockType(add.x(), add.y(), add.z()).replaceable()) {
+                                world.setBlockType(add.x(), add.y(), add.z(), type);
+                            }
                         }
                         blockPlaceTimer = 0;
                     }

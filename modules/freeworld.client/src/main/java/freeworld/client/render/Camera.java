@@ -14,8 +14,6 @@ import freeworld.math.Matrix4f;
 import freeworld.math.Vector2d;
 import freeworld.math.Vector3d;
 import freeworld.world.entity.Entity;
-import freeworld.world.entity.EntityComponents;
-import freeworld.world.entity.system.EntitySystem;
 
 /**
  * @author squid233
@@ -29,22 +27,9 @@ public final class Camera {
     private Vector3d eyePosition = Vector3d.ZERO;
 
     public void moveToEntity(Entity entity) {
-        if (EntitySystem.hasAllComponents(entity, EntityComponents.POSITION, EntityComponents.ROTATION)) {
-            final Vector3d ePos = entity.getComponent(EntityComponents.POSITION);
-            if (entity.hasComponent(EntityComponents.EYE_POSITION)) {
-                final Vector3d vector3d = entity.getComponent(EntityComponents.EYE_POSITION);
-                position = new Vector3d(
-                    ePos.x(),
-                    ePos.y() + vector3d.y(),
-                    ePos.z()
-                );
-                eyePosition = vector3d;
-            } else {
-                position = ePos;
-                eyePosition = Vector3d.ZERO;
-            }
-            rotation = entity.getComponent(EntityComponents.ROTATION);
-        }
+        eyePosition = entity.eyePosition();
+        position = entity.position().add(0.0, eyePosition.y(), 0.0);
+        rotation = entity.rotation();
     }
 
     public void preUpdate() {

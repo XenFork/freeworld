@@ -31,6 +31,7 @@ import freeworld.client.render.world.WorldRenderer;
 import freeworld.client.world.chunk.ClientChunk;
 import freeworld.core.Identifier;
 import freeworld.math.Matrix4f;
+import freeworld.math.Vector3i;
 import freeworld.util.Direction;
 import freeworld.util.Logging;
 import freeworld.util.math.Lined;
@@ -57,7 +58,7 @@ public final class GameRenderer implements GLResource {
     private HudRenderer hudRenderer;
     private BlockRenderer blockRenderer;
     private WorldRenderer worldRenderer;
-    private BlockHitResult hitResult = new BlockHitResult(true, null, 0, 0, 0, Direction.SOUTH);
+    private BlockHitResult hitResult = new BlockHitResult(true, null, Vector3i.ZERO, Direction.SOUTH);
 
     public GameRenderer(Freeworld client) {
         this.client = client;
@@ -168,7 +169,7 @@ public final class GameRenderer implements GLResource {
 
         if (!hitResult.missed()) {
             var lines = hitResult.blockType().outlineShape().toLines(Direction.LIST);
-            Matrix4f mat = Matrix4f.translation(hitResult.x(), hitResult.y(), hitResult.z());
+            Matrix4f mat = Matrix4f.translation(hitResult.position().toVector3f());
             RenderSystem.bindTexture2D(null);
             RenderSystem.useProgram(positionColorProgram);
             RenderSystem.updateMatrices();

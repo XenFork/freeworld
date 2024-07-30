@@ -4,8 +4,8 @@
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
- * License as published by the Free Software Foundation; either
- * version 2.1 of the License, or (at your option) any later version.
+ * License as published by the Free Software Foundation;
+ * only version 2.1 of the License.
  */
 
 package freeworld.math;
@@ -97,7 +97,7 @@ public record Matrix4f(
                  * and is rather expensive (6 dot products) in the worst case.
                  */
             } else if (m01 == 0.0f && m02 == 0.0f && m10 == 0.0f && m12 == 0.0f && m20 == 0.0f && m21 == 0.0f
-                       && m30 == 0.0f && m31 == 0.0f && m33 == 0.0f) {
+                && m30 == 0.0f && m31 == 0.0f && m33 == 0.0f) {
                 properties |= PROPERTY_PERSPECTIVE;
             }
         }
@@ -275,6 +275,10 @@ public record Matrix4f(
         );
     }
 
+    public static Matrix4f translation(Vector3f v) {
+        return translation(v.x(), v.y(), v.z());
+    }
+
     public Matrix4f translate(float x, float y, float z) {
         if ((properties & PROPERTY_IDENTITY) != 0)
             return translation(x, y, z);
@@ -430,7 +434,7 @@ public record Matrix4f(
         boolean one = Maths.absEqualsOne(x) && Maths.absEqualsOne(y) && Maths.absEqualsOne(z);
         return new Matrix4f(
             properties & ~(PROPERTY_PERSPECTIVE | PROPERTY_IDENTITY | PROPERTY_TRANSLATION
-                           | (one ? 0 : PROPERTY_ORTHONORMAL)),
+                | (one ? 0 : PROPERTY_ORTHONORMAL)),
             m00() * x,
             m01() * x,
             m02() * x,

@@ -18,16 +18,24 @@ import freeworld.util.shape.VoxelShape;
  */
 public class BlockType { // must be an identity class
     private final boolean air;
+    private final boolean replaceable;
 
     public BlockType(Settings settings) {
         this.air = settings.air;
+        this.replaceable = settings.replaceable;
     }
 
     public static final class Settings {
         private boolean air = false;
+        private boolean replaceable;
 
         public Settings air() {
             this.air = true;
+            return this;
+        }
+
+        public Settings replaceable() {
+            this.replaceable = true;
             return this;
         }
     }
@@ -38,6 +46,10 @@ public class BlockType { // must be an identity class
 
     public boolean air() {
         return air;
+    }
+
+    public boolean replaceable() {
+        return replaceable;
     }
 
     public boolean hasSidedTransparency() {

@@ -12,22 +12,21 @@ package freeworld.client.render.world;
 
 import freeworld.client.render.GameRenderer;
 import freeworld.client.render.RenderSystem;
-import freeworld.client.render.vertex.DefaultVertexBuilder;
 import freeworld.client.render.gl.GLResource;
 import freeworld.client.render.gl.GLStateMgr;
+import freeworld.client.render.vertex.DefaultVertexBuilder;
 import freeworld.client.render.vertex.VertexLayouts;
 import freeworld.client.world.chunk.ClientChunk;
-import freeworld.util.math.AABBox;
 import freeworld.math.*;
 import freeworld.util.Direction;
 import freeworld.util.Logging;
+import freeworld.util.math.AABBox;
+import freeworld.util.math.ChunkPos;
 import freeworld.util.math.HitResult;
 import freeworld.world.World;
 import freeworld.world.WorldListener;
 import freeworld.world.block.BlockType;
-import freeworld.util.math.ChunkPos;
 import freeworld.world.entity.Entity;
-import freeworld.world.entity.EntityComponents;
 import org.slf4j.Logger;
 import reactor.core.Disposable;
 import reactor.core.publisher.Flux;
@@ -102,7 +101,7 @@ public final class WorldRenderer implements GLResource, WorldListener {
     }
 
     public void renderChunks(GLStateMgr gl, List<ClientChunk> renderingChunks) {
-        Vector3d playerPos = gameRenderer.client().player().getComponent(EntityComponents.POSITION);
+        Vector3d playerPos = gameRenderer.client().player().position();
         int playerChunkX = ChunkPos.absoluteToChunk((int) Math.floor(playerPos.x()));
         int playerChunkY = ChunkPos.absoluteToChunk((int) Math.floor(playerPos.y()));
         int playerChunkZ = ChunkPos.absoluteToChunk((int) Math.floor(playerPos.z()));
@@ -152,8 +151,7 @@ public final class WorldRenderer implements GLResource, WorldListener {
 
         final float radius = 5.0f;
         final float radiusSquared = radius * radius;
-        final AABBox range = player.getComponent(EntityComponents.BOUNDING_BOX)
-            .grow(radius, radius, radius);
+        final AABBox range = player.boundingBox().grow(radius, radius, radius);
         final int x0 = (int) Math.floor(range.minX());
         final int y0 = (int) Math.floor(range.minY());
         final int z0 = (int) Math.floor(range.minZ());
@@ -192,7 +190,7 @@ public final class WorldRenderer implements GLResource, WorldListener {
             }
         }
 
-        return new BlockHitResult(nearestBlock == null, nearestBlock, nearestX, nearestY, nearestZ, face);
+        return new BlockHitResult(nearestBlock == null, nearestBlock, new Vector3i(nearestX, nearestY, nearestZ), face);
     }
 
     @Override
