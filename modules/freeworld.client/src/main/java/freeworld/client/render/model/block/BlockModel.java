@@ -10,7 +10,7 @@
 
 package freeworld.client.render.model.block;
 
-import freeworld.core.Identifier;
+import freeworld.util.Identifier;
 
 import java.util.List;
 import java.util.Map;

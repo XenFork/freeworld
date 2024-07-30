@@ -8,7 +8,7 @@
  * only version 2.1 of the License.
  */
 
-package freeworld.core;
+package freeworld.util;
 
 /**
  * @author squid233

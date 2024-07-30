@@ -11,10 +11,10 @@
 package freeworld.client.render.model.block;
 
 import freeworld.client.render.texture.Texture;
-import freeworld.core.Identifier;
-import freeworld.core.registry.DefaultedRegistry;
-import freeworld.core.registry.Registries;
-import freeworld.core.registry.Registry;
+import freeworld.util.Identifier;
+import freeworld.registry.DefaultedRegistry;
+import freeworld.registry.Registries;
+import freeworld.registry.Registry;
 import freeworld.world.block.BlockType;
 import freeworld.world.block.BlockTypes;
 

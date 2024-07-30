@@ -10,9 +10,9 @@
 
 package freeworld.world.block;
 
-import freeworld.core.Identifier;
-import freeworld.core.registry.Registries;
-import freeworld.core.registry.Registry;
+import freeworld.util.Identifier;
+import freeworld.registry.Registries;
+import freeworld.registry.Registry;
 
 /**
  * @author squid233

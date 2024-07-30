@@ -11,7 +11,7 @@
 package freeworld.client.render.model.block;
 
 import freeworld.client.render.model.TextureKeys;
-import freeworld.core.Identifier;
+import freeworld.util.Identifier;
 import freeworld.math.Vector2f;
 import freeworld.math.Vector3f;
 import freeworld.util.Direction;

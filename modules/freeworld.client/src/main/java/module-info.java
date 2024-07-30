@@ -16,6 +16,7 @@
  */
 module freeworld.client {
     exports freeworld.client;
+    exports freeworld.client.event;
     exports freeworld.client.main;
     exports freeworld.client.render;
     exports freeworld.client.render.animation;

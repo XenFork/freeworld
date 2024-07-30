@@ -8,9 +8,9 @@
  * only version 2.1 of the License.
  */
 
-package freeworld.core.registry;
+package freeworld.registry;
 
-import freeworld.core.Identifier;
+import freeworld.util.Identifier;
 
 import java.util.function.Supplier;
 

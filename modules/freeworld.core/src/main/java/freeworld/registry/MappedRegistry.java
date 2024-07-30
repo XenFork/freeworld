@@ -8,9 +8,9 @@
  * only version 2.1 of the License.
  */
 
-package freeworld.core.registry;
+package freeworld.registry;
 
-import freeworld.core.Identifier;
+import freeworld.util.Identifier;
 import freeworld.util.Logging;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
@@ -35,7 +35,6 @@ public class MappedRegistry<T> implements MutableRegistry<T> {
     private final Map<Integer, T> rawIdToEntryMap = HashMap.newHashMap(DEFAULT_CAPACITY);
     private final Map<Identifier, Integer> idToRawIdMap = HashMap.newHashMap(DEFAULT_CAPACITY);
     private int nextId = -1;
-    private boolean frozen = false;
 
     public MappedRegistry(Identifier registryName) {
         this.registryName = registryName;
@@ -48,10 +47,6 @@ public class MappedRegistry<T> implements MutableRegistry<T> {
 
     @Override
     public <R extends T> R set(Identifier identifier, int rawId, R entry) {
-        if (frozen) {
-            logger.error("Attempts to write in registry {} while frozen; ignoring.", registryName());
-            return entry;
-        }
         if (idToEntryMap.containsKey(identifier)) {
             logger.warn("Attempts to overwrite an existing key {} to {}; this might be an programming error. Please remove it first", identifier, registryName());
         }
@@ -73,10 +68,6 @@ public class MappedRegistry<T> implements MutableRegistry<T> {
 
     @Override
     public T remove(Identifier identifier) {
-        if (frozen) {
-            logger.error("Attempts to remove entry while frozen; ignoring.");
-            return null;
-        }
         if (!idToEntryMap.containsKey(identifier)) {
             logger.warn("Attempts to remove an absent entry with key {}; ignoring.", identifier);
             return null;
@@ -86,23 +77,6 @@ public class MappedRegistry<T> implements MutableRegistry<T> {
         final Integer oldRawId = idToRawIdMap.remove(identifier);
         rawIdToEntryMap.remove(oldRawId);
         return oldValue;
-    }
-
-    @Override
-    public void unfreeze() {
-        logger.warn("Unfreezing registry {}; use at your own risk.", registryName());
-        frozen = false;
-    }
-
-    @Override
-    public void freeze() {
-        logger.info("Freezing registry {}", registryName());
-        frozen = true;
-    }
-
-    @Override
-    public boolean frozen() {
-        return frozen;
     }
 
     @Override

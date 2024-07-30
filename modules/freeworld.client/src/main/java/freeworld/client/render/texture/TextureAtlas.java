@@ -12,7 +12,7 @@ package freeworld.client.render.texture;
 
 import freeworld.client.render.RenderSystem;
 import freeworld.client.render.gl.GLStateMgr;
-import freeworld.core.Identifier;
+import freeworld.util.Identifier;
 import freeworld.util.Logging;
 import org.slf4j.Logger;
 import overrungl.opengl.GL;

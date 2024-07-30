@@ -10,7 +10,7 @@
 
 package freeworld.client.render.model;
 
-import freeworld.core.Identifier;
+import freeworld.util.Identifier;
 
 /**
  * @author squid233

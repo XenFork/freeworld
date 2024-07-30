@@ -20,8 +20,8 @@ import freeworld.client.render.screen.Screen;
  * @since 0.1.0
  */
 public class PauseScreen extends Screen {
-    public PauseScreen(Freeworld client, Screen parent) {
-        super(client, parent);
+    public PauseScreen(Freeworld client) {
+        super(client);
     }
 
     @Override

@@ -20,13 +20,11 @@ import freeworld.client.render.gui.GuiGraphics;
  */
 public class Screen {
     protected final Freeworld client;
-    protected final Screen parent;
     protected float width = 0;
     protected float height = 0;
 
-    public Screen(Freeworld client, Screen parent) {
+    public Screen(Freeworld client) {
         this.client = client;
-        this.parent = parent;
     }
 
     // process
@@ -52,12 +50,7 @@ public class Screen {
     public void render(GuiGraphics graphics, GLStateMgr gl, double partialTick) {
     }
 
-    public void close() {
-        dispose();
-        client.openScreen(parent);
-    }
-
-    public void dispose() {
+    public void onClose() {
     }
 
     // events

@@ -15,8 +15,8 @@
  * @since 0.1.0
  */
 module freeworld.core {
-    exports freeworld.core;
-    exports freeworld.core.registry;
+    exports freeworld.event;
+    exports freeworld.registry;
     exports freeworld.util;
     exports freeworld.util.file;
     exports freeworld.util.math;
@@ -33,6 +33,7 @@ module freeworld.core {
     requires transitive com.google.gson;
     requires transitive org.slf4j;
     requires static org.jetbrains.annotations;
+    requires reactor.core;
 
     provides ch.qos.logback.classic.spi.Configurator
         with freeworld.util.LogbackConfigurator;

@@ -10,24 +10,24 @@
 
 package freeworld.client;
 
+import freeworld.client.event.CursorPosEvent;
 import freeworld.client.render.Camera;
 import freeworld.client.render.GameRenderer;
 import freeworld.client.render.RenderSystem;
 import freeworld.client.render.gl.GLStateMgr;
 import freeworld.client.render.model.block.BlockModelManager;
+import freeworld.client.render.screen.Screen;
 import freeworld.client.render.screen.ingame.CreativeTabScreen;
 import freeworld.client.render.screen.ingame.PauseScreen;
-import freeworld.client.render.screen.Screen;
 import freeworld.client.render.world.BlockHitResult;
 import freeworld.client.render.world.WorldRenderer;
-import freeworld.core.registry.Registries;
 import freeworld.math.Vector2d;
 import freeworld.math.Vector3d;
 import freeworld.math.Vector3i;
 import freeworld.util.Direction;
 import freeworld.util.Logging;
+import freeworld.util.Timer;
 import freeworld.util.math.MathUtil;
-import freeworld.core.Timer;
 import freeworld.world.World;
 import freeworld.world.block.BlockType;
 import freeworld.world.block.BlockTypes;
@@ -68,11 +68,7 @@ public final class Freeworld implements AutoCloseable {
     private int framebufferHeight;
     private final Timer timer = new Timer(Timer.DEFAULT_TPS);
     private final Camera camera = new Camera();
-    private double cursorX;
-    private double cursorY;
-    private double cursorDeltaX;
-    private double cursorDeltaY;
-    private boolean disableCursor = false;
+    private MouseInput mouseInput;
     private GameRenderer gameRenderer;
     private BlockModelManager blockModelManager;
     private World world;
@@ -120,14 +116,15 @@ public final class Freeworld implements AutoCloseable {
             glfw.windowHint(GLFW.POSITION_Y, (videoMode.height() - INIT_WINDOW_HEIGHT) / 2);
         }
 
-        window = glfw.createWindow(INIT_WINDOW_WIDTH, INIT_WINDOW_HEIGHT, "freeworld ~: toggle camera", MemorySegment.NULL, MemorySegment.NULL);
+        window = glfw.createWindow(INIT_WINDOW_WIDTH, INIT_WINDOW_HEIGHT, "freeworld", MemorySegment.NULL, MemorySegment.NULL);
         if (Unmarshal.isNullPointer(window)) {
             throw new IllegalStateException("Failed to create GLFW window");
         }
 
+        mouseInput = new MouseInput(window);
+        CursorPosEvent.DISABLED.subscribe(this::onCursorPosDisabled);
         glfw.setKeyCallback(window, (_, key, scancode, action, mods) -> onKey(key, scancode, action, mods));
         glfw.setFramebufferSizeCallback(window, (_, width, height) -> onResize(width, height));
-        glfw.setCursorPosCallback(window, (_, posX, posY) -> onCursorPos(posX, posY));
         glfw.setScrollCallback(window, (_, scrollX, scrollY) -> onScroll(scrollX, scrollY));
 
         final Pair.OfInt framebufferSize = glfw.getFramebufferSize(window);
@@ -139,13 +136,12 @@ public final class Freeworld implements AutoCloseable {
         }
 
         BlockTypes.bootstrap();
-        Registries.BLOCK_TYPE.freeze();
         EntityTypes.bootstrap();
-        Registries.ENTITY_TYPE.freeze();
 
         blockModelManager = new BlockModelManager();
         blockModelManager.bootstrap();
 
+        setScreen(new PauseScreen(this));
         world = new World("New world", new Random().nextLong());
         player = world.createEntity(EntityTypes.PLAYER, new Vector3d(0.0, 64.0, 0.0));
 
@@ -157,23 +153,15 @@ public final class Freeworld implements AutoCloseable {
 
     private void onKey(int key, int scancode, int action, int mods) {
         switch (action) {
-            case GLFW.RELEASE -> {
-                switch (key) {
-                    case GLFW.KEY_GRAVE_ACCENT -> {
-                        disableCursor = !disableCursor;
-                        glfw.setInputMode(window, GLFW.CURSOR, disableCursor ? GLFW.CURSOR_DISABLED : GLFW.CURSOR_NORMAL);
-                    }
-                }
-            }
             case GLFW.PRESS -> {
                 switch (key) {
                     case GLFW.KEY_ESCAPE -> {
                         if (screen != null) {
                             if (screen.escapeCanClose()) {
-                                screen.close();
+                                setScreen(null);
                             }
                         } else if (world != null) {
-                            openScreen(new PauseScreen(this, null));
+                            setScreen(new PauseScreen(this));
                         }
                     }
                     default -> {
@@ -190,7 +178,7 @@ public final class Freeworld implements AutoCloseable {
                                     case GLFW.KEY_8 -> hotBarSelection = 7;
                                     case GLFW.KEY_9 -> hotBarSelection = 8;
                                     case GLFW.KEY_0 -> hotBarSelection = 9;
-                                    case GLFW.KEY_E -> openScreen(new CreativeTabScreen(this, null));
+                                    case GLFW.KEY_E -> setScreen(new CreativeTabScreen(this));
                                     case GLFW.KEY_SPACE -> {
                                         if (gameTick - spaceTick < 5) {
                                             player.flying = !player.flying();
@@ -203,6 +191,15 @@ public final class Freeworld implements AutoCloseable {
                             screen.onKeyPressed(key);
                         }
                     }
+                }
+                if (world != null) {
+                    if (screen == null) {
+                        mouseInput.disable();
+                    } else {
+                        mouseInput.enable();
+                    }
+                } else {
+                    mouseInput.enable();
                 }
             }
         }
@@ -218,25 +215,19 @@ public final class Freeworld implements AutoCloseable {
         }
     }
 
-    private void onCursorPos(double x, double y) {
-        cursorDeltaX = x - cursorX;
-        cursorDeltaY = y - cursorY;
-        if (disableCursor) {
-            final double pitch = -cursorDeltaY * MOUSE_SENSITIVITY;
-            final double yaw = -cursorDeltaX * MOUSE_SENSITIVITY;
-            final double updateX = Math.clamp(player.rotation().x() + pitch, -90.0, 90.0);
-            double updateY = player.rotation().y() + yaw;
+    private void onCursorPosDisabled(CursorPosEvent event) {
+        final double pitch = -event.deltaY() * MOUSE_SENSITIVITY;
+        final double yaw = -event.deltaX() * MOUSE_SENSITIVITY;
+        final double updateX = Math.clamp(player.rotation().x() + pitch, -90.0, 90.0);
+        double updateY = player.rotation().y() + yaw;
 
-            if (updateY < 0.0) {
-                updateY += 360.0;
-            } else if (updateY >= 360.0) {
-                updateY -= 360.0;
-            }
-
-            player.rotation = new Vector2d(updateX, updateY);
+        if (updateY < 0.0) {
+            updateY += 360.0;
+        } else if (updateY >= 360.0) {
+            updateY -= 360.0;
         }
-        cursorX = x;
-        cursorY = y;
+
+        player.rotation = new Vector2d(updateX, updateY);
     }
 
     private void onScroll(double x, double y) {
@@ -359,9 +350,9 @@ public final class Freeworld implements AutoCloseable {
         glfw.setErrorCallback(null);
     }
 
-    public void openScreen(@Nullable Screen screen) {
+    public void setScreen(@Nullable Screen screen) {
         if (this.screen != null) {
-            this.screen.dispose();
+            this.screen.onClose();
         }
         this.screen = screen;
         if (screen != null) {
@@ -407,6 +398,10 @@ public final class Freeworld implements AutoCloseable {
 
     public Camera camera() {
         return camera;
+    }
+
+    public MouseInput mouseInput() {
+        return mouseInput;
     }
 
     public GameRenderer gameRenderer() {

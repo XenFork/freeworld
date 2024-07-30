@@ -8,15 +8,14 @@
  * only version 2.1 of the License.
  */
 
-package freeworld.client.render.model.block;
+package freeworld.client.event;
 
-import freeworld.util.Identifier;
-import freeworld.math.Vector2f;
-import freeworld.util.Direction;
+import freeworld.event.Event;
 
 /**
  * @author squid233
  * @since 0.1.0
  */
-public record BlockModelFace(Vector2f uvFrom, Vector2f uvTo, Identifier textureKey, Direction cullFace) {
+public record CursorPosEvent(double x, double y, double deltaX, double deltaY) {
+    public static final Event<CursorPosEvent> DISABLED = new Event<>();
 }

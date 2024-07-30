@@ -29,7 +29,7 @@ import freeworld.client.render.world.BlockHitResult;
 import freeworld.client.render.world.BlockRenderer;
 import freeworld.client.render.world.WorldRenderer;
 import freeworld.client.world.chunk.ClientChunk;
-import freeworld.core.Identifier;
+import freeworld.util.Identifier;
 import freeworld.math.Matrix4f;
 import freeworld.math.Vector3i;
 import freeworld.util.Direction;
@@ -130,6 +130,18 @@ public final class GameRenderer implements GLResource {
     public void render(GLStateMgr gl, double partialTick) {
         gl.clear(GL10C.COLOR_BUFFER_BIT | GL10C.DEPTH_BUFFER_BIT);
 
+        if (worldRenderer != null) {
+            renderWorld(gl, partialTick);
+        }
+
+        gl.clear(GL10C.DEPTH_BUFFER_BIT);
+        if (client.world() != null) {
+            renderHud(gl, partialTick);
+        }
+        renderGui(gl, partialTick);
+    }
+
+    private void renderWorld(GLStateMgr gl, double partialTick) {
         gl.disableBlend();
         gl.enableCullFace();
         gl.enableDepthTest();
@@ -182,16 +194,18 @@ public final class GameRenderer implements GLResource {
             }
             tessellator.end(gl);
         }
+    }
 
-        gl.clear(GL10C.DEPTH_BUFFER_BIT);
-
+    private void renderHud(GLStateMgr gl, double partialTick) {
         gl.disableCullFace();
         gl.disableDepthTest();
         gl.enableBlend();
         gl.setBlendFunc(GL10C.SRC_ALPHA, GL10C.ONE_MINUS_SRC_ALPHA);
         hudRenderer.update(client.scaledFramebufferWidth(), client.scaledFramebufferHeight());
         hudRenderer.render(guiGraphics, gl, partialTick);
+    }
 
+    private void renderGui(GLStateMgr gl, double partialTick) {
         gl.disableCullFace();
         gl.disableDepthTest();
         gl.enableBlend();

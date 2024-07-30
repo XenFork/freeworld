@@ -4,16 +4,16 @@
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
- * License as published by the Free Software Foundation; either
- * version 2.1 of the License, or (at your option) any later version.
+ * License as published by the Free Software Foundation;
+ * only version 2.1 of the License.
  */
 
-package freeworld.core.registry;
+package freeworld.registry;
 
-import freeworld.core.Identifier;
+import freeworld.util.Identifier;
 
 /**
- * A mutable registry, which allows modifying while it is not {@linkplain #frozen() frozen}.
+ * A mutable registry that allows modifying.
  *
  * @param <T> the type of the entry.
  * @author squid233
@@ -25,19 +25,4 @@ public interface MutableRegistry<T> extends Registry<T> {
     <R extends T> R add(Identifier identifier, R entry);
 
     T remove(Identifier identifier);
-
-    /**
-     * Unfreezes this registry.
-     */
-    void unfreeze();
-
-    /**
-     * Freezes this registry.
-     */
-    void freeze();
-
-    /**
-     * {@return is this registry frozen?}
-     */
-    boolean frozen();
 }

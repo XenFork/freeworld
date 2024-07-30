@@ -14,7 +14,7 @@ import freeworld.client.Freeworld;
 import freeworld.client.render.gl.GLStateMgr;
 import freeworld.client.render.gui.GuiGraphics;
 import freeworld.client.render.screen.Screen;
-import freeworld.core.Identifier;
+import freeworld.util.Identifier;
 import overrungl.glfw.GLFW;
 
 /**
@@ -24,8 +24,8 @@ import overrungl.glfw.GLFW;
 public class CreativeTabScreen extends Screen {
     private static final Identifier BACKGROUND_TEXTURE = Identifier.ofBuiltin("gui/screen/creative_tab/background");
 
-    public CreativeTabScreen(Freeworld client, Screen parent) {
-        super(client, parent);
+    public CreativeTabScreen(Freeworld client) {
+        super(client);
     }
 
     @Override
@@ -47,7 +47,7 @@ public class CreativeTabScreen extends Screen {
     public void onKeyPressed(int key) {
         super.onKeyPressed(key);
         if (key == GLFW.KEY_E) {
-            close();
+            client.setScreen(null);
         }
     }
 }
