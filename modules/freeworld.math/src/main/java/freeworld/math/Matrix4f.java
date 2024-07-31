@@ -285,6 +285,10 @@ public record Matrix4f(
         return translateGeneric(x, y, z);
     }
 
+    public Matrix4f translate(Vector3f v) {
+        return translate(v.x(), v.y(), v.z());
+    }
+
     private Matrix4f translateGeneric(float x, float y, float z) {
         return new Matrix4f(
             properties & ~(PROPERTY_PERSPECTIVE | PROPERTY_IDENTITY),

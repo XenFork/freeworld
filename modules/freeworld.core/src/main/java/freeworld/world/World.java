@@ -10,13 +10,16 @@
 
 package freeworld.world;
 
+import freeworld.math.Vector2d;
 import freeworld.math.Vector3d;
 import freeworld.math.Vector3i;
 import freeworld.util.Int3Consumer;
 import freeworld.util.math.ChunkPos;
+import freeworld.util.math.MathUtil;
 import freeworld.world.block.BlockType;
 import freeworld.world.block.BlockTypes;
 import freeworld.world.chunk.Chunk;
+import freeworld.world.entity.CubeEntity;
 import freeworld.world.entity.Entity;
 import freeworld.world.entity.EntityType;
 import freeworld.world.entity.PlayerEntity;
@@ -69,6 +72,17 @@ public final class World {
     public void tick() {
         motionSystem.process(this, players);
         motionSystem.process(this, entities);
+        // TODO: test
+        for (Entity entity : entities) {
+            if (entity instanceof CubeEntity cubeEntity) {
+                cubeEntity.rotation = new Vector2d(0.0, cubeEntity.rotation().y() + Math.random() * 2 - 1);
+                cubeEntity.acceleration = MathUtil.moveRelative(
+                    0.0, cubeEntity.onGround() && Math.random() > 0.5 ? 0.5 : 0.0, 1.0,
+                    cubeEntity.rotation().y(),
+                    cubeEntity.onGround() ? 0.1 : 0.02
+                );
+            }
+        }
     }
 
     public <T extends Entity> T createEntity(EntityType<T> type, Vector3d position) {

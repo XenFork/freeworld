@@ -32,6 +32,7 @@ public final class EntityRenderers {
         register(EntityTypes.CUBE, CubeEntityRenderer::new);
     }
 
+    @SuppressWarnings("unchecked")
     public static <T extends Entity> void register(EntityType<T> entityType, EntityRenderer.Factory<T> renderer) {
         Registry.register(REGISTRY, Registries.ENTITY_TYPE.getId(entityType), (EntityRenderer.Factory<Entity>) renderer);
     }

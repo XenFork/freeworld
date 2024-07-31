@@ -207,7 +207,11 @@ public final class GameRenderer implements GLResource {
             entity.interpolatePosition(partialTick);
             var factory = EntityRenderers.registry().getById(Registries.ENTITY_TYPE.getId(entity.entityType()));
             if (factory != null) {
-                factory.create(client).render(gl, partialTick, Matrix4f.translation(entity.interpolatedPosition().toVector3f()), entity);
+                factory.create(client).render(gl,
+                    partialTick,
+                    Matrix4f.translation(entity.interpolatedPosition().toVector3f())
+                        .rotateY((float) Math.toRadians(entity.rotation().y())),
+                    entity);
             }
         }
     }

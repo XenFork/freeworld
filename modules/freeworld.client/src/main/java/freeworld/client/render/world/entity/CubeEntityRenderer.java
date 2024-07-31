@@ -32,13 +32,54 @@ public class CubeEntityRenderer extends EntityRenderer<CubeEntity> {
         RenderSystem.useProgram(client.gameRenderer().positionColorProgram());
         Tessellator t = Tessellator.getInstance();
         t.begin(GLDrawMode.TRIANGLES);
+        float x0 = -0.5f;
+        float y0 = 0.0f;
+        float z0 = -0.5f;
+        float x1 = 0.5f;
+        float y1 = 1.0f;
+        float z1 = 0.5f;
+
+        // -x
+        t.indices(0, 1, 2, 2, 3, 0);
+        t.position(positionMatrix, x0, y1, z0).color(0, 255, 255).texCoord(0, 0).emit();
+        t.position(positionMatrix, x0, y0, z0).color(0, 255, 255).texCoord(0, 0).emit();
+        t.position(positionMatrix, x0, y0, z1).color(0, 255, 255).texCoord(0, 0).emit();
+        t.position(positionMatrix, x0, y1, z1).color(0, 255, 255).texCoord(0, 0).emit();
+
+        // +x
+        t.indices(0, 1, 2, 2, 3, 0);
+        t.position(positionMatrix, x1, y1, z1).color(255, 0, 0).texCoord(0, 0).emit();
+        t.position(positionMatrix, x1, y0, z1).color(255, 0, 0).texCoord(0, 0).emit();
+        t.position(positionMatrix, x1, y0, z0).color(255, 0, 0).texCoord(0, 0).emit();
+        t.position(positionMatrix, x1, y1, z0).color(255, 0, 0).texCoord(0, 0).emit();
+
+        // -y
+        t.indices(0, 1, 2, 2, 3, 0);
+        t.position(positionMatrix, x0, y0, z1).color(255, 0, 220).texCoord(0, 0).emit();
+        t.position(positionMatrix, x0, y0, z0).color(255, 0, 220).texCoord(0, 0).emit();
+        t.position(positionMatrix, x1, y0, z0).color(255, 0, 220).texCoord(0, 0).emit();
+        t.position(positionMatrix, x1, y0, z1).color(255, 0, 220).texCoord(0, 0).emit();
+
+        // +y
+        t.indices(0, 1, 2, 2, 3, 0);
+        t.position(positionMatrix, x0, y1, z0).color(0, 255, 33).texCoord(0, 0).emit();
+        t.position(positionMatrix, x0, y1, z1).color(0, 255, 33).texCoord(0, 0).emit();
+        t.position(positionMatrix, x1, y1, z1).color(0, 255, 33).texCoord(0, 0).emit();
+        t.position(positionMatrix, x1, y1, z0).color(0, 255, 33).texCoord(0, 0).emit();
+
+        // -z
+        t.indices(0, 1, 2, 2, 3, 0);
+        t.position(positionMatrix, x1, y1, z0).color(255, 216, 0).texCoord(0, 0).emit();
+        t.position(positionMatrix, x1, y0, z0).color(255, 216, 0).texCoord(0, 0).emit();
+        t.position(positionMatrix, x0, y0, z0).color(255, 216, 0).texCoord(0, 0).emit();
+        t.position(positionMatrix, x0, y1, z0).color(255, 216, 0).texCoord(0, 0).emit();
 
         // +z
         t.indices(0, 1, 2, 2, 3, 0);
-        t.position(positionMatrix, 0.0f, 1.0f, 1.0f).color(0, 148, 255).texCoord(0, 0).emit();
-        t.position(positionMatrix, 0.0f, 0.0f, 1.0f).color(0, 148, 255).texCoord(0, 0).emit();
-        t.position(positionMatrix, 1.0f, 0.0f, 1.0f).color(0, 148, 255).texCoord(0, 0).emit();
-        t.position(positionMatrix, 1.0f, 1.0f, 1.0f).color(0, 148, 255).texCoord(0, 0).emit();
+        t.position(positionMatrix, x0, y1, z1).color(0, 148, 255).texCoord(0, 0).emit();
+        t.position(positionMatrix, x0, y0, z1).color(0, 148, 255).texCoord(0, 0).emit();
+        t.position(positionMatrix, x1, y0, z1).color(0, 148, 255).texCoord(0, 0).emit();
+        t.position(positionMatrix, x1, y1, z1).color(0, 148, 255).texCoord(0, 0).emit();
 
         t.end(gl);
     }
