@@ -45,6 +45,7 @@ public record Vector3d(double x, double y, double z) {
         return new Vector3f((float) x, (float) y, (float) z);
     }
 
+    @Deprecated
     public Vector3i toVector3iFloor() {
         return new Vector3i(Maths.floorToInt(x), Maths.floorToInt(y), Maths.floorToInt(z));
     }

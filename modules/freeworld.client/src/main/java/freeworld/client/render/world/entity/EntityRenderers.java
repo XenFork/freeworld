@@ -10,20 +10,21 @@
 
 package freeworld.client.render.world.entity;
 
-import freeworld.registry.MappedRegistry;
-import freeworld.registry.Registries;
-import freeworld.registry.Registry;
-import freeworld.util.Identifier;
+import freeworld.client.Freeworld;
 import freeworld.world.entity.Entity;
 import freeworld.world.entity.EntityType;
 import freeworld.world.entity.EntityTypes;
+
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * @author squid233
  * @since 0.1.0
  */
 public final class EntityRenderers {
-    private static final MappedRegistry<EntityRenderer.Factory<Entity>> REGISTRY = new MappedRegistry<>(Identifier.ofBuiltin("entity_renderer"));
+    private static final Map<EntityType<?>, EntityRenderer.Factory<?>> factoryMap = new HashMap<>();
 
     private EntityRenderers() {
     }
@@ -32,12 +33,13 @@ public final class EntityRenderers {
         register(EntityTypes.CUBE, CubeEntityRenderer::new);
     }
 
-    @SuppressWarnings("unchecked")
     public static <T extends Entity> void register(EntityType<T> entityType, EntityRenderer.Factory<T> renderer) {
-        Registry.register(REGISTRY, Registries.ENTITY_TYPE.getId(entityType), (EntityRenderer.Factory<Entity>) renderer);
+        factoryMap.put(entityType, renderer);
     }
 
-    public static Registry<EntityRenderer.Factory<Entity>> registry() {
-        return REGISTRY;
+    public static Map<EntityType<?>, EntityRenderer<?>> loadRenderers(Freeworld context) {
+        final Map<EntityType<?>, EntityRenderer<?>> renderers = HashMap.newHashMap(factoryMap.size());
+        factoryMap.forEach((entityType, factory) -> renderers.put(entityType, factory.create(context)));
+        return Collections.unmodifiableMap(renderers);
     }
 }

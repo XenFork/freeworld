@@ -14,7 +14,6 @@ import freeworld.math.Vector3d;
 import freeworld.world.World;
 
 import java.util.Objects;
-import java.util.UUID;
 
 /**
  * @author squid233
@@ -23,31 +22,39 @@ import java.util.UUID;
 public class EntityType<T extends Entity> {
     private final Factory<T> factory;
     private final Vector3d dimension;
-    private final Vector3d eyePosition;
 
-    public EntityType(Settings settings, Factory<T> factory) {
+    private EntityType(Factory<T> factory, Vector3d dimension) {
         this.factory = factory;
-        this.dimension = Objects.requireNonNull(settings.dimension);
-        this.eyePosition = Objects.requireNonNull(settings.eyePosition);
+        this.dimension = dimension;
     }
 
     @FunctionalInterface
     public interface Factory<T extends Entity> {
-        T create(World world, UUID uuid);
+        T create(World world);
     }
 
-    public static final class Settings {
-        private Vector3d dimension;
-        private Vector3d eyePosition = new Vector3d(0.0, 0.5, 0.0);
+    public static <T extends Entity> Builder<T> builder(Factory<T> factory) {
+        return new Builder<>(factory);
+    }
 
-        public Settings dimension(Vector3d dimension) {
+    public static final class Builder<T extends Entity> {
+        private final Factory<T> factory;
+        private Vector3d dimension = new Vector3d(0.6, 1.8, 0.6);
+
+        private Builder(Factory<T> factory) {
+            this.factory = factory;
+        }
+
+        public Builder<T> dimension(Vector3d dimension) {
             this.dimension = dimension;
             return this;
         }
 
-        public Settings eyePosition(Vector3d eyePosition) {
-            this.eyePosition = eyePosition;
-            return this;
+        public EntityType<T> build() {
+            return new EntityType<>(
+                factory,
+                Objects.requireNonNull(dimension)
+            );
         }
     }
 
@@ -57,9 +64,5 @@ public class EntityType<T extends Entity> {
 
     public Vector3d dimension() {
         return dimension;
-    }
-
-    public Vector3d eyePosition() {
-        return eyePosition;
     }
 }

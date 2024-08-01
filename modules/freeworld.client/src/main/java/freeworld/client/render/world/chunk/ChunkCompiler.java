@@ -51,17 +51,17 @@ public final class ChunkCompiler {
                     blockRenderer.renderBlockModel(
                         vertexBuilder,
                         model,
-                        ChunkPos.relativeToAbsolute(cx, x),
-                        ChunkPos.relativeToAbsolute(cy, y),
-                        ChunkPos.relativeToAbsolute(cz, z),
+                        ChunkPos.toBlockPosInWorld(cx, x),
+                        ChunkPos.toBlockPosInWorld(cy, y),
+                        ChunkPos.toBlockPosInWorld(cz, z),
                         direction -> {
                             Vector3i nPos = direction.axis().add(finalPos);
-                            Vector3i abs = ChunkPos.relativeToAbsolute(chunkPos, nPos);
+                            Vector3i abs = ChunkPos.toBlockPosInWorld(chunkPos, nPos);
                             final boolean shouldRender =
                                 (chunk.isInBound(nPos.x(), nPos.y(), nPos.z()) &&
                                  chunk.getBlockType(nPos.x(), nPos.y(), nPos.z()).hasSidedTransparency()) ||
                                 (chunk.world().isBlockLoaded(abs.x(), abs.y(), abs.z()) &&
-                                 chunk.world().getBlockType(abs.x(), abs.y(), abs.z()).hasSidedTransparency()) ||
+                                 chunk.world().getBlock(abs).hasSidedTransparency()) ||
                                 !chunk.world().isBlockLoaded(abs.x(), abs.y(), abs.z()) /* TODO: add method world::tryLoading() */;
                             return !shouldRender;
                         }

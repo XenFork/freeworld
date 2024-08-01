@@ -13,7 +13,6 @@ package freeworld.world.entity.system;
 import freeworld.math.Maths;
 import freeworld.math.Vector3d;
 import freeworld.util.math.AABBox;
-import freeworld.util.math.ChunkPos;
 import freeworld.world.World;
 import freeworld.world.block.BlockType;
 import freeworld.world.entity.Entity;
@@ -45,21 +44,16 @@ public final class MotionSystem implements EntitySystem {
             final int x0 = Maths.floorToInt(range.minX());
             final int y0 = Maths.floorToInt(range.minY());
             final int z0 = Maths.floorToInt(range.minZ());
-            final int x1 = Maths.ceilToInt(range.maxX() + 1.0);
-            final int y1 = Maths.ceilToInt(range.maxY() + 1.0);
-            final int z1 = Maths.ceilToInt(range.maxZ() + 1.0);
-            for (int x = x0; x < x1; x++) {
-                for (int y = y0; y < y1; y++) {
-                    for (int z = z0; z < z1; z++) {
+            final int x1 = Maths.floorToInt(range.maxX());
+            final int y1 = Maths.floorToInt(range.maxY());
+            final int z1 = Maths.floorToInt(range.maxZ());
+            for (int x = x0; x <= x1; x++) {
+                for (int y = y0; y <= y1; y++) {
+                    for (int z = z0; z <= z1; z++) {
                         if (!world.isBlockLoaded(x, y, z)) {
-                            world.getOrCreateChunk(
-                                ChunkPos.absoluteToChunk(x),
-                                ChunkPos.absoluteToChunk(y),
-                                ChunkPos.absoluteToChunk(z)
-                            );
                             continue;
                         }
-                        final BlockType blockType = world.getBlockType(x, y, z);
+                        final BlockType blockType = world.getBlock(x, y, z);
                         if (blockType.air()) {
                             continue;
                         }
@@ -101,7 +95,6 @@ public final class MotionSystem implements EntitySystem {
 
             entity.updatePreviousPosition();
             entity.setPosition(entity.position().add(moveX, moveY, moveZ));
-            entity.boundingBox = Entity.boundingBox(entity.position(), entity.boundingBox().dimension());
 
             if (entity.flying()) {
                 entity.velocity = Vector3d.ZERO;

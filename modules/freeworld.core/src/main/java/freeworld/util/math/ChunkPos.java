@@ -18,23 +18,23 @@ import freeworld.world.chunk.Chunk;
  * @since 0.1.0
  */
 public final class ChunkPos {
-    public static int relativeToAbsolute(int chunkPos, int relativePos) {
-        return chunkPos * Chunk.SIZE + relativePos;
+    public static int toBlockPosInWorld(int blockPosInChunk, int chunkPos) {
+        return blockPosInChunk * Chunk.SIZE + chunkPos;
     }
 
-    public static Vector3i relativeToAbsolute(Vector3i chunkPos, Vector3i relativePos) {
-        return chunkPos.mul(Chunk.SIZE).add(relativePos);
+    public static Vector3i toBlockPosInWorld(Vector3i blockPosInChunk, Vector3i chunkPos) {
+        return blockPosInChunk.mul(Chunk.SIZE).add(chunkPos);
     }
 
-    public static int absoluteToRelative(int absolutePos) {
-        return Math.floorMod(absolutePos, Chunk.SIZE);
+    public static int toBlockPosInChunk(int blockPosInWorld) {
+        return Math.floorMod(blockPosInWorld, Chunk.SIZE);
     }
 
-    public static int absoluteToChunk(int absolutePos) {
-        return Math.floorDiv(absolutePos, Chunk.SIZE);
+    public static int toChunkPos(int blockPos) {
+        return Math.floorDiv(blockPos, Chunk.SIZE);
     }
 
-    public static Vector3i absoluteToChunk(Vector3i absolutePos) {
-        return absolutePos.floorDiv(Chunk.SIZE);
+    public static Vector3i toChunkPos(Vector3i blockPos) {
+        return blockPos.floorDiv(Chunk.SIZE);
     }
 }

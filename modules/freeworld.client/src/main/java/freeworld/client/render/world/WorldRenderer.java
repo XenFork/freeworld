@@ -48,15 +48,18 @@ import java.util.concurrent.LinkedBlockingQueue;
 public final class WorldRenderer implements GLResource, WorldListener {
     private static final Logger logger = Logging.caller();
     public static final int RENDER_RADIUS = 5;
+    private static int builtChunkCount = 0;
     private final GameRenderer gameRenderer;
     private final World world;
     private final Scheduler scheduler = Schedulers.newParallel("WorldRenderer-Worker");
     private final Pool<DefaultVertexBuilder> vertexBuilderPool = PoolBuilder
         .from(Mono.fromSupplier(WorldRenderer::createVertexBuilder).subscribeOn(scheduler))
         .buildPool();
+    @Deprecated
     private final Map<Vector3i, ClientChunk> chunks = new HashMap<>(2048);
     private final Disposable chunkGC;
     private final Queue<Runnable> chunkGCQueue = new LinkedBlockingQueue<>();
+    @Deprecated
     private Vector3i playerChunkPos = Vector3i.ZERO;
 
     public WorldRenderer(GameRenderer gameRenderer, World world) {
@@ -84,22 +87,15 @@ public final class WorldRenderer implements GLResource, WorldListener {
         }
     }
 
-    public List<ClientChunk> renderingChunks(Entity player) {
-        final List<ClientChunk> chunks = new ArrayList<>(2048);
-        World.forInChunkRange(player, RENDER_RADIUS, (x, y, z) -> chunks.add(getChunkOrCreate(x, y, z)));
-        return chunks;
+    public void compileChunks(Entity player) {
+        World.forInChunkRange(player, RENDER_RADIUS, (x, y, z) -> getChunkOrCreate(x, y, z).compile());
     }
 
-    public void compileChunks(List<ClientChunk> renderingChunks) {
-        for (ClientChunk chunk : renderingChunks) {
-            chunk.compile();
-        }
-    }
-
-    public void renderChunks(GLStateMgr gl, List<ClientChunk> renderingChunks) {
-        int builtChunkCount = 0;
+    public void renderChunks(GLStateMgr gl, Entity player) {
+        builtChunkCount = 0;
         FrustumIntersection frustumIntersection = new FrustumIntersection(RenderSystem.projectionViewMatrix());
-        for (ClientChunk chunk : renderingChunks) {
+        World.forInChunkRange(player, RENDER_RADIUS, (x, y, z) -> {
+            ClientChunk chunk = getChunkOrCreate(x, y, z);
             if (frustumIntersection.testAab(
                 chunk.fromX(),
                 chunk.fromY(),
@@ -114,10 +110,10 @@ public final class WorldRenderer implements GLResource, WorldListener {
                 }
                 chunk.render(gl);
             }
-        }
+        });
 
         Vector3d playerPos = gameRenderer.client().player().position();
-        Vector3i playerChunkPos = ChunkPos.absoluteToChunk(playerPos.toVector3iFloor());
+        Vector3i playerChunkPos = ChunkPos.toChunkPos(playerPos.toVector3iFloor());
         if (!this.playerChunkPos.equals(playerChunkPos)) {
             this.playerChunkPos = playerChunkPos;
             uninstallChunks();
@@ -166,7 +162,7 @@ public final class WorldRenderer implements GLResource, WorldListener {
                     final float vz = z + 0.5f - oz;
                     final float zSquared = vz * vz;
                     if ((xSquared + ySquared + zSquared) <= radiusSquared) {
-                        final BlockType blockType = world.getBlockType(x, y, z);
+                        final BlockType blockType = world.getBlock(x, y, z);
                         if (blockType.air()) {
                             continue;
                         }
@@ -207,20 +203,23 @@ public final class WorldRenderer implements GLResource, WorldListener {
         }
     }
 
+    @Deprecated
     private ClientChunk getChunk(int x, int y, int z) {
         return chunks.get(new Vector3i(x, y, z));
     }
 
+    @Deprecated
     private ClientChunk getChunkOrCreate(int x, int y, int z) {
         return chunks.computeIfAbsent(new Vector3i(x, y, z),
             chunkPos -> new ClientChunk(world, this, chunkPos.x(), chunkPos.y(), chunkPos.z()));
     }
 
+    @Deprecated
     private ClientChunk getChunkByAbsolutePos(int x, int y, int z) {
         return getChunk(
-            ChunkPos.absoluteToChunk(x),
-            ChunkPos.absoluteToChunk(y),
-            ChunkPos.absoluteToChunk(z)
+            ChunkPos.toChunkPos(x),
+            ChunkPos.toChunkPos(y),
+            ChunkPos.toChunkPos(z)
         );
     }
 

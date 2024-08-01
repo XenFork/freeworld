@@ -10,13 +10,19 @@
 
 package freeworld.world.chunk;
 
+import freeworld.math.Vector2d;
 import freeworld.util.math.ChunkPos;
+import freeworld.util.math.MathUtil;
 import freeworld.util.math.SimplexNoiseUtil;
 import freeworld.world.World;
 import freeworld.world.block.BlockType;
 import freeworld.world.block.BlockTypes;
+import freeworld.world.entity.CubeEntity;
+import freeworld.world.entity.Entity;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.StringJoiner;
 
 /**
@@ -40,6 +46,7 @@ public class Chunk {
     private final int height;
     private final int depth;
     private final BlockType[] blocks;
+    private final List<Entity> entities = new ArrayList<>();
 
     public Chunk(World world, int x, int y, int z) {
         this.world = world;
@@ -59,14 +66,37 @@ public class Chunk {
         Arrays.fill(blocks, BlockTypes.AIR);
     }
 
+    public void tick() {
+        world.motionSystem().process(world, entities);
+        // TODO: test
+        for (Entity entity : entities) {
+            if (entity instanceof CubeEntity cubeEntity) {
+                cubeEntity.rotation = new Vector2d(0.0, cubeEntity.rotation().y() + Math.random() * 2 - 1);
+                cubeEntity.acceleration = MathUtil.moveRelative(
+                    0.0, cubeEntity.onGround() && Math.random() > 0.5 ? 0.5 : 0.0, 1.0,
+                    cubeEntity.rotation().y(),
+                    cubeEntity.onGround() ? 0.1 : 0.02
+                );
+            }
+        }
+    }
+
+    public void addEntity(Entity entity) {
+        entities.add(entity);
+    }
+
+    public void removeEntity(Entity entity) {
+        entities.remove(entity);
+    }
+
     public void generateTerrain() {
         for (int bx = 0; bx < width; bx++) {
             for (int bz = 0; bz < depth; bz++) {
-                final int absX = ChunkPos.relativeToAbsolute(x, bx);
-                final int absZ = ChunkPos.relativeToAbsolute(z, bz);
+                final int absX = ChunkPos.toBlockPosInWorld(x, bx);
+                final int absZ = ChunkPos.toBlockPosInWorld(z, bz);
                 final float heightmap = SimplexNoiseUtil.sumOctave(8, absX, absZ, world.seed() & 0xff, (world.seed() >> 8) & 0xff, 0.2f, 0.003f, -64.0f, 64.0f);
                 for (int by = 0; by < height; by++) {
-                    final int absY = ChunkPos.relativeToAbsolute(y, by);
+                    final int absY = ChunkPos.toBlockPosInWorld(y, by);
                     if (absY < heightmap - 3) {
                         setBlockType(bx, by, bz, BlockTypes.STONE);
                     } else if (absY < heightmap - 1) {
@@ -105,6 +135,10 @@ public class Chunk {
 
     public World world() {
         return world;
+    }
+
+    public List<Entity> entities() {
+        return entities;
     }
 
     public int x() {

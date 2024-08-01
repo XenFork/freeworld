@@ -29,7 +29,7 @@ public class CubeEntityRenderer extends EntityRenderer<CubeEntity> {
 
     @Override
     public void render(GLStateMgr gl, double partialTick, Matrix4f positionMatrix, CubeEntity entity) {
-        RenderSystem.useProgram(client.gameRenderer().positionColorProgram());
+        RenderSystem.useProgram(context.gameRenderer().positionColorProgram());
         Tessellator t = Tessellator.getInstance();
         t.begin(GLDrawMode.TRIANGLES);
         float x0 = -0.5f;

@@ -10,9 +10,12 @@
 
 package freeworld.world.entity;
 
+import freeworld.math.Maths;
 import freeworld.math.Vector2d;
 import freeworld.math.Vector3d;
+import freeworld.math.Vector3i;
 import freeworld.util.math.AABBox;
+import freeworld.util.math.ChunkPos;
 import freeworld.world.World;
 
 import java.util.UUID;
@@ -23,30 +26,31 @@ import java.util.UUID;
  */
 public class Entity {
     private final World world;
-    private final UUID uuid;
-    private final EntityType<? extends Entity> entityType;
+    private final EntityType<? extends Entity> type;
+    private final UUID uuid = UUID.randomUUID();
     public Vector3d acceleration = Vector3d.ZERO;
+    private Vector3i blockPos = Vector3i.ZERO;
     public AABBox boundingBox;
-    public Vector3d eyePosition;
+    private Vector3i chunkPos = Vector3i.ZERO;
+    private final Vector3d dimension;
+    public double eyeHeight;
     public boolean flying = false;
     public boolean onGround = false;
     private Vector3d previousPosition = Vector3d.ZERO;
     private Vector3d position = Vector3d.ZERO;
-    private Vector3d interpolatedPosition = Vector3d.ZERO;
     public Vector2d rotation = Vector2d.ZERO;
     public Vector3d velocity = Vector3d.ZERO;
 
-    public Entity(World world, UUID uuid, EntityType<? extends Entity> entityType) {
+    public Entity(EntityType<? extends Entity> type, World world) {
         this.world = world;
-        this.uuid = uuid;
-        this.entityType = entityType;
-        this.eyePosition = entityType.eyePosition();
+        this.type = type;
+        this.dimension = type.dimension();
+        this.eyeHeight = getEyeHeight(dimension);
+        setPosition(new Vector3d(0.0, 0.0, 0.0));
     }
 
-    public static AABBox boundingBox(
-        Vector3d position,
-        Vector3d dimension
-    ) {
+    private AABBox calculateBoundingBox() {
+        // TODO: use EntityDimension
         final double hw = dimension.x() * 0.5;
         final double hd = dimension.z() * 0.5;
         return new AABBox(
@@ -59,9 +63,12 @@ public class Entity {
         );
     }
 
-    public final void init(Vector3d position) {
-        this.position = position;
-        this.boundingBox = boundingBox(position, entityType.dimension());
+    public double getEyeHeight(Vector3d dimension) {
+        return dimension.y() * 0.9;
+    }
+
+    public double getEyeHeight() {
+        return getEyeHeight(dimension);
     }
 
     public void updatePreviousPosition() {
@@ -69,11 +76,36 @@ public class Entity {
     }
 
     public void setPosition(Vector3d position) {
-        this.position = position;
+        setPos(position);
+        setBoundingBox(calculateBoundingBox());
     }
 
-    public void interpolatePosition(double partialTick) {
-        interpolatedPosition = previousPosition.lerp(position, partialTick);
+    public void setPos(Vector3d pos) {
+        if (!this.position.equals(pos)) {
+            this.position = pos;
+            int x = Maths.floorToInt(this.position.x());
+            int y = Maths.floorToInt(this.position.y());
+            int z = Maths.floorToInt(this.position.z());
+            if (x != this.blockPos.x() || y != this.blockPos.y() || z != this.blockPos.z()) {
+                this.blockPos = new Vector3i(x, y, z);
+                Vector3i chunkPos = ChunkPos.toChunkPos(this.blockPos);
+                if (!this.chunkPos.equals(chunkPos)) {
+                    this.chunkPos = chunkPos;
+                }
+            }
+        }
+    }
+
+    public void setBoundingBox(AABBox boundingBox) {
+        this.boundingBox = boundingBox;
+    }
+
+    public Vector3d interpolatedPosition(double partialTick) {
+        return previousPosition.lerp(position, partialTick);
+    }
+
+    public Vector3d getCameraPos(double partialTick) {
+        return interpolatedPosition(partialTick).add(0.0, getEyeHeight(), 0.0);
     }
 
     public World world() {
@@ -84,20 +116,24 @@ public class Entity {
         return uuid;
     }
 
-    public EntityType<? extends Entity> entityType() {
-        return entityType;
+    public EntityType<?> type() {
+        return type;
     }
 
     public Vector3d acceleration() {
         return acceleration;
     }
 
+    public Vector3i blockPos() {
+        return blockPos;
+    }
+
     public AABBox boundingBox() {
         return boundingBox;
     }
 
-    public Vector3d eyePosition() {
-        return eyePosition;
+    public Vector3i chunkPos() {
+        return chunkPos;
     }
 
     public boolean flying() {
@@ -114,10 +150,6 @@ public class Entity {
 
     public Vector3d position() {
         return position;
-    }
-
-    public Vector3d interpolatedPosition() {
-        return interpolatedPosition;
     }
 
     public Vector2d rotation() {

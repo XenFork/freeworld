@@ -12,14 +12,12 @@ package freeworld.world.entity;
 
 import freeworld.world.World;
 
-import java.util.UUID;
-
 /**
  * @author squid233
  * @since 0.1.0
  */
 public class CubeEntity extends Entity {
-    public CubeEntity(World world, UUID uuid) {
-        super(world, uuid, EntityTypes.CUBE);
+    public CubeEntity(World world) {
+        super(EntityTypes.CUBE, world);
     }
 }

@@ -33,7 +33,7 @@ import freeworld.world.World;
 import freeworld.world.block.BlockType;
 import freeworld.world.block.BlockTypes;
 import freeworld.world.entity.EntityTypes;
-import freeworld.world.entity.PlayerEntity;
+import freeworld.world.entity.player.PlayerEntity;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import overrun.marshal.Unmarshal;
@@ -264,7 +264,7 @@ public final class Freeworld implements AutoCloseable {
             if (!hitResult.missed() &&
                 glfw.getMouseButton(window, GLFW.MOUSE_BUTTON_LEFT) == GLFW.PRESS) {
                 Vector3i position = hitResult.position();
-                world.setBlockType(position.x(), position.y(), position.z(), BlockTypes.AIR);
+                world.setBlock(position.x(), position.y(), position.z(), BlockTypes.AIR);
                 blockDestroyTimer = 0;
             }
         }
@@ -278,9 +278,9 @@ public final class Freeworld implements AutoCloseable {
                     Vector3i axis = face.axis();
                     Vector3i position = hitResult.position();
                     Vector3i add = position.add(axis);
-                    if (world.getBlockType(position.x(), position.y(), position.z()).replaceable() ||
-                        world.getBlockType(add.x(), add.y(), add.z()).replaceable()) {
-                        world.setBlockType(add.x(), add.y(), add.z(), type);
+                    if (world.getBlock(position).replaceable() ||
+                        world.getBlock(add).replaceable()) {
+                        world.setBlock(add.x(), add.y(), add.z(), type);
                     }
                 }
                 blockPlaceTimer = 0;
@@ -296,7 +296,6 @@ public final class Freeworld implements AutoCloseable {
 
     private void tick() {
         if (world != null) {
-            camera.preUpdate();
             if (screen == null) {
                 worldInput();
             }

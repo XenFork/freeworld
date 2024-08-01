@@ -8,13 +8,13 @@
  * only version 2.1 of the License.
  */
 
-package freeworld.world.entity;
+package freeworld.world.entity.player;
 
 import freeworld.world.World;
 import freeworld.world.block.BlockType;
 import freeworld.world.block.BlockTypes;
-
-import java.util.UUID;
+import freeworld.world.entity.Entity;
+import freeworld.world.entity.EntityTypes;
 
 /**
  * @author squid233
@@ -35,8 +35,8 @@ public class PlayerEntity extends Entity {
     };
     private int selectedHotBar = 0;
 
-    public PlayerEntity(World world, UUID uuid) {
-        super(world, uuid, EntityTypes.PLAYER);
+    public PlayerEntity(World world) {
+        super(EntityTypes.PLAYER, world);
     }
 
     public void selectHotBar(int index) {

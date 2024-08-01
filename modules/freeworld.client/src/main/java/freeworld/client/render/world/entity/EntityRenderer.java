@@ -20,14 +20,14 @@ import freeworld.world.entity.Entity;
  * @since 0.1.0
  */
 public abstract class EntityRenderer<T extends Entity> {
-    protected final Freeworld client;
+    protected final Freeworld context;
 
-    protected EntityRenderer(Freeworld client) {
-        this.client = client;
+    protected EntityRenderer(Freeworld context) {
+        this.context = context;
     }
 
     public interface Factory<T extends Entity> {
-        EntityRenderer<T> create(Freeworld client);
+        EntityRenderer<T> create(Freeworld context);
     }
 
     public abstract void render(GLStateMgr gl, double partialTick, Matrix4f positionMatrix, T entity);

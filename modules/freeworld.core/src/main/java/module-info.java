@@ -25,6 +25,7 @@ module freeworld.core {
     exports freeworld.world.block;
     exports freeworld.world.chunk;
     exports freeworld.world.entity;
+    exports freeworld.world.entity.player;
     exports freeworld.world.entity.system;
 
     requires transitive freeworld.math;

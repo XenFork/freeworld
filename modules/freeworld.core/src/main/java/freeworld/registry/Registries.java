@@ -14,6 +14,7 @@ import freeworld.util.Identifier;
 import freeworld.world.block.BlockType;
 import freeworld.world.block.BlockTypes;
 import freeworld.world.entity.EntityType;
+import freeworld.world.entity.EntityTypes;
 
 /**
  * @author squid233
@@ -21,7 +22,7 @@ import freeworld.world.entity.EntityType;
  */
 public final class Registries {
     public static final DefaultedRegistry<BlockType> BLOCK_TYPE = new DefaultedRegistry<>(Identifier.ofBuiltin("block_type"), () -> BlockTypes.AIR);
-    public static final MappedRegistry<EntityType> ENTITY_TYPE = new MappedRegistry<>(Identifier.ofBuiltin("entity_type"));
+    public static final DefaultedRegistry<EntityType<?>> ENTITY_TYPE = new DefaultedRegistry<>(Identifier.ofBuiltin("entity_type"), () -> EntityTypes.CUBE);
 
     private Registries() {
     }

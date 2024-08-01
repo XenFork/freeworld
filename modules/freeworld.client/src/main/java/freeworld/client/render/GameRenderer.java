@@ -27,22 +27,24 @@ import freeworld.client.render.vertex.VertexLayout;
 import freeworld.client.render.vertex.VertexLayouts;
 import freeworld.client.render.world.WorldRenderer;
 import freeworld.client.render.world.block.BlockRenderer;
+import freeworld.client.render.world.entity.EntityRenderer;
 import freeworld.client.render.world.entity.EntityRenderers;
-import freeworld.client.world.chunk.ClientChunk;
 import freeworld.math.Matrix4f;
 import freeworld.math.Vector3i;
-import freeworld.registry.Registries;
 import freeworld.util.Direction;
 import freeworld.util.Identifier;
 import freeworld.util.Logging;
 import freeworld.util.math.Lined;
+import freeworld.world.World;
 import freeworld.world.block.BlockHitResult;
 import freeworld.world.entity.Entity;
+import freeworld.world.entity.EntityType;
 import org.slf4j.Logger;
 import overrungl.opengl.GL10C;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 /**
  * The game renderer.
@@ -61,6 +63,7 @@ public final class GameRenderer implements GLResource {
     private BlockRenderer blockRenderer;
     private WorldRenderer worldRenderer;
     private BlockHitResult hitResult = new BlockHitResult(true, null, Vector3i.ZERO, Direction.SOUTH);
+    private Map<EntityType<?>, EntityRenderer<?>> rendererMap;
 
     public GameRenderer(Freeworld client) {
         this.client = client;
@@ -90,6 +93,8 @@ public final class GameRenderer implements GLResource {
 
         guiGraphics = new GuiGraphics(gl, this);
         hudRenderer = new HudRenderer(this);
+
+        rendererMap = EntityRenderers.loadRenderers(client);
     }
 
     private void initBlockAtlas(GLStateMgr gl) {
@@ -151,8 +156,7 @@ public final class GameRenderer implements GLResource {
 
         final Camera camera = client.camera();
         final Entity player = client.player();
-        camera.moveToEntity(player);
-        camera.updateLerp(partialTick);
+        camera.moveToEntity(player, partialTick);
         RenderSystem.setProjectionViewMatrix(Matrix4f.setPerspective(
             (float) Math.toRadians(70.0),
             (float) client.framebufferWidth() / client.framebufferHeight(),
@@ -164,8 +168,7 @@ public final class GameRenderer implements GLResource {
         RenderSystem.useProgram(positionColorTexProgram);
         RenderSystem.updateMatrices();
 
-        final List<ClientChunk> chunks = worldRenderer.renderingChunks(player);
-        worldRenderer.compileChunks(chunks);
+        worldRenderer.compileChunks(player);
 
         hitResult = worldRenderer.selectBlock(player);
 
@@ -175,7 +178,7 @@ public final class GameRenderer implements GLResource {
             gl.setPolygonOffset(1.0f, 1.0f);
             gl.setLineWidth(2.0f);
         }
-        worldRenderer.renderChunks(gl, chunks);
+        worldRenderer.renderChunks(gl, player);
         if (!hitResult.missed()) {
             gl.disablePolygonOffsetFill();
             gl.setLineWidth(1.0f);
@@ -203,17 +206,23 @@ public final class GameRenderer implements GLResource {
     private void renderWorldEntities(GLStateMgr gl, double partialTick) {
         RenderSystem.useProgram(positionColorProgram);
         RenderSystem.updateMatrices();
-        for (Entity entity : client.world().entities()) {
-            entity.interpolatePosition(partialTick);
-            var factory = EntityRenderers.registry().getById(Registries.ENTITY_TYPE.getId(entity.entityType()));
-            if (factory != null) {
-                factory.create(client).render(gl,
-                    partialTick,
-                    Matrix4f.translation(entity.interpolatedPosition().toVector3f())
-                        .rotateY((float) Math.toRadians(entity.rotation().y())),
-                    entity);
+        World.forInChunkRange(client.player(), WorldRenderer.RENDER_RADIUS, (x, y, z) -> {
+            for (Entity entity : client.world().getOrCreateChunk(x, y, z).entities()) {
+                var renderer = getEntityRenderer(entity);
+                if (renderer != null) {
+                    renderer.render(gl,
+                        partialTick,
+                        Matrix4f.translation(entity.interpolatedPosition(partialTick).toVector3f())
+                            .rotateY((float) Math.toRadians(entity.rotation().y())),
+                        entity);
+                }
             }
-        }
+        });
+    }
+
+    @SuppressWarnings("unchecked")
+    private <T extends Entity> EntityRenderer<T> getEntityRenderer(T entity) {
+        return (EntityRenderer<T>) rendererMap.get(entity.type());
     }
 
     private void renderHud(GLStateMgr gl, double partialTick) {

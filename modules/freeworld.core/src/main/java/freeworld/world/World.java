@@ -10,25 +10,21 @@
 
 package freeworld.world;
 
-import freeworld.math.Vector2d;
 import freeworld.math.Vector3d;
 import freeworld.math.Vector3i;
 import freeworld.util.Int3Consumer;
 import freeworld.util.math.ChunkPos;
-import freeworld.util.math.MathUtil;
 import freeworld.world.block.BlockType;
 import freeworld.world.block.BlockTypes;
 import freeworld.world.chunk.Chunk;
-import freeworld.world.entity.CubeEntity;
 import freeworld.world.entity.Entity;
 import freeworld.world.entity.EntityType;
-import freeworld.world.entity.PlayerEntity;
+import freeworld.world.entity.player.PlayerEntity;
 import freeworld.world.entity.system.MotionSystem;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -38,7 +34,6 @@ import java.util.concurrent.ConcurrentHashMap;
 public final class World {
     public static final int TICKING_RADIUS = 5;
     public final Map<Vector3i, Chunk> chunks = new ConcurrentHashMap<>(2048);
-    private final List<Entity> entities = new ArrayList<>();
     private final List<PlayerEntity> players = new ArrayList<>();
     private final MotionSystem motionSystem = new MotionSystem();
     private final List<WorldListener> listeners = new ArrayList<>();
@@ -49,7 +44,7 @@ public final class World {
     }
 
     public static void forInChunkRange(Entity player, int chunkRadius, Int3Consumer consumer) {
-        Vector3i chunkPos = ChunkPos.absoluteToChunk(player.position().toVector3iFloor());
+        Vector3i chunkPos = player.chunkPos();
         int minX = chunkPos.x() - chunkRadius;
         int maxX = chunkPos.x() + chunkRadius;
         int minY = chunkPos.y() - chunkRadius;
@@ -71,27 +66,19 @@ public final class World {
 
     public void tick() {
         motionSystem.process(this, players);
-        motionSystem.process(this, entities);
-        // TODO: test
-        for (Entity entity : entities) {
-            if (entity instanceof CubeEntity cubeEntity) {
-                cubeEntity.rotation = new Vector2d(0.0, cubeEntity.rotation().y() + Math.random() * 2 - 1);
-                cubeEntity.acceleration = MathUtil.moveRelative(
-                    0.0, cubeEntity.onGround() && Math.random() > 0.5 ? 0.5 : 0.0, 1.0,
-                    cubeEntity.rotation().y(),
-                    cubeEntity.onGround() ? 0.1 : 0.02
-                );
-            }
+        for (PlayerEntity player : players) {
+            forInChunkRange(player, TICKING_RADIUS, (x, y, z) -> getOrCreateChunk(x, y, z).tick());
         }
     }
 
     public <T extends Entity> T createEntity(EntityType<T> type, Vector3d position) {
-        final T entity = type.factory().create(this, UUID.randomUUID());
-        entity.init(position);
+        final T entity = type.factory().create(this);
+        entity.setPosition(position);
         if (entity instanceof PlayerEntity player) {
             players.add(player);
         } else {
-            entities.add(entity);
+            Vector3i chunkPos = entity.chunkPos();
+            getOrCreateChunk(chunkPos.x(), chunkPos.y(), chunkPos.z()).addEntity(entity);
         }
         return entity;
     }
@@ -102,9 +89,9 @@ public final class World {
 
     public boolean isBlockLoaded(int x, int y, int z) {
         return isChunkLoaded(
-            ChunkPos.absoluteToChunk(x),
-            ChunkPos.absoluteToChunk(y),
-            ChunkPos.absoluteToChunk(z)
+            ChunkPos.toChunkPos(x),
+            ChunkPos.toChunkPos(y),
+            ChunkPos.toChunkPos(z)
         );
     }
 
@@ -125,31 +112,35 @@ public final class World {
 
     public Chunk getChunkByAbsolutePos(int x, int y, int z) {
         return getChunk(
-            ChunkPos.absoluteToChunk(x),
-            ChunkPos.absoluteToChunk(y),
-            ChunkPos.absoluteToChunk(z)
+            ChunkPos.toChunkPos(x),
+            ChunkPos.toChunkPos(y),
+            ChunkPos.toChunkPos(z)
         );
     }
 
-    public BlockType getBlockType(int x, int y, int z) {
+    public BlockType getBlock(int x, int y, int z) {
         final Chunk chunk = getChunkByAbsolutePos(x, y, z);
         if (chunk != null) {
             return chunk.getBlockType(
-                ChunkPos.absoluteToRelative(x),
-                ChunkPos.absoluteToRelative(y),
-                ChunkPos.absoluteToRelative(z)
+                ChunkPos.toBlockPosInChunk(x),
+                ChunkPos.toBlockPosInChunk(y),
+                ChunkPos.toBlockPosInChunk(z)
             );
         }
         return BlockTypes.AIR;
     }
 
-    public void setBlockType(int x, int y, int z, BlockType blockType) {
+    public BlockType getBlock(Vector3i pos) {
+        return getBlock(pos.x(), pos.y(), pos.z());
+    }
+
+    public void setBlock(int x, int y, int z, BlockType blockType) {
         final Chunk chunk = getChunkByAbsolutePos(x, y, z);
         if (chunk != null) {
             chunk.setBlockType(
-                ChunkPos.absoluteToRelative(x),
-                ChunkPos.absoluteToRelative(y),
-                ChunkPos.absoluteToRelative(z),
+                ChunkPos.toBlockPosInChunk(x),
+                ChunkPos.toBlockPosInChunk(y),
+                ChunkPos.toBlockPosInChunk(z),
                 blockType
             );
             for (WorldListener listener : listeners) {
@@ -162,7 +153,7 @@ public final class World {
         return seed;
     }
 
-    public List<Entity> entities() {
-        return entities;
+    public MotionSystem motionSystem() {
+        return motionSystem;
     }
 }
