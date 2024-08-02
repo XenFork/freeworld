@@ -24,6 +24,8 @@ public final class BlockTypes {
     public static final BlockType DIRT = register("dirt", new BlockType(new BlockType.Settings()));
     public static final BlockType STONE = register("stone", new BlockType(new BlockType.Settings()));
     public static final BlockType STONE_SLAB = register("stone_slab", new SlabBlockType(new BlockType.Settings()));
+    public static final BlockType OAK_LOG = register("oak_log", new BlockType(new BlockType.Settings()));
+    public static final BlockType COAL_ORE = register("coal_ore", new BlockType(new BlockType.Settings()));
 
     private BlockTypes() {
     }

@@ -35,9 +35,9 @@ public final class CubeAllBlockModel implements BlockModel {
     static {
         final Map<Direction, BlockModelFace> map = HashMap.newHashMap(6);
         for (Direction direction : Direction.LIST) {
-            map.put(direction, new BlockModelFace(Vector2f.ZERO, new Vector2f(1.0f), TextureKeys.ALL, direction));
+            map.put(direction, new BlockModelFace(Vector2f.ZERO, Vector2f.ONE, TextureKeys.ALL, direction));
         }
-        LIST = List.of(new BlockModelPart(Vector3f.ZERO, new Vector3f(1.0f), map));
+        LIST = List.of(new BlockModelPart(Vector3f.ZERO, Vector3f.ONE, map));
     }
 
     @Override

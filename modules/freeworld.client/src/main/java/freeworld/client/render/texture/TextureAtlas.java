@@ -27,6 +27,7 @@ import java.lang.foreign.MemorySegment;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * @author squid233
@@ -43,7 +44,8 @@ public final class TextureAtlas extends Texture {
         this.aliasMap = new HashMap<>();
     }
 
-    public static TextureAtlas load(GLStateMgr gl, List<Identifier> identifierList, int initMipmapLevel) {
+    public static TextureAtlas load(GLStateMgr gl, Set<Identifier> identifierSet, int initMipmapLevel) {
+        var identifierList = List.copyOf(identifierSet);
         final int numIds = identifierList.size();
         final STBRectPack stbrp = STBRectPack.INSTANCE;
         try (Arena arena = Arena.ofConfined()) {

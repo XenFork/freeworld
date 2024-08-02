@@ -42,9 +42,9 @@ import freeworld.world.entity.EntityType;
 import org.slf4j.Logger;
 import overrungl.opengl.GL10C;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * The game renderer.
@@ -80,7 +80,7 @@ public final class GameRenderer implements GLResource {
 
         initBlockAtlas(gl);
 
-        final TextureAtlas guiAtlas = TextureAtlas.load(gl, List.of(
+        final TextureAtlas guiAtlas = TextureAtlas.load(gl, Set.of(
             HudRenderer.CROSSING_TEXTURE,
             HudRenderer.HOT_BAR_TEXTURE,
             HudRenderer.HOT_BAR_SELECTED_TEXTURE
@@ -101,17 +101,17 @@ public final class GameRenderer implements GLResource {
         final var registry = client.blockModelManager().registry();
 
         // scan textures
-        final List<Identifier> list = new ArrayList<>(registry.size());
+        final Set<Identifier> set = new HashSet<>(registry.size());
         for (var e : registry) {
             final BlockModel model = e.getValue();
             for (BlockModelPart part : model.parts()) {
                 for (BlockModelFace face : part.faces().values()) {
-                    list.add(model.textureDefinitions().get(face.textureKey()));
+                    set.add(model.textureDefinitions().get(face.textureKey()));
                 }
             }
         }
 
-        final TextureAtlas blockAtlas = TextureAtlas.load(gl, list, 4);
+        final TextureAtlas blockAtlas = TextureAtlas.load(gl, set, 4);
         textureManager.addTexture(TextureManager.BLOCK_ATLAS, blockAtlas);
         logAtlas(blockAtlas, TextureManager.BLOCK_ATLAS);
     }

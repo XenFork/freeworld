@@ -16,6 +16,7 @@ package freeworld.math;
  */
 public record Vector2f(float x, float y) {
     public static final Vector2f ZERO = new Vector2f(0.0f);
+    public static final Vector2f ONE = new Vector2f(1.0f);
 
     public Vector2f(float d) {
         this(d, d);

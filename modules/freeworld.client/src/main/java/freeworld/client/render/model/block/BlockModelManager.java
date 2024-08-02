@@ -67,6 +67,8 @@ public final class BlockModelManager {
         register(BlockTypes.DIRT, new CubeAllBlockModel(Identifier.ofBuiltin("block/dirt")));
         register(BlockTypes.STONE, new CubeAllBlockModel(Identifier.ofBuiltin("block/stone")));
         register(BlockTypes.STONE_SLAB, new SlabBlockModel(Identifier.ofBuiltin("block/stone"), Identifier.ofBuiltin("block/stone"), Identifier.ofBuiltin("block/stone")));
+        register(BlockTypes.OAK_LOG, new LogBlockModel(Identifier.ofBuiltin("block/oak_log_top"), Identifier.ofBuiltin("block/oak_log")));
+        register(BlockTypes.COAL_ORE, new CubeAllBlockModel(Identifier.ofBuiltin("block/coal_ore")));
     }
 
     public BlockModel get(Identifier identifier) {

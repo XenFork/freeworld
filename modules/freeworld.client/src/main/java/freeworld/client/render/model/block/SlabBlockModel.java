@@ -20,6 +20,8 @@ import java.util.List;
 import java.util.Map;
 
 import static freeworld.client.render.model.TextureKeys.*;
+import static freeworld.math.Vector2f.*;
+import static freeworld.util.Direction.*;
 
 /**
  * @author squid233
@@ -30,12 +32,12 @@ public final class SlabBlockModel implements BlockModel {
         Vector3f.ZERO,
         new Vector3f(1.0f, 0.5f, 1.0f),
         new MapBuilder<Direction, BlockModelFace>()
-            .entry(Direction.WEST, new BlockModelFace(new Vector2f(0.0f, 0.5f), new Vector2f(1.0f), SIDE, Direction.WEST))
-            .entry(Direction.EAST, new BlockModelFace(new Vector2f(0.0f, 0.5f), new Vector2f(1.0f), SIDE, Direction.EAST))
-            .entry(Direction.DOWN, new BlockModelFace(Vector2f.ZERO, new Vector2f(1.0f), BOTTOM, Direction.DOWN))
-            .entry(Direction.UP, new BlockModelFace(Vector2f.ZERO, new Vector2f(1.0f), TOP, null))
-            .entry(Direction.NORTH, new BlockModelFace(new Vector2f(0.0f, 0.5f), new Vector2f(1.0f), SIDE, Direction.NORTH))
-            .entry(Direction.SOUTH, new BlockModelFace(new Vector2f(0.0f, 0.5f), new Vector2f(1.0f), SIDE, Direction.SOUTH))
+            .entry(WEST, new BlockModelFace(new Vector2f(0.0f, 0.5f), ONE, SIDE, WEST))
+            .entry(EAST, new BlockModelFace(new Vector2f(0.0f, 0.5f), ONE, SIDE, EAST))
+            .entry(DOWN, new BlockModelFace(ZERO, ONE, BOTTOM, DOWN))
+            .entry(UP, new BlockModelFace(ZERO, ONE, TOP, null))
+            .entry(NORTH, new BlockModelFace(new Vector2f(0.0f, 0.5f), ONE, SIDE, NORTH))
+            .entry(SOUTH, new BlockModelFace(new Vector2f(0.0f, 0.5f), ONE, SIDE, SOUTH))
             .build()
     ));
     private final Map<Identifier, Identifier> textureDef;
