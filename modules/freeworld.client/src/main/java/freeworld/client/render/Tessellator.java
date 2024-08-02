@@ -4,8 +4,8 @@
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
- * License as published by the Free Software Foundation;
- * only version 2.1 of the License.
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
  */
 
 package freeworld.client.render;
@@ -33,7 +33,7 @@ import java.lang.foreign.MemorySegment;
 public final class Tessellator implements GLResource, VertexBuilder {
     private static final int MAX_VERTEX_COUNT = 60000;
     private static final int MAX_INDEX_COUNT = 90000;
-    private static final VertexLayout VERTEX_LAYOUT = VertexLayouts.POSITION_COLOR_TEX;
+    private static final VertexLayout VERTEX_LAYOUT = VertexLayouts.POSITION_COLOR_TEXTURE;
     private final VertexBuilder vertexBuilder = new DefaultVertexBuilder(VERTEX_LAYOUT, MAX_VERTEX_COUNT, MAX_INDEX_COUNT);
     private boolean drawing = false;
     private GLDrawMode drawMode = GLDrawMode.TRIANGLES;
@@ -100,23 +100,18 @@ public final class Tessellator implements GLResource, VertexBuilder {
     }
 
     @Override
-    public void nextElement(byte b) {
-        vertexBuilder.nextElement(b);
+    public void putByte(long offset, byte b) {
+        vertexBuilder.putByte(offset, b);
     }
 
     @Override
-    public void nextElement(float f) {
-        vertexBuilder.nextElement(f);
+    public void putFloat(long offset, float f) {
+        vertexBuilder.putFloat(offset, f);
     }
 
     @Override
-    public void nextElement(int i) {
-        vertexBuilder.nextElement(i);
-    }
-
-    @Override
-    public void nextPadding(int size) {
-        vertexBuilder.nextPadding(size);
+    public void nextElement() {
+        vertexBuilder.nextElement();
     }
 
     @Override
@@ -151,7 +146,6 @@ public final class Tessellator implements GLResource, VertexBuilder {
         gl.setArrayBufferBinding(vbo);
         if (firstFlush || vertexBuilder.shouldReallocateVertexData()) {
             gl.bufferData(GL15C.ARRAY_BUFFER, vertexData, GL15C.STREAM_DRAW);
-            VERTEX_LAYOUT.enableAttribs(gl);
             VERTEX_LAYOUT.specifyAttribPointers(gl);
         } else {
             gl.bufferSubData(GL15C.ARRAY_BUFFER, 0L, vertexData);

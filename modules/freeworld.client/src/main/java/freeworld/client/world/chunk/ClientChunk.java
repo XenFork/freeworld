@@ -130,7 +130,6 @@ public final class ClientChunk extends Chunk implements AutoCloseable {
         if (data.shouldReallocateVertexData()) {
             gl.bufferData(GL15C.ARRAY_BUFFER, vertexData, GL15C.DYNAMIC_DRAW);
             final VertexLayout layout = data.vertexLayout();
-            layout.enableAttribs(gl);
             layout.specifyAttribPointers(gl);
         } else {
             gl.bufferSubData(GL15C.ARRAY_BUFFER, 0L, vertexData);

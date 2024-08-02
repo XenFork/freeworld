@@ -138,8 +138,8 @@ public final class GameRenderer implements GLResource {
 
     private void initGLPrograms(GLStateMgr gl) {
         positionColorProgram = initBuiltinProgram(gl, "init/position_color", VertexLayouts.POSITION_COLOR);
-        positionColorTexProgram = initBuiltinProgram(gl, "init/position_color_tex", VertexLayouts.POSITION_COLOR_TEX);
-        renderTypeTextProgram = initBuiltinProgram(gl, "core/render_type_text", VertexLayouts.POSITION_COLOR_TEX);
+        positionColorTexProgram = initBuiltinProgram(gl, "init/position_color_tex", VertexLayouts.POSITION_COLOR_TEXTURE);
+        renderTypeTextProgram = initBuiltinProgram(gl, "core/render_type_text", VertexLayouts.POSITION_COLOR_TEXTURE);
     }
 
     private GLProgram initBuiltinProgram(GLStateMgr gl, String path, VertexLayout layout) {

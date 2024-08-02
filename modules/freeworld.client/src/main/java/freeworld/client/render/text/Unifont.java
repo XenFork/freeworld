@@ -67,7 +67,7 @@ public final class Unifont implements Font {
                     int hexData = Integer.parseInt(data.substring(dataIndex, dataIndex + stride), 16);
                     for (int x1 = 0; x1 < width; x1++) {
                         int bit = (hexData >> (width - 1 - x1)) & 1;
-                        segment.setAtIndex(ValueLayout.JAVA_BYTE, (long) (y + y1) * TEXTURE_SIZE + (x + x1), (byte) (bit != 0 ? 0xff : 0));
+                        segment.set(ValueLayout.JAVA_BYTE, (long) (y + y1) * TEXTURE_SIZE + (x + x1), (byte) (bit != 0 ? 0xff : 0));
                     }
                 }
             }

@@ -36,6 +36,7 @@ import freeworld.world.entity.player.PlayerEntity;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import overrun.marshal.Unmarshal;
+import overrungl.OverrunGL;
 import overrungl.glfw.GLFW;
 import overrungl.glfw.GLFWCallbacks;
 import overrungl.glfw.GLFWErrorCallback;
@@ -88,6 +89,7 @@ public final class FreeworldClient implements AutoCloseable {
     public void start() {
         logger.info("Starting client");
 
+        OverrunGL.setApiLogger(logger::error);
         GLFWErrorCallback.createLog(logger::error).set();
 
         if (!glfw.init()) {

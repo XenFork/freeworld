@@ -4,13 +4,13 @@
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
- * License as published by the Free Software Foundation;
- * only version 2.1 of the License.
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
  */
 
 package freeworld.client.render.model.block;
 
-import freeworld.client.util.MapBuilder;
+import freeworld.util.MapBuilder;
 import freeworld.math.Vector3f;
 import freeworld.util.Direction;
 import freeworld.util.Identifier;
@@ -33,12 +33,12 @@ public final class LogBlockModel implements BlockModel {
             Vector3f.ZERO,
             Vector3f.ONE,
             new MapBuilder<Direction, BlockModelFace>()
-                .entry(WEST, new BlockModelFace(ZERO, ONE, SIDE, WEST))
-                .entry(EAST, new BlockModelFace(ZERO, ONE, SIDE, EAST))
-                .entry(DOWN, new BlockModelFace(ZERO, ONE, TOP, DOWN))
-                .entry(UP, new BlockModelFace(ZERO, ONE, TOP, UP))
-                .entry(NORTH, new BlockModelFace(ZERO, ONE, SIDE, NORTH))
-                .entry(SOUTH, new BlockModelFace(ZERO, ONE, SIDE, SOUTH))
+                .add(WEST, new BlockModelFace(ZERO, ONE, SIDE, WEST))
+                .add(EAST, new BlockModelFace(ZERO, ONE, SIDE, EAST))
+                .add(DOWN, new BlockModelFace(ZERO, ONE, TOP, DOWN))
+                .add(UP, new BlockModelFace(ZERO, ONE, TOP, UP))
+                .add(NORTH, new BlockModelFace(ZERO, ONE, SIDE, NORTH))
+                .add(SOUTH, new BlockModelFace(ZERO, ONE, SIDE, SOUTH))
                 .build()
         )
     );

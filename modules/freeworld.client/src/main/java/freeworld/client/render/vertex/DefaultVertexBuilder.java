@@ -10,8 +10,6 @@
 
 package freeworld.client.render.vertex;
 
-import freeworld.math.Matrix4f;
-import freeworld.math.Vector3f;
 import freeworld.util.Logging;
 import org.slf4j.Logger;
 
@@ -28,54 +26,41 @@ import java.util.Objects;
 public final class DefaultVertexBuilder implements VertexBuilder {
     private static final Logger logger = Logging.caller();
     private final VertexLayout vertexLayout;
-    private Arena vertexArena;
-    private Arena indexArena;
     private MemorySegment vertexData;
     private MemorySegment indexData;
     private boolean shouldReallocateVertexData = true;
     private boolean shouldReallocateIndexData = true;
-    private int maxVertexCount;
     private int maxIndexCount;
-    private int prevVertexCount = 0;
+    private long prevVertexDataOffset = 0L;
+    private long vertexDataOffset = 0L;
     private int prevIndexCount = 0;
     private int vertexCount = 0;
     private int indexCount = 0;
-    private final int elementCount;
-    private int currentElement = 0;
-    private int currentElementOffset = 0;
-    private final MemorySegment elementsBuffer;
+    private VertexLayoutElement currentElement;
+    private int currentElementIndex = 0;
 
     public DefaultVertexBuilder(VertexLayout layout, int vertexCount, int indexCount) {
         Objects.requireNonNull(layout);
         if (vertexCount <= 0) throw new IllegalArgumentException("vertexCount <= 0: " + vertexCount);
         if (indexCount <= 0) throw new IllegalArgumentException("indexCount <= 0: " + indexCount);
 
-        final List<VertexFormat> formats = layout.formats();
-
         this.vertexLayout = layout;
-        this.vertexArena = Arena.ofAuto();
-        this.indexArena = Arena.ofAuto();
-        this.vertexData = vertexArena.allocate((long) layout.stride() * vertexCount);
-        this.indexData = indexArena.allocate(ValueLayout.JAVA_INT, indexCount);
-        this.maxVertexCount = vertexCount;
+        this.vertexData = Arena.ofAuto().allocate((long) layout.stride() * vertexCount);
+        this.indexData = Arena.ofAuto().allocate(ValueLayout.JAVA_INT, indexCount);
         this.maxIndexCount = indexCount;
-
-        int elementCount = 0;
-        for (VertexFormat format : formats) {
-            elementCount += format.elementCount();
-        }
-        this.elementCount = elementCount;
-        this.elementsBuffer = Arena.ofAuto().allocate(layout.stride());
     }
 
     @Override
     public void reset() {
-        prevVertexCount = vertexCount;
+        prevVertexDataOffset = vertexDataOffset;
+        vertexDataOffset = 0L;
         prevIndexCount = indexCount;
         vertexCount = 0;
         indexCount = 0;
-        currentElement = 0;
-        currentElementOffset = 0;
+        // TODO: 2024/8/3 squid233: begin(VertexLayout)
+//        currentElement = null;
+        currentElement = vertexLayout.elements().getFirst();
+        currentElementIndex = 0;
     }
 
     @Override
@@ -84,8 +69,8 @@ public final class DefaultVertexBuilder implements VertexBuilder {
         if (indexCount + length > maxIndexCount) {
             logger.debug("Exceeds max index count: {} + {} > {}; expanding", indexCount, length, maxIndexCount);
             maxIndexCount = maxIndexCount * 3 / 2;
-            indexArena = Arena.ofAuto();
-            indexData = indexArena.allocate(ValueLayout.JAVA_INT, maxIndexCount);
+            MemorySegment prevData = indexData;
+            indexData = Arena.ofAuto().allocate(ValueLayout.JAVA_INT, maxIndexCount).copyFrom(prevData);
             shouldReallocateIndexData = true;
         }
         for (int i = 0; i < indices.length; i++) {
@@ -103,112 +88,50 @@ public final class DefaultVertexBuilder implements VertexBuilder {
         return indicesWithOffset(vertexCount, indices);
     }
 
-    @Override
-    public DefaultVertexBuilder position(float x, float y, float z) {
-        VertexBuilder.super.position(x, y, z);
-        return this;
+    private void grow() {
+        grow(vertexLayout.stride());
     }
 
-    @Override
-    public DefaultVertexBuilder position(Matrix4f positionMatrix, float x, float y, float z) {
-        VertexBuilder.super.position(positionMatrix, x, y, z);
-        return this;
-    }
-
-    @Override
-    public DefaultVertexBuilder position(Matrix4f positionMatrix, Vector3f v) {
-        VertexBuilder.super.position(positionMatrix, v);
-        return this;
-    }
-
-    @Override
-    public DefaultVertexBuilder color(int red, int green, int blue, int alpha) {
-        VertexBuilder.super.color(red, green, blue, alpha);
-        return this;
-    }
-
-    @Override
-    public DefaultVertexBuilder color(int red, int green, int blue) {
-        VertexBuilder.super.color(red, green, blue);
-        return this;
-    }
-
-    @Override
-    public DefaultVertexBuilder color(float red, float green, float blue, float alpha) {
-        VertexBuilder.super.color(red, green, blue, alpha);
-        return this;
-    }
-
-    @Override
-    public DefaultVertexBuilder color(float red, float green, float blue) {
-        VertexBuilder.super.color(red, green, blue);
-        return this;
-    }
-
-    @Override
-    public DefaultVertexBuilder texCoord(float u, float v) {
-        VertexBuilder.super.texCoord(u, v);
-        return this;
-    }
-
-    private void checkElement() {
-        if (currentElementOffset >= elementsBuffer.byteSize()) {
-            throw new IllegalStateException("Element out of bounds: " + currentElementOffset + " >= " + elementsBuffer.byteSize());
-        }
-    }
-
-    private void increaseElement(int count, int byteSize) {
-        currentElement += count;
-        currentElementOffset += byteSize;
-        if (currentElement >= elementCount) {
-            currentElement = 0;
-            currentElementOffset = 0;
+    private void grow(long size) {
+        long byteSize = vertexData.byteSize();
+        if (vertexDataOffset + size > byteSize) {
+            logger.debug("Exceeds max vertex data size: {}; expanding", byteSize);
+            MemorySegment prevData = vertexData;
+            vertexData = Arena.ofAuto().allocate(byteSize * 3 / 2).copyFrom(prevData);
+            shouldReallocateVertexData = true;
         }
     }
 
     @Override
-    public void nextElement(byte b) {
-        checkElement();
-        elementsBuffer.set(ValueLayout.JAVA_BYTE, currentElementOffset, b);
-        increaseElement(1, 1);
+    public void putByte(long offset, byte b) {
+        vertexData.set(ValueLayout.JAVA_BYTE, vertexDataOffset + offset, b);
     }
 
     @Override
-    public void nextElement(float f) {
-        checkElement();
-        elementsBuffer.set(ValueLayout.JAVA_FLOAT, currentElementOffset, f);
-        increaseElement(1, 4);
+    public void putFloat(long offset, float f) {
+        vertexData.set(ValueLayout.JAVA_FLOAT, vertexDataOffset + offset, f);
     }
 
     @Override
-    public void nextElement(int i) {
-        checkElement();
-        elementsBuffer.set(ValueLayout.JAVA_INT, currentElementOffset, i);
-        increaseElement(1, 4);
-    }
-
-    @Override
-    public void nextPadding(int size) {
-        checkElement();
-        elementsBuffer.asSlice(currentElementOffset, size).fill((byte) 0);
-        increaseElement(size, size);
+    public void nextElement() {
+        List<VertexLayoutElement> formats = vertexLayout.elements();
+        currentElementIndex = (currentElementIndex + 1) % formats.size();
+        vertexDataOffset += this.currentElement.byteSize();
+        VertexLayoutElement element = formats.get(currentElementIndex);
+        this.currentElement = element;
+        if (element.format() == VertexFormat.PADDING) {
+            nextElement();
+        }
     }
 
     @Override
     public void emit() {
-        if (currentElement % elementCount != 0) {
-            throw new IllegalStateException("Incomplete element with layout " + vertexLayout);
+        if (currentElementIndex != 0) {
+            throw new IllegalStateException("Not filled all elements");
         }
-        if (vertexCount + 1 > maxVertexCount) {
-            logger.debug("Exceeds max vertex count: {}; expanding", maxVertexCount);
-            maxVertexCount = maxVertexCount * 3 / 2;
-            vertexArena = Arena.ofAuto();
-            vertexData = vertexArena.allocate((long) vertexLayout.stride() * maxVertexCount);
-            shouldReallocateVertexData = true;
-        }
-        MemorySegment.copy(elementsBuffer, 0L, vertexData, (long) vertexLayout.stride() * vertexCount, elementsBuffer.byteSize());
         vertexCount++;
-        if (vertexCount > prevVertexCount) {
+        grow();
+        if (vertexDataOffset > prevVertexDataOffset) {
             shouldReallocateVertexData = true;
         }
     }
@@ -231,6 +154,11 @@ public final class DefaultVertexBuilder implements VertexBuilder {
     @Override
     public MemorySegment indexData() {
         return indexData;
+    }
+
+    @Override
+    public MemorySegment vertexDataSlice() {
+        return vertexData.asSlice(0L, vertexDataOffset);
     }
 
     @Override

@@ -24,6 +24,7 @@ import static freeworld.client.util.ColorUtil.colorToInt;
  * @since 0.1.0
  */
 public interface VertexBuilder {
+    @Deprecated
     void reset();
 
     @Deprecated
@@ -33,9 +34,10 @@ public interface VertexBuilder {
     VertexBuilder indices(int... indices);
 
     default VertexBuilder position(float x, float y, float z) {
-        nextElement(x);
-        nextElement(y);
-        nextElement(z);
+        putFloat(0L, x);
+        putFloat(4L, y);
+        putFloat(8L, z);
+        nextElement();
         return this;
     }
 
@@ -49,10 +51,11 @@ public interface VertexBuilder {
     }
 
     default VertexBuilder color(int red, int green, int blue, int alpha) {
-        nextElement((byte) red);
-        nextElement((byte) green);
-        nextElement((byte) blue);
-        nextElement((byte) alpha);
+        putByte(0L, (byte) red);
+        putByte(1L, (byte) green);
+        putByte(2L, (byte) blue);
+        putByte(3L, (byte) alpha);
+        nextElement();
         return this;
     }
 
@@ -69,40 +72,46 @@ public interface VertexBuilder {
     }
 
     default VertexBuilder texCoord(float u, float v) {
-        nextElement(u);
-        nextElement(v);
+        putFloat(0L, u);
+        putFloat(4L, v);
+        nextElement();
         return this;
     }
 
-    void nextElement(byte b);
+    void putByte(long offset, byte b);
 
-    void nextElement(float f);
+    void putFloat(long offset, float f);
 
-    void nextElement(int i);
-
-    void nextPadding(int size);
+    void nextElement();
 
     void emit();
 
+    @Deprecated
     int vertexCount();
 
+    @Deprecated
     int indexCount();
 
+    @Deprecated
     MemorySegment vertexData();
 
+    @Deprecated
     MemorySegment indexData();
 
-    default MemorySegment vertexDataSlice() {
-        return vertexData().asSlice(0L, (long) vertexLayout().stride() * vertexCount());
-    }
+    @Deprecated
+    MemorySegment vertexDataSlice();
 
+    @Deprecated
     default MemorySegment indexDataSlice() {
         return indexData().asSlice(0L, ValueLayout.JAVA_INT.scale(0L, indexCount()));
     }
 
+    @Deprecated
     boolean shouldReallocateVertexData();
 
+    @Deprecated
     boolean shouldReallocateIndexData();
 
+    @Deprecated
     VertexLayout vertexLayout();
 }
