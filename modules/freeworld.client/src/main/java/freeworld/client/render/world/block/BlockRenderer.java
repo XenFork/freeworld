@@ -4,12 +4,13 @@
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
- * License as published by the Free Software Foundation;
- * only version 2.1 of the License.
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
  */
 
 package freeworld.client.render.world.block;
 
+import freeworld.client.render.GameRenderer;
 import freeworld.client.render.model.block.BlockModel;
 import freeworld.client.render.model.block.BlockModelFace;
 import freeworld.client.render.model.block.BlockModelPart;
@@ -31,10 +32,10 @@ import java.util.function.Predicate;
  * @since 0.1.0
  */
 public final class BlockRenderer {
-    private final TextureManager textureManager;
+    private final GameRenderer gameRenderer;
 
-    public BlockRenderer(TextureManager textureManager) {
-        this.textureManager = textureManager;
+    public BlockRenderer(GameRenderer gameRenderer) {
+        this.gameRenderer = gameRenderer;
     }
 
     private void emitVertices(VertexBuilder builder, Matrix4f matrix, Vector3f from, Vector3f to, Vector2f uvFrom, Vector2f uvTo, Direction direction) {
@@ -55,7 +56,7 @@ public final class BlockRenderer {
     }
 
     public void renderBlockModel(VertexBuilder builder, BlockModel model, Matrix4f matrix, int x, int y, int z, Predicate<Direction> shouldCullFace) {
-        final TextureAtlas texture = textureManager.getTexture(TextureManager.BLOCK_ATLAS);
+        final TextureAtlas texture = gameRenderer.textureManager().getTexture(TextureManager.BLOCK_ATLAS);
         final int width = texture.width();
         final int height = texture.height();
 

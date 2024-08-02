@@ -4,8 +4,8 @@
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
- * License as published by the Free Software Foundation;
- * only version 2.1 of the License.
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
  */
 
 package freeworld.util;
@@ -50,7 +50,7 @@ public enum Direction {
             case 3 -> UP;
             case 4 -> NORTH;
             case 5 -> SOUTH;
-            default -> throw new IllegalArgumentException(STR."Invalid id for direction: \{id}");
+            default -> throw new IllegalArgumentException("Invalid id for direction: " + id);
         };
     }
 

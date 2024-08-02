@@ -4,8 +4,8 @@
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
- * License as published by the Free Software Foundation;
- * only version 2.1 of the License.
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
  */
 
 package freeworld.util.file;
@@ -26,7 +26,9 @@ import java.util.stream.Collectors;
  *
  * @author squid233
  * @since 0.1.0
+ * @deprecated to be replaced with an enhanced resource loader which supports reloading and loading from external zip files.
  */
+@Deprecated(since = "0.1.0")
 public final class BuiltinFiles {
     private static final Logger logger = Logging.caller();
 
@@ -59,7 +61,7 @@ public final class BuiltinFiles {
         }
         try (stream) {
             return allocator.allocateFrom(ValueLayout.JAVA_BYTE, stream.readAllBytes());
-        } catch (IOException e) {
+        } catch (Exception e) {
             logger.error("Failed to load file {} from stream", name, e);
             return MemorySegment.NULL;
         }

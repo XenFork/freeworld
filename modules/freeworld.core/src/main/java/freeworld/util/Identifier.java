@@ -4,8 +4,8 @@
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
- * License as published by the Free Software Foundation;
- * only version 2.1 of the License.
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
  */
 
 package freeworld.util;
@@ -14,7 +14,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
-import java.util.regex.Pattern;
+import java.util.function.UnaryOperator;
 
 /**
  * An identifier that locates to a resource.
@@ -26,29 +26,24 @@ import java.util.regex.Pattern;
  */
 public record Identifier(@NotNull String namespace, @NotNull String path) {
     public static final String DEFAULT_NAMESPACE = "freeworld";
-    public static final String ROOT_ASSETS = "assets";
-    public static final String RES_SHADER = "shader";
-    public static final String RES_TEXTURE = "texture";
-    public static final String EXT_JSON = ".json";
-    public static final String EXT_PNG = ".png";
-    private static final Pattern NAMESPACE_RULE = Pattern.compile("^[\\w-]+$");
-    private static final Pattern PATH_RULE = Pattern.compile("^[\\w/.-]*$");
-    private static final Identifier EMPTY = new Identifier(DEFAULT_NAMESPACE, "");
 
     public Identifier {
-        checkNamespace(namespace);
-        checkPath(path);
+        checkNamespace(namespace, path);
+        checkPath(namespace, path);
     }
 
-    @NotNull
-    public static Identifier of(@NotNull String identifier) throws InvalidIdentifierException {
-        Objects.requireNonNull(identifier);
-        final String[] split = identifier.split(":", 2);
-        return switch (split.length) {
-            case 0 -> EMPTY;
-            case 1 -> ofBuiltin(split[0]);
-            default -> new Identifier(split[0], split[1]);
-        };
+    public Identifier(String identifier) {
+        String[] split = identifier.split(":", 2);
+        this(split.length == 2 ? split[0] : DEFAULT_NAMESPACE, switch (split.length) {
+            case 0 -> "";
+            case 1 -> split[0];
+            default -> split[1];
+        });
+    }
+
+    @Nullable
+    public static Identifier of(@NotNull String identifier) {
+        return isValidIdentifier(identifier) ? new Identifier(identifier) : null;
     }
 
     @NotNull
@@ -56,17 +51,12 @@ public record Identifier(@NotNull String namespace, @NotNull String path) {
         return new Identifier(DEFAULT_NAMESPACE, path);
     }
 
-    @Nullable
-    public static Identifier ofSafe(@Nullable String identifier) {
-        return isValidIdentifier(identifier) ? of(identifier) : null;
-    }
-
     public static boolean isValidNamespace(@Nullable String namespace) {
-        return namespace != null && NAMESPACE_RULE.matcher(namespace).matches();
+        return namespace != null && namespace.codePoints().allMatch(Identifier::isValidNamespaceCodepoint);
     }
 
     public static boolean isValidPath(@Nullable String path) {
-        return path != null && PATH_RULE.matcher(path).matches();
+        return path != null && path.codePoints().allMatch(Identifier::isValidPathCodepoint);
     }
 
     public static boolean isValidIdentifier(@Nullable String identifier) {
@@ -81,32 +71,56 @@ public record Identifier(@NotNull String namespace, @NotNull String path) {
         };
     }
 
-    private static String checkNamespace(@NotNull String namespace) {
+    private static boolean isValidNamespaceCodepoint(int codePoint) {
+        return codePoint == '_' ||
+            codePoint == '-' ||
+            codePoint == '.' ||
+            codePoint >= '0' && codePoint <= '9' ||
+            codePoint >= 'a' && codePoint <= 'z';
+    }
+
+    private static boolean isValidPathCodepoint(int codePoint) {
+        return isValidNamespaceCodepoint(codePoint) || codePoint == '/';
+    }
+
+    private static String checkNamespace(@NotNull String namespace, String path) {
         Objects.requireNonNull(namespace);
         if (isValidNamespace(namespace)) {
             return namespace;
         }
-        throw new InvalidIdentifierException(STR."Invalid namespace: \{namespace}");
+        throw new InvalidIdentifierException("Invalid namespace '" + namespace + "' in identifier " + namespace + ":" + path);
     }
 
-    private static String checkPath(@NotNull String path) {
+    private static String checkPath(String namespace, @NotNull String path) {
         Objects.requireNonNull(path);
         if (isValidPath(path)) {
             return path;
         }
-        throw new InvalidIdentifierException(STR."Invalid path: \{path}");
+        throw new InvalidIdentifierException("Invalid path '" + path + "' in identifier " + namespace + ":" + path);
     }
 
-    public String toResourcePath(@Nullable String root, @Nullable String type, @Nullable String suffix) {
-        return STR."\{root != null ? STR."\{root}/" : ""}\{namespace()}/\{type != null ? STR."\{type}/" : ""}\{path()}\{suffix != null ? suffix : ""}";
+    public String toResourcePath() {
+        return namespace + "/" + path;
     }
 
-    public Identifier toResourceId(@Nullable String type, @Nullable String suffix) {
-        return new Identifier(namespace(), STR."\{type != null ? STR."\{type}/" : ""}\{path()}\{suffix != null ? suffix : ""}");
+    public Identifier withPath(String path) {
+        return new Identifier(namespace, path);
+    }
+
+    public Identifier withPath(UnaryOperator<String> operator) {
+        return withPath(operator.apply(path));
+    }
+
+    public Identifier withPathPrefix(String prefix) {
+        return withPath(prefix + path);
+    }
+
+    public Identifier withPathSuffix(String suffix) {
+        return withPath(path + suffix);
     }
 
     @Override
     public String toString() {
-        return STR."\{namespace()}:\{path()}";
+        return namespace + ":" + path;
     }
 }

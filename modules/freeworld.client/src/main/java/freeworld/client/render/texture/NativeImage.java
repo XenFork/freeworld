@@ -4,8 +4,8 @@
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
- * License as published by the Free Software Foundation;
- * only version 2.1 of the License.
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
  */
 
 package freeworld.client.render.texture;
@@ -28,14 +28,15 @@ import java.lang.foreign.ValueLayout;
  * @param width   the width
  * @param height  the height
  * @param segment the segment
+ * @param formats the formats of this image.
  * @param failed  {@code true} if failed
  * @author squid233
  * @since 0.1.0
  */
-public record NativeImage(int width, int height, MemorySegment segment, boolean failed) {
+public record NativeImage(int width, int height, MemorySegment segment, ImageFormats formats, boolean failed) {
     private static final Logger logger = Logging.caller();
 
-    public static NativeImage load(Arena arena, MemorySegment segment, String path) {
+    public static NativeImage load(Arena arena, MemorySegment segment, String path, ImageFormats formats) {
         if (Unmarshal.isNullPointer(segment)) {
             return fail();
         }
@@ -43,21 +44,25 @@ public record NativeImage(int width, int height, MemorySegment segment, boolean 
         final MemorySegment py = arena.allocate(ValueLayout.JAVA_INT);
         final MemorySegment pc = arena.allocate(ValueLayout.JAVA_INT);
         final STBImage stbImage = STBImage.INSTANCE;
-        final MemorySegment result = stbImage.loadFromMemory(segment, px, py, pc, STBImage.RGB_ALPHA);
+        final MemorySegment result = stbImage.loadFromMemory(segment, px, py, pc, formats.format().stbEnum());
         if (Unmarshal.isNullPointer(result)) {
             logger.error("Failed to load image from {}: {}", path, stbImage.failureReason());
             return fail();
         }
-        return new NativeImage(
+        return of(
             px.get(ValueLayout.JAVA_INT, 0L),
             py.get(ValueLayout.JAVA_INT, 0L),
             result.reinterpret(arena, stbImage::free),
-            false
+            formats
         );
     }
 
-    public static NativeImage load(Arena arena, String path) {
-        return load(arena, BuiltinFiles.loadBinary(arena, BuiltinFiles.load(path), path), path);
+    public static NativeImage load(Arena arena, String path, ImageFormats formats) {
+        return load(arena, BuiltinFiles.loadBinary(arena, BuiltinFiles.load(path), path), path, formats);
+    }
+
+    public static NativeImage of(int width, int height, MemorySegment segment, ImageFormats formats) {
+        return new NativeImage(width, height, segment, formats, false);
     }
 
     public static NativeImage fail() {
@@ -71,7 +76,7 @@ public record NativeImage(int width, int height, MemorySegment segment, boolean 
                         segment.setAtIndex(ValueLayout.JAVA_INT, y * 16 + x, (x < 8 ^ y < 8) ? 0xff000000 : 0xffff00ff);
                     }
                 }
-                FAILED = new NativeImage(16, 16, segment.asReadOnly(), true);
+                FAILED = new NativeImage(16, 16, segment.asReadOnly(), ImageFormats.RGBA, true);
             }
         }
         return Holder.FAILED;

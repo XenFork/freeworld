@@ -4,8 +4,8 @@
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
- * License as published by the Free Software Foundation;
- * only version 2.1 of the License.
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
  */
 
 package freeworld.client.render.gl;
@@ -70,9 +70,7 @@ public final class GLProgram implements GLResource {
     }
 
     private static GLProgram loadFromJson(GLStateMgr gl, Identifier identifier, VertexLayout vertexLayout) {
-        final String path = identifier.toResourcePath(Identifier.ROOT_ASSETS,
-            Identifier.RES_SHADER,
-            Identifier.EXT_JSON);
+        final String path = "assets/" + identifier.withPath(s -> "shader/" + s + ".json").toResourcePath();
         final BufferedReader reader = BuiltinFiles.readTextAsReader(BuiltinFiles.load(path));
         if (reader == null) {
             logger.error("Failed to load GLProgram {} from file {}", identifier, path);
@@ -114,26 +112,26 @@ public final class GLProgram implements GLResource {
                     final String name = entry.getKey();
                     final JsonElement valueElement = entry.getValue();
                     if (!valueElement.isJsonObject()) {
-                        malformedJson(identifier, path, STR."uniform.\{name} is not a JSON object");
+                        malformedJson(identifier, path, "uniform." + name + " is not a JSON object");
                         return null;
                     }
                     final JsonObject valueObject = valueElement.getAsJsonObject();
                     final JsonElement typeElement = valueObject.get("type");
                     if (!typeElement.isJsonPrimitive() || !typeElement.getAsJsonPrimitive().isString()) {
-                        malformedJson(identifier, path, STR."uniform.\{name}.type is not a string");
+                        malformedJson(identifier, path, "uniform." + name + ".type is not a string");
                         return null;
                     }
                     final String type = typeElement.getAsString();
                     final GLUniformType uniformType = GLUniformType.fromString(type);
                     if (uniformType == null) {
-                        malformedJson(identifier, path, STR."uniform.\{name}.type is an invalid type: \{type}");
+                        malformedJson(identifier, path, "uniform." + name + ".type is an invalid type: " + type);
                         return null;
                     }
                     uniformTypeMap.put(name, uniformType);
                     if (valueObject.has("value")) {
                         final JsonElement uniformValueElement = valueObject.get("value");
                         if (!uniformValueElement.isJsonArray()) {
-                            malformedJson(identifier, path, STR."uniform.\{name}.value is not an array");
+                            malformedJson(identifier, path, "uniform." + name + ".value is not an array");
                             return null;
                         }
                         final JsonArray valueArray = uniformValueElement.getAsJsonArray();
@@ -153,7 +151,7 @@ public final class GLProgram implements GLResource {
 
         // OpenGL stuff
 
-        final String vshPath = vshId.toResourcePath(Identifier.ROOT_ASSETS, Identifier.RES_SHADER, null);
+        final String vshPath = "assets/" + vshId.withPathPrefix("shader/").toResourcePath();
         final String vshSrc = BuiltinFiles.readText(BuiltinFiles.load(vshPath), vshPath);
         if (vshSrc == null) {
             return null;
@@ -163,7 +161,7 @@ public final class GLProgram implements GLResource {
             return null;
         }
 
-        final String fshPath = fshId.toResourcePath(Identifier.ROOT_ASSETS, Identifier.RES_SHADER, null);
+        final String fshPath = "assets/" + fshId.withPathPrefix("shader/").toResourcePath();
         final String fshSrc = BuiltinFiles.readText(BuiltinFiles.load(fshPath), fshPath);
         if (fshSrc == null) {
             gl.deleteShader(vsh);
@@ -244,13 +242,13 @@ public final class GLProgram implements GLResource {
     private static Identifier getShaderId(Identifier identifier, String path, JsonObject jsonObject, String name) {
         final JsonElement jsonElement = jsonObject.get(name);
         if (!jsonElement.isJsonPrimitive() || !jsonElement.getAsJsonPrimitive().isString()) {
-            malformedJson(identifier, path, STR."\{name} is not a string");
+            malformedJson(identifier, path, name + " is not a string");
             return null;
         }
         final String asString = jsonElement.getAsString();
-        final Identifier id = Identifier.ofSafe(asString);
+        final Identifier id = Identifier.of(asString);
         if (id == null) {
-            malformedJson(identifier, path, STR."\{name} shader is invalid: \{asString}");
+            malformedJson(identifier, path, name + " shader is invalid: " + asString);
             return null;
         }
         return id;
@@ -300,7 +298,7 @@ public final class GLProgram implements GLResource {
 
     @Override
     public String toString() {
-        return STR."GLProgram \{identifier()} (\{id()})";
+        return "GLProgram " + identifier + " (" + id + ")";
     }
 
     public int id() {

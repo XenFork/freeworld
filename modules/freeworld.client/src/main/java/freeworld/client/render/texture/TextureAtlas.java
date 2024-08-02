@@ -4,8 +4,8 @@
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
- * License as published by the Free Software Foundation;
- * only version 2.1 of the License.
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
  */
 
 package freeworld.client.render.texture;
@@ -33,7 +33,7 @@ import java.util.Set;
  * @author squid233
  * @since 0.1.0
  */
-public final class TextureAtlas extends Texture {
+public final class TextureAtlas extends Texture2D {
     private static final Logger logger = Logging.caller();
     private final Map<Identifier, TextureRegion> regionMap;
     private final Map<Identifier, Identifier> aliasMap;
@@ -54,7 +54,7 @@ public final class TextureAtlas extends Texture {
                 boolean missing = MISSING.equals(identifier);
                 final NativeImage load = missing ?
                     NativeImage.fail() :
-                    NativeImage.load(arena, identifier.toResourcePath(Identifier.ROOT_ASSETS, Identifier.RES_TEXTURE, Identifier.EXT_PNG));
+                    NativeImage.load(arena, "assets/" + identifier.withPath(s -> "texture/" + s + ".png").toResourcePath(), ImageFormats.RGBA);
                 imageMap.put(identifier, load);
                 if (load.failed() && !missing) {
                     logger.error("Failed to load texture {}", identifier);
@@ -113,15 +113,16 @@ public final class TextureAtlas extends Texture {
                     final int width = slice.w();
                     final int height = slice.h();
                     regionMap.put(identifier, new TextureRegion(atlas, xo, yo, width, height));
+                    NativeImage nativeImage = imageMap.get(identifier);
                     gl.texSubImage2D(GL10C.TEXTURE_2D,
                         0,
                         xo,
                         yo,
                         width,
                         height,
-                        GL10C.RGBA,
+                        nativeImage.formats().format().glEnum(),
                         GL10C.UNSIGNED_BYTE,
-                        imageMap.get(identifier).segment());
+                        nativeImage.segment());
                 }
             }
             if (mipmapLevel > 0) {

@@ -326,6 +326,6 @@ if (hasPublication.toBoolean() && publicationRepo != null) {
 
 dependencies {
     constraints {
-        gameModules.forEach { api("io.github.xenfork:${it.artifactId}:${it.version}") }
+        gameModules.forEach { api("$projGroupId:${it.artifactId}:${it.version}") }
     }
 }

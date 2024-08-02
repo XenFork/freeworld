@@ -4,8 +4,8 @@
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
- * License as published by the Free Software Foundation;
- * only version 2.1 of the License.
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
  */
 
 package freeworld.registry;
@@ -27,7 +27,7 @@ public interface Registry<T> extends Iterable<Map.Entry<Identifier, T>> {
     }
 
     static <T> T register(MutableRegistry<? super T> registry, String id, T entry) {
-        return register(registry, Identifier.of(id), entry);
+        return register(registry, new Identifier(id), entry);
     }
 
     Identifier registryName();

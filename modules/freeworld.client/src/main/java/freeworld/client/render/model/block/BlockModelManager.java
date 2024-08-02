@@ -4,13 +4,13 @@
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
- * License as published by the Free Software Foundation;
- * only version 2.1 of the License.
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
  */
 
 package freeworld.client.render.model.block;
 
-import freeworld.client.render.texture.Texture;
+import freeworld.client.render.texture.Texture2D;
 import freeworld.util.Identifier;
 import freeworld.registry.DefaultedRegistry;
 import freeworld.registry.Registries;
@@ -61,7 +61,7 @@ public final class BlockModelManager {
     }
 
     public void bootstrap() {
-        register(Texture.MISSING, missing());
+        register(Texture2D.MISSING, missing());
         register(BlockTypes.AIR, empty());
         register(BlockTypes.GRASS_BLOCK, new CubeAllBlockModel(Identifier.ofBuiltin("block/grass_block")));
         register(BlockTypes.DIRT, new CubeAllBlockModel(Identifier.ofBuiltin("block/dirt")));

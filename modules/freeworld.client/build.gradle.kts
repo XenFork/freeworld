@@ -12,6 +12,7 @@ plugins {
     application
 }
 
+val clientVersion: String by rootProject
 val jdkEnablePreview: String by rootProject
 val overrunglVersion: String by rootProject
 
@@ -70,5 +71,15 @@ application {
                 ).joinToString(separator = ",")
             }"
         )
+    }
+}
+
+tasks.processResources {
+    val map = mapOf(
+        "client_version" to clientVersion
+    )
+    inputs.properties(map)
+    filesMatching("client_version.json") {
+        expand(map)
     }
 }

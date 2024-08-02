@@ -4,8 +4,8 @@
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
- * License as published by the Free Software Foundation;
- * only version 2.1 of the License.
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
  */
 
 package freeworld.client.world.chunk;
@@ -16,6 +16,7 @@ import freeworld.client.render.gl.GLStateMgr;
 import freeworld.client.render.vertex.VertexLayout;
 import freeworld.client.render.world.chunk.ChunkCompiler;
 import freeworld.client.render.world.WorldRenderer;
+import freeworld.client.render.world.chunk.ChunkVertexData;
 import freeworld.world.World;
 import freeworld.world.chunk.Chunk;
 import overrungl.opengl.GL15C;
@@ -58,7 +59,7 @@ public final class ClientChunk extends Chunk implements AutoCloseable {
                 return ChunkCompiler.compile(
                     vertexBuilder,
                     gameRenderer.blockRenderer(),
-                    gameRenderer.client().blockModelManager(),
+                    gameRenderer.blockModelManager(),
                     this
                 );
             }))

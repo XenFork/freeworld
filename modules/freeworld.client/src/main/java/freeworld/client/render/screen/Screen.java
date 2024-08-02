@@ -4,13 +4,13 @@
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
- * License as published by the Free Software Foundation;
- * only version 2.1 of the License.
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
  */
 
 package freeworld.client.render.screen;
 
-import freeworld.client.Freeworld;
+import freeworld.client.FreeworldClient;
 import freeworld.client.render.gl.GLStateMgr;
 import freeworld.client.render.gui.GuiGraphics;
 
@@ -19,11 +19,11 @@ import freeworld.client.render.gui.GuiGraphics;
  * @since 0.1.0
  */
 public class Screen {
-    protected final Freeworld client;
+    protected final FreeworldClient client;
     protected float width = 0;
     protected float height = 0;
 
-    public Screen(Freeworld client) {
+    public Screen(FreeworldClient client) {
         this.client = client;
     }
 

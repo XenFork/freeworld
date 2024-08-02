@@ -4,13 +4,13 @@
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
- * License as published by the Free Software Foundation;
- * only version 2.1 of the License.
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
  */
 
 package freeworld.client.render.screen.ingame;
 
-import freeworld.client.Freeworld;
+import freeworld.client.FreeworldClient;
 import freeworld.client.render.gl.GLStateMgr;
 import freeworld.client.render.gui.GuiGraphics;
 import freeworld.client.render.screen.Screen;
@@ -24,7 +24,7 @@ import overrungl.glfw.GLFW;
 public class CreativeTabScreen extends Screen {
     private static final Identifier BACKGROUND_TEXTURE = Identifier.ofBuiltin("gui/screen/creative_tab/background");
 
-    public CreativeTabScreen(Freeworld client) {
+    public CreativeTabScreen(FreeworldClient client) {
         super(client);
     }
 

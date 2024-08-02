@@ -4,8 +4,8 @@
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
- * License as published by the Free Software Foundation;
- * only version 2.1 of the License.
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
  */
 
 package freeworld.client.render.vertex;
@@ -47,8 +47,8 @@ public final class DefaultVertexBuilder implements VertexBuilder {
 
     public DefaultVertexBuilder(VertexLayout layout, int vertexCount, int indexCount) {
         Objects.requireNonNull(layout);
-        if (vertexCount <= 0) throw new IllegalArgumentException(STR."vertexCount <= 0: \{vertexCount}");
-        if (indexCount <= 0) throw new IllegalArgumentException(STR."indexCount <= 0: \{indexCount}");
+        if (vertexCount <= 0) throw new IllegalArgumentException("vertexCount <= 0: " + vertexCount);
+        if (indexCount <= 0) throw new IllegalArgumentException("indexCount <= 0: " + indexCount);
 
         final List<VertexFormat> formats = layout.formats();
 

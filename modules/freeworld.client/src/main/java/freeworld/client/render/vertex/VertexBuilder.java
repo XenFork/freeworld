@@ -4,8 +4,8 @@
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
- * License as published by the Free Software Foundation;
- * only version 2.1 of the License.
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
  */
 
 package freeworld.client.render.vertex;
@@ -17,7 +17,7 @@ import freeworld.math.Vector4f;
 import java.lang.foreign.MemorySegment;
 import java.lang.foreign.ValueLayout;
 
-import static freeworld.client.util.Conversions.colorToInt;
+import static freeworld.client.util.ColorUtil.colorToInt;
 
 /**
  * @author squid233
@@ -26,8 +26,10 @@ import static freeworld.client.util.Conversions.colorToInt;
 public interface VertexBuilder {
     void reset();
 
+    @Deprecated
     VertexBuilder indicesWithOffset(int offset, int... indices);
 
+    @Deprecated
     VertexBuilder indices(int... indices);
 
     default VertexBuilder position(float x, float y, float z) {

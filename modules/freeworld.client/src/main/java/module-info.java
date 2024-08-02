@@ -26,6 +26,7 @@ module freeworld.client {
     exports freeworld.client.render.model.block;
     exports freeworld.client.render.screen;
     exports freeworld.client.render.screen.ingame;
+    exports freeworld.client.render.text;
     exports freeworld.client.render.texture;
     exports freeworld.client.render.vertex;
     exports freeworld.client.render.world;

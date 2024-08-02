@@ -1,6 +1,6 @@
 {
-  "vertex": "freeworld:init/position_color_tex.vert",
-  "fragment": "freeworld:init/position_color_tex.frag",
+  "vertex": "freeworld:core/text.vert",
+  "fragment": "freeworld:core/text.frag",
   "uniform": {
     "ProjectionViewMatrix": {
       "type": "mat4",

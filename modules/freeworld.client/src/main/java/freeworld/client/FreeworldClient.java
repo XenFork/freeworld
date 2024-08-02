@@ -4,8 +4,8 @@
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
- * License as published by the Free Software Foundation;
- * only version 2.1 of the License.
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
  */
 
 package freeworld.client;
@@ -15,7 +15,6 @@ import freeworld.client.render.Camera;
 import freeworld.client.render.GameRenderer;
 import freeworld.client.render.RenderSystem;
 import freeworld.client.render.gl.GLStateMgr;
-import freeworld.client.render.model.block.BlockModelManager;
 import freeworld.client.render.screen.Screen;
 import freeworld.client.render.screen.ingame.CreativeTabScreen;
 import freeworld.client.render.screen.ingame.PauseScreen;
@@ -55,8 +54,8 @@ import java.util.Random;
  * @author squid233
  * @since 0.1.0
  */
-public final class Freeworld implements AutoCloseable {
-    private static final Freeworld INSTANCE = new Freeworld();
+public final class FreeworldClient implements AutoCloseable {
+    private static final FreeworldClient INSTANCE = new FreeworldClient();
     private static final Logger logger = Logging.caller();
     private static final int INIT_WINDOW_WIDTH = 854;
     private static final int INIT_WINDOW_HEIGHT = 480;
@@ -71,7 +70,6 @@ public final class Freeworld implements AutoCloseable {
     private final Camera camera = new Camera();
     private MouseInput mouseInput;
     private GameRenderer gameRenderer;
-    private BlockModelManager blockModelManager;
     private World world;
     private PlayerEntity player;
     @Nullable
@@ -81,8 +79,9 @@ public final class Freeworld implements AutoCloseable {
     private int blockPlaceTimer = 0;
     private int gameTick = 0;
     private int spaceTick = 0;
+    private boolean debugHudEnabled = false;
 
-    private Freeworld() {
+    private FreeworldClient() {
         this.glfw = GLFW.INSTANCE;
     }
 
@@ -109,7 +108,7 @@ public final class Freeworld implements AutoCloseable {
             throw new IllegalStateException("Failed to create GLFW window");
         }
 
-        mouseInput = new MouseInput(window);
+        mouseInput = new MouseInput(this, window);
         CursorPosEvent.DISABLED.subscribe(this::onCursorPosDisabled);
         glfw.setKeyCallback(window, (_, key, scancode, action, mods) -> onKey(key, scancode, action, mods));
         glfw.setFramebufferSizeCallback(window, (_, width, height) -> onResize(width, height));
@@ -168,6 +167,7 @@ public final class Freeworld implements AutoCloseable {
                                         }
                                         spaceTick = gameTick;
                                     }
+                                    case GLFW.KEY_F3 -> debugHudEnabled = !debugHudEnabled;
                                 }
                             }
                         } else {
@@ -313,9 +313,6 @@ public final class Freeworld implements AutoCloseable {
 
         RenderSystem.initialize(gl);
 
-        blockModelManager = new BlockModelManager();
-        blockModelManager.bootstrap();
-
         EntityRenderers.bootstrap();
 
         gameRenderer = new GameRenderer(this);
@@ -407,10 +404,6 @@ public final class Freeworld implements AutoCloseable {
         return gameRenderer;
     }
 
-    public BlockModelManager blockModelManager() {
-        return blockModelManager;
-    }
-
     public World world() {
         return world;
     }
@@ -423,7 +416,11 @@ public final class Freeworld implements AutoCloseable {
         return guiScale;
     }
 
-    public static Freeworld getInstance() {
+    public boolean debugHudEnabled() {
+        return debugHudEnabled;
+    }
+
+    public static FreeworldClient getInstance() {
         return INSTANCE;
     }
 }

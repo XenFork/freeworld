@@ -11,13 +11,13 @@
 package freeworld.client.util;
 
 /**
- * Number conversions
+ * Color conversions
  *
  * @author squid233
  * @since 0.1.0
  */
-public final class Conversions {
-    private Conversions() {
+public final class ColorUtil {
+    private ColorUtil() {
     }
 
     // color integer

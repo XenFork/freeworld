@@ -4,8 +4,8 @@
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
- * License as published by the Free Software Foundation;
- * only version 2.1 of the License.
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
  */
 
 package freeworld.client.render.gui;
@@ -16,7 +16,7 @@ import freeworld.client.render.Tessellator;
 import freeworld.client.render.gl.GLDrawMode;
 import freeworld.client.render.gl.GLProgram;
 import freeworld.client.render.gl.GLStateMgr;
-import freeworld.client.render.texture.Texture;
+import freeworld.client.render.texture.Texture2D;
 import freeworld.client.render.texture.TextureRegion;
 
 /**
@@ -28,7 +28,7 @@ public final class GuiGraphics {
     private final GameRenderer gameRenderer;
     private final Tessellator tessellator = Tessellator.getInstance();
     private GLProgram program = null;
-    private Texture texture = null;
+    private Texture2D texture = null;
 
     public GuiGraphics(GLStateMgr gl, GameRenderer gameRenderer) {
         this.gl = gl;
@@ -40,11 +40,10 @@ public final class GuiGraphics {
             tessellator.flush(gl);
             this.program = program;
             RenderSystem.useProgram(program);
-            RenderSystem.updateMatrices();
         }
     }
 
-    private void updateTexture(Texture texture) {
+    private void updateTexture(Texture2D texture) {
         if (this.texture != texture) {
             tessellator.flush(gl);
             this.texture = texture;
@@ -67,7 +66,7 @@ public final class GuiGraphics {
         tessellator.end(gl);
     }
 
-    public void drawSprite(Texture texture, float x, float y, float width, float height, float anchorX, float anchorY, float u0, float u1, float v0, float v1) {
+    public void drawSprite(Texture2D texture, float x, float y, float width, float height, float anchorX, float anchorY, float u0, float u1, float v0, float v1) {
         updateProgram(gameRenderer.positionColorTexProgram());
         updateTexture(texture);
         final float lWidth = width * anchorX;
@@ -81,17 +80,17 @@ public final class GuiGraphics {
         tessellator.position(x + rWidth, y + tHeight, 0).color(1.0f, 1.0f, 1.0f).texCoord(u1, v0).emit();
     }
 
-    public void drawSprite(Texture texture, float x, float y, float anchorX, float anchorY) {
+    public void drawSprite(Texture2D texture, float x, float y, float anchorX, float anchorY) {
         drawSprite(texture, x, y, texture.width(), texture.height(), anchorX, anchorY, 0.0f, 1.0f, 0.0f, 1.0f);
     }
 
-    public void drawSprite(Texture texture, float x, float y) {
+    public void drawSprite(Texture2D texture, float x, float y) {
         drawSprite(texture, x, y, 0.0f, 0.0f);
     }
 
     public void drawSprite(TextureRegion textureRegion, float x, float y, float anchorX, float anchorY) {
         if (textureRegion == null) {
-            drawSprite(gameRenderer.textureManager().getOrLoad(gl, Texture.MISSING), x, y, anchorX, anchorY);
+            drawSprite(gameRenderer.textureManager().getOrLoad(gl, Texture2D.MISSING), x, y, anchorX, anchorY);
             return;
         }
         drawSprite(textureRegion.atlas(), x, y, textureRegion.width(), textureRegion.height(), anchorX, anchorY, textureRegion.u0(), textureRegion.u1(), textureRegion.v0(), textureRegion.v1());

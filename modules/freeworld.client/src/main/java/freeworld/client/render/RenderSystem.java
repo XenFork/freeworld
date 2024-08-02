@@ -4,15 +4,15 @@
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
- * License as published by the Free Software Foundation;
- * only version 2.1 of the License.
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
  */
 
 package freeworld.client.render;
 
 import freeworld.client.render.gl.GLProgram;
 import freeworld.client.render.gl.GLStateMgr;
-import freeworld.client.render.texture.Texture;
+import freeworld.client.render.texture.Texture2D;
 import freeworld.math.Matrix4f;
 import freeworld.util.Logging;
 import org.jetbrains.annotations.ApiStatus;
@@ -27,7 +27,7 @@ public final class RenderSystem {
     private static final Logger logger = Logging.caller();
     private static GLStateMgr stateMgr = null;
     private static GLProgram currentProgram = null;
-    private static Texture textureBinding2D = null;
+    private static Texture2D textureBinding2D = null;
     private static Matrix4f projectionMatrix = Matrix4f.identity();
     private static Matrix4f viewMatrix = Matrix4f.identity();
     private static Matrix4f modelMatrix = Matrix4f.identity();
@@ -41,6 +41,7 @@ public final class RenderSystem {
         currentProgram = program;
         if (program != null) {
             program.use(stateMgr);
+            updateMatrices();
         } else {
             stateMgr.setCurrentProgram(0);
         }
@@ -50,7 +51,7 @@ public final class RenderSystem {
         return currentProgram;
     }
 
-    public static void bindTexture2D(Texture texture) {
+    public static void bindTexture2D(Texture2D texture) {
         textureBinding2D = texture;
         if (texture != null) {
             texture.bind(stateMgr);
@@ -59,7 +60,7 @@ public final class RenderSystem {
         }
     }
 
-    public static Texture textureBinding2D() {
+    public static Texture2D textureBinding2D() {
         return textureBinding2D;
     }
 

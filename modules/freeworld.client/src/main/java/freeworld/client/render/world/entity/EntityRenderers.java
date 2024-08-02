@@ -4,13 +4,13 @@
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
- * License as published by the Free Software Foundation;
- * only version 2.1 of the License.
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
  */
 
 package freeworld.client.render.world.entity;
 
-import freeworld.client.Freeworld;
+import freeworld.client.FreeworldClient;
 import freeworld.world.entity.Entity;
 import freeworld.world.entity.EntityType;
 import freeworld.world.entity.EntityTypes;
@@ -37,7 +37,7 @@ public final class EntityRenderers {
         factoryMap.put(entityType, renderer);
     }
 
-    public static Map<EntityType<?>, EntityRenderer<?>> loadRenderers(Freeworld context) {
+    public static Map<EntityType<?>, EntityRenderer<?>> loadRenderers(FreeworldClient context) {
         final Map<EntityType<?>, EntityRenderer<?>> renderers = HashMap.newHashMap(factoryMap.size());
         factoryMap.forEach((entityType, factory) -> renderers.put(entityType, factory.create(context)));
         return Collections.unmodifiableMap(renderers);

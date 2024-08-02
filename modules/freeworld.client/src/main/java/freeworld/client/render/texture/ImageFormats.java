@@ -8,28 +8,13 @@
  * version 2.1 of the License, or (at your option) any later version.
  */
 
-package freeworld.client.main;
-
-import freeworld.client.FreeworldClient;
+package freeworld.client.render.texture;
 
 /**
- * The main class
- *
  * @author squid233
  * @since 0.1.0
  */
-public final class Main {
-    private Main() {
-    }
-
-    /**
-     * the main method
-     *
-     * @param args arguments
-     */
-    public static void main(String[] args) {
-        try (FreeworldClient game = FreeworldClient.getInstance()) {
-            game.start();
-        }
-    }
+public record ImageFormats(ImageFormat internalFormat, ImageFormat format) {
+    public static final ImageFormats RGBA = new ImageFormats(ImageFormat.RGBA, ImageFormat.RGBA);
+    public static final ImageFormats UNIFONT = new ImageFormats(ImageFormat.RED, ImageFormat.RED);
 }

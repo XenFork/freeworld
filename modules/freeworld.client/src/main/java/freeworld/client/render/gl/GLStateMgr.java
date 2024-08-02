@@ -4,13 +4,13 @@
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
- * License as published by the Free Software Foundation;
- * only version 2.1 of the License.
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
  */
 
 package freeworld.client.render.gl;
 
-import freeworld.client.Freeworld;
+import freeworld.client.FreeworldClient;
 import overrun.marshal.gen.Skip;
 import overrungl.opengl.GL;
 import overrungl.opengl.GLFlags;
@@ -260,6 +260,6 @@ public abstract class GLStateMgr implements GL {
 
     @Skip
     public GLFlags flags() {
-        return Freeworld.getInstance().glFlags();
+        return FreeworldClient.getInstance().glFlags();
     }
 }

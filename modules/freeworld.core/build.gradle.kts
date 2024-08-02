@@ -8,6 +8,18 @@
  * version 2.1 of the License, or (at your option) any later version.
  */
 
+val coreVersion: String by rootProject
+
 dependencies {
     api(project(":freeworld-math"))
+}
+
+tasks.processResources {
+    val map = mapOf(
+        "core_version" to coreVersion
+    )
+    inputs.properties(map)
+    filesMatching("core_version.json") {
+        expand(map)
+    }
 }

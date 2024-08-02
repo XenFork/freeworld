@@ -4,8 +4,8 @@
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
- * License as published by the Free Software Foundation;
- * only version 2.1 of the License.
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
  */
 
 package freeworld.client.render.world.chunk;
@@ -14,7 +14,6 @@ import freeworld.client.render.vertex.VertexBuilder;
 import freeworld.client.render.model.block.BlockModel;
 import freeworld.client.render.model.block.BlockModelManager;
 import freeworld.client.render.world.block.BlockRenderer;
-import freeworld.client.world.chunk.ChunkVertexData;
 import freeworld.registry.Registries;
 import freeworld.math.Vector3i;
 import freeworld.world.chunk.Chunk;
