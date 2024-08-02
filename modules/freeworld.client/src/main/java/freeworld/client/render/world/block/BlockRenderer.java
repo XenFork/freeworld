@@ -81,6 +81,6 @@ public final class BlockRenderer {
     }
 
     public void renderBlockModel(VertexBuilder builder, BlockModel model, int x, int y, int z, Predicate<Direction> shouldCullFace) {
-        renderBlockModel(builder, model, Matrix4f.IDENTITY, x, y, z, shouldCullFace);
+        renderBlockModel(builder, model, Matrix4f.identity(), x, y, z, shouldCullFace);
     }
 }

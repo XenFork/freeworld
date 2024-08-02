@@ -50,7 +50,7 @@ public final class HudRenderer {
 
     public void render(GuiGraphics graphics, GLStateMgr gl, double partialTick) {
         RenderSystem.setProjectionViewMatrix(Matrix4f.setOrtho(0.0f, width, 0.0f, height, -300.0f, 300.0f),
-            Matrix4f.IDENTITY);
+            Matrix4f.identity());
         RenderSystem.setModelMatrix(Matrix4f.translation(width * 0.5f, height * 0.5f, 0.0f));
 
         RenderSystem.useProgram(gameRenderer.positionColorTexProgram());

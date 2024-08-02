@@ -21,32 +21,47 @@ public record Vector3d(double x, double y, double z) {
         this(d, d, d);
     }
 
-    public Vector3d add(Vector3d v) {
-        return add(v.x(), v.y(), v.z());
+    public Vector3d add(double x, double y, double z) {
+        return new Vector3d(x() + x, y() + y, z() + z);
     }
 
-    public Vector3d add(double x, double y, double z) {
-        return new Vector3d(this.x + x, this.y + y, this.z + z);
+    public Vector3d add(Vector3d v) {
+        return new Vector3d(x() + v.x(), y() + v.y(), z() + v.z());
+    }
+
+    public Vector3d sub(double x, double y, double z) {
+        return new Vector3d(x() - x, y() - y, z() - z);
+    }
+
+    public Vector3d sub(Vector3d v) {
+        return new Vector3d(x() - v.x(), y() - v.y(), z() - v.z());
     }
 
     public Vector3d mul(double x, double y, double z) {
-        return new Vector3d(this.x * x, this.y * y, this.z * z);
+        return new Vector3d(x() * x, y() * y, z() * z);
     }
 
-    public Vector3d lerp(Vector3d v, double t) {
+    public Vector3d mul(Vector3d v) {
+        return new Vector3d(x() * v.x(), y() * v.y(), z() * v.z());
+    }
+
+    public Vector3d div(double x, double y, double z) {
+        return new Vector3d(x() / x, y() / y, z() / z);
+    }
+
+    public Vector3d div(Vector3d v) {
+        return new Vector3d(x() / v.x(), y() / v.y(), z() / v.z());
+    }
+
+    public Vector3d linearInterpolate(Vector3d v, double t) {
         return new Vector3d(
-            Maths.fma(v.x() - x, t, x),
-            Maths.fma(v.y() - y, t, y),
-            Maths.fma(v.z() - z, t, z)
+            Maths.linearInterpolate(x, v.x(), t),
+            Maths.linearInterpolate(y, v.y(), t),
+            Maths.linearInterpolate(z, v.z(), t)
         );
     }
 
     public Vector3f toVector3f() {
         return new Vector3f((float) x, (float) y, (float) z);
-    }
-
-    @Deprecated
-    public Vector3i toVector3iFloor() {
-        return new Vector3i(Maths.floorToInt(x), Maths.floorToInt(y), Maths.floorToInt(z));
     }
 }

@@ -30,11 +30,11 @@ public final class Maths {
         return a * b + c;
     }
 
-    public static double lerp(double a, double b, double t) {
+    public static double linearInterpolate(double a, double b, double t) {
         return fma(b - a, t, a);
     }
 
-    public static float lerp(float a, float b, float t) {
+    public static float linearInterpolate(float a, float b, float t) {
         return fma(b - a, t, a);
     }
 

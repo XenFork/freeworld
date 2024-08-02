@@ -21,6 +21,38 @@ public record Vector4f(float x, float y, float z, float w) {
         this(d, d, d, d);
     }
 
+    public Vector4f add(float x, float y, float z, float w) {
+        return new Vector4f(x() + x, y() + y, z() + z, w() + w);
+    }
+
+    public Vector4f add(Vector4f v) {
+        return new Vector4f(x() + v.x(), y() + v.y(), z() + v.z(), w() + v.w());
+    }
+
+    public Vector4f sub(float x, float y, float z, float w) {
+        return new Vector4f(x() - x, y() - y, z() - z, w() - w);
+    }
+
+    public Vector4f sub(Vector4f v) {
+        return new Vector4f(x() - v.x(), y() - v.y(), z() - v.z(), w() - v.w());
+    }
+
+    public Vector4f mul(float x, float y, float z, float w) {
+        return new Vector4f(x() * x, y() * y, z() * z, w() * w);
+    }
+
+    public Vector4f mul(Vector4f v) {
+        return new Vector4f(x() * v.x(), y() * v.y(), z() * v.z(), w() * v.w());
+    }
+
+    public Vector4f div(float x, float y, float z, float w) {
+        return new Vector4f(x() / x, y() / y, z() / z, w() / w);
+    }
+
+    public Vector4f div(Vector4f v) {
+        return new Vector4f(x() / v.x(), y() / v.y(), z() / v.z(), w() / v.w());
+    }
+
     public Vector4f mul(Matrix4f mat) {
         int prop = mat.properties();
         if ((prop & Matrix4f.PROPERTY_IDENTITY) != 0)

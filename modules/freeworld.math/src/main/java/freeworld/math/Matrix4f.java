@@ -53,7 +53,7 @@ public record Matrix4f(
      * {@link #PROPERTY_AFFINE} in this implementation.
      */
     public static final byte PROPERTY_ORTHONORMAL = 1 << 4;
-    public static final Matrix4f IDENTITY = new Matrix4f(
+    private static final Matrix4f IDENTITY = new Matrix4f(
         PROPERTY_IDENTITY | PROPERTY_AFFINE | PROPERTY_TRANSLATION | PROPERTY_ORTHONORMAL,
         1.0f, 0.0f, 0.0f, 0.0f,
         0.0f, 1.0f, 0.0f, 0.0f,
@@ -102,6 +102,15 @@ public record Matrix4f(
             }
         }
         return properties;
+    }
+
+    /**
+     * {@return an identity matrix}
+     * <p>
+     * This method keeps consistent with other matrix initializers that use methods.
+     */
+    public static Matrix4f identity() {
+        return IDENTITY;
     }
 
     //region get
@@ -414,9 +423,76 @@ public record Matrix4f(
         );
     }
 
+    public static Matrix4f rotationZ(float ang) {
+        float sin = (float) Math.sin(ang);
+        float cos = (float) Math.cos(ang);
+        return new Matrix4f(
+            PROPERTY_AFFINE | PROPERTY_ORTHONORMAL,
+            cos, sin, 0.0f, 0.0f,
+            -sin, cos, 0.0f, 0.0f,
+            0.0f, 0.0f, 1.0f, 0.0f,
+            0.0f, 0.0f, 0.0f, 1.0f
+        );
+    }
+
+    public Matrix4f rotateZ(float ang) {
+        if ((properties & PROPERTY_IDENTITY) != 0)
+            return rotationZ(ang);
+        else if ((properties & PROPERTY_TRANSLATION) != 0) {
+            float x = m30(), y = m31(), z = m32();
+            return rotationZ(ang).setTranslation(x, y, z);
+        }
+        return rotateZInternal(ang);
+    }
+
+    private Matrix4f rotateZInternal(float ang) {
+        float sin = (float) Math.sin(ang);
+        float cos = (float) Math.cos(ang);
+        return rotateTowardsXY(sin, cos);
+    }
+
+    public static Matrix4f rotationTowardsXY(float dirX, float dirY) {
+        return new Matrix4f(
+            PROPERTY_AFFINE | PROPERTY_ORTHONORMAL,
+            dirY, dirX, 0.0f, 0.0f,
+            -dirX, dirY, 0.0f, 0.0f,
+            0.0f, 0.0f, 1.0f, 0.0f,
+            0.0f, 0.0f, 0.0f, 1.0f
+        );
+    }
+
+    public Matrix4f rotateTowardsXY(float dirX, float dirY) {
+        if ((properties & PROPERTY_IDENTITY) != 0)
+            return rotationTowardsXY(dirX, dirY);
+        float nm00 = Maths.fma(m00(), dirY, m10() * dirX);
+        float nm01 = Maths.fma(m01(), dirY, m11() * dirX);
+        float nm02 = Maths.fma(m02(), dirY, m12() * dirX);
+        float nm03 = Maths.fma(m03(), dirY, m13() * dirX);
+        return new Matrix4f(
+            properties & ~(PROPERTY_PERSPECTIVE | PROPERTY_IDENTITY | PROPERTY_TRANSLATION),
+            Maths.fma(m00(), -dirX, m10() * dirY),
+            Maths.fma(m01(), -dirX, m11() * dirY),
+            Maths.fma(m02(), -dirX, m12() * dirY),
+            Maths.fma(m03(), -dirX, m13() * dirY),
+            nm00,
+            nm01,
+            nm02,
+            nm03,
+            m20(),
+            m21(),
+            m22(),
+            m23(),
+            m30(),
+            m31(),
+            m32(),
+            m33()
+        );
+    }
+
     //endregion
 
     //region scale
+
     public static Matrix4f scaling(float x, float y, float z) {
         boolean one = Maths.absEqualsOne(x) && Maths.absEqualsOne(y) && Maths.absEqualsOne(z);
         return new Matrix4f(

@@ -21,12 +21,40 @@ public record Vector3i(int x, int y, int z) {
         this(d, d, d);
     }
 
+    public Vector3i add(int x, int y, int z) {
+        return new Vector3i(x() + x, y() + y, z() + z);
+    }
+
     public Vector3i add(Vector3i v) {
-        return new Vector3i(x + v.x, y + v.y, z + v.z);
+        return new Vector3i(x() + v.x(), y() + v.y(), z() + v.z());
+    }
+
+    public Vector3i sub(int x, int y, int z) {
+        return new Vector3i(x() - x, y() - y, z() - z);
+    }
+
+    public Vector3i sub(Vector3i v) {
+        return new Vector3i(x() - v.x(), y() - v.y(), z() - v.z());
+    }
+
+    public Vector3i mul(int x, int y, int z) {
+        return new Vector3i(x() * x, y() * y, z() * z);
+    }
+
+    public Vector3i mul(Vector3i v) {
+        return new Vector3i(x() * v.x(), y() * v.y(), z() * v.z());
     }
 
     public Vector3i mul(int i) {
-        return new Vector3i(x * i, y * i, z * i);
+        return new Vector3i(x() * i, y() * i, z() * i);
+    }
+
+    public Vector3i div(int x, int y, int z) {
+        return new Vector3i(x() / x, y() / y, z() / z);
+    }
+
+    public Vector3i div(Vector3i v) {
+        return new Vector3i(x() / v.x(), y() / v.y(), z() / v.z());
     }
 
     public Vector3i floorDiv(int i) {

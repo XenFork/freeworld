@@ -20,4 +20,36 @@ public record Vector4i(int x, int y, int z, int w) {
     public Vector4i(int d) {
         this(d, d, d, d);
     }
+
+    public Vector4i add(int x, int y, int z, int w) {
+        return new Vector4i(x() + x, y() + y, z() + z, w() + w);
+    }
+
+    public Vector4i add(Vector4i v) {
+        return new Vector4i(x() + v.x(), y() + v.y(), z() + v.z(), w() + v.w());
+    }
+
+    public Vector4i sub(int x, int y, int z, int w) {
+        return new Vector4i(x() - x, y() - y, z() - z, w() - w);
+    }
+
+    public Vector4i sub(Vector4i v) {
+        return new Vector4i(x() - v.x(), y() - v.y(), z() - v.z(), w() - v.w());
+    }
+
+    public Vector4i mul(int x, int y, int z, int w) {
+        return new Vector4i(x() * x, y() * y, z() * z, w() * w);
+    }
+
+    public Vector4i mul(Vector4i v) {
+        return new Vector4i(x() * v.x(), y() * v.y(), z() * v.z(), w() * v.w());
+    }
+
+    public Vector4i div(int x, int y, int z, int w) {
+        return new Vector4i(x() / x, y() / y, z() / z, w() / w);
+    }
+
+    public Vector4i div(Vector4i v) {
+        return new Vector4i(x() / v.x(), y() / v.y(), z() / v.z(), w() / v.w());
+    }
 }

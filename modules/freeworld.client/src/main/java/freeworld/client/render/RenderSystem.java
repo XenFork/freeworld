@@ -28,9 +28,9 @@ public final class RenderSystem {
     private static GLStateMgr stateMgr = null;
     private static GLProgram currentProgram = null;
     private static Texture textureBinding2D = null;
-    private static Matrix4f projectionMatrix = Matrix4f.IDENTITY;
-    private static Matrix4f viewMatrix = Matrix4f.IDENTITY;
-    private static Matrix4f modelMatrix = Matrix4f.IDENTITY;
+    private static Matrix4f projectionMatrix = Matrix4f.identity();
+    private static Matrix4f viewMatrix = Matrix4f.identity();
+    private static Matrix4f modelMatrix = Matrix4f.identity();
 
     public static void initialize(GLStateMgr gl) {
         logger.info("Initializing render system");

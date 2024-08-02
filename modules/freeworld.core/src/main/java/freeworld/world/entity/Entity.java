@@ -31,9 +31,10 @@ public class Entity {
     public Vector3d acceleration = Vector3d.ZERO;
     private Vector3i blockPos = Vector3i.ZERO;
     public AABBox boundingBox;
+    private EntityChangeListener changeListener = EntityChangeListener.EMPTY;
     private Vector3i chunkPos = Vector3i.ZERO;
     private final Vector3d dimension;
-    public double eyeHeight;
+    private final double eyeHeight;
     public boolean flying = false;
     public boolean onGround = false;
     private Vector3d previousPosition = Vector3d.ZERO;
@@ -47,6 +48,10 @@ public class Entity {
         this.dimension = type.dimension();
         this.eyeHeight = getEyeHeight(dimension);
         setPosition(new Vector3d(0.0, 0.0, 0.0));
+    }
+
+    public void setChangeListener(EntityChangeListener changeListener) {
+        this.changeListener = changeListener;
     }
 
     private AABBox calculateBoundingBox() {
@@ -93,6 +98,7 @@ public class Entity {
                     this.chunkPos = chunkPos;
                 }
             }
+            changeListener.onEntityPositionUpdated();
         }
     }
 
@@ -101,11 +107,11 @@ public class Entity {
     }
 
     public Vector3d interpolatedPosition(double partialTick) {
-        return previousPosition.lerp(position, partialTick);
+        return previousPosition.linearInterpolate(position, partialTick);
     }
 
     public Vector3d getCameraPos(double partialTick) {
-        return interpolatedPosition(partialTick).add(0.0, getEyeHeight(), 0.0);
+        return interpolatedPosition(partialTick).add(0.0, eyeHeight, 0.0);
     }
 
     public World world() {
@@ -134,6 +140,10 @@ public class Entity {
 
     public Vector3i chunkPos() {
         return chunkPos;
+    }
+
+    public double eyeHeight() {
+        return eyeHeight;
     }
 
     public boolean flying() {

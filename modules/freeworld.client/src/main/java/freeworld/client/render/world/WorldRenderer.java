@@ -28,6 +28,7 @@ import freeworld.world.WorldListener;
 import freeworld.world.block.BlockHitResult;
 import freeworld.world.block.BlockType;
 import freeworld.world.entity.Entity;
+import freeworld.world.entity.EntityChangeListener;
 import org.slf4j.Logger;
 import reactor.core.Disposable;
 import reactor.core.publisher.Flux;
@@ -57,10 +58,10 @@ public final class WorldRenderer implements GLResource, WorldListener {
         .buildPool();
     @Deprecated
     private final Map<Vector3i, ClientChunk> chunks = new HashMap<>(2048);
-    private final Disposable chunkGC;
-    private final Queue<Runnable> chunkGCQueue = new LinkedBlockingQueue<>();
     @Deprecated
-    private Vector3i playerChunkPos = Vector3i.ZERO;
+    private final Disposable chunkGC;
+    @Deprecated
+    private final Queue<Runnable> chunkGCQueue = new LinkedBlockingQueue<>();
 
     public WorldRenderer(GameRenderer gameRenderer, World world) {
         this.gameRenderer = gameRenderer;
@@ -68,6 +69,18 @@ public final class WorldRenderer implements GLResource, WorldListener {
         world.addListener(this);
         this.chunkGC = Flux.interval(Duration.ofSeconds(45))
             .subscribe(_ -> chunkGCQueue.offer(this::uninstallChunks));
+        gameRenderer.client().player().setChangeListener(new EntityChangeListener() {
+            private Vector3i chunkPos = gameRenderer.client().player().chunkPos();
+
+            @Override
+            public void onEntityPositionUpdated() {
+                Vector3i chunkPos1 = gameRenderer.client().player().chunkPos();
+                if (!chunkPos.equals(chunkPos1)) {
+                    chunkPos = chunkPos1;
+                    uninstallChunks();
+                }
+            }
+        });
     }
 
     private static DefaultVertexBuilder createVertexBuilder() {
@@ -111,13 +124,6 @@ public final class WorldRenderer implements GLResource, WorldListener {
                 chunk.render(gl);
             }
         });
-
-        Vector3d playerPos = gameRenderer.client().player().position();
-        Vector3i playerChunkPos = ChunkPos.toChunkPos(playerPos.toVector3iFloor());
-        if (!this.playerChunkPos.equals(playerChunkPos)) {
-            this.playerChunkPos = playerChunkPos;
-            uninstallChunks();
-        }
 
         Runnable chunkGCTask;
         while ((chunkGCTask = chunkGCQueue.poll()) != null) {

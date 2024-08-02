@@ -46,6 +46,7 @@ public class Chunk {
     private final int height;
     private final int depth;
     private final BlockType[] blocks;
+    @Deprecated
     private final List<Entity> entities = new ArrayList<>();
 
     public Chunk(World world, int x, int y, int z) {
@@ -66,6 +67,7 @@ public class Chunk {
         Arrays.fill(blocks, BlockTypes.AIR);
     }
 
+    @Deprecated
     public void tick() {
         world.motionSystem().process(world, entities);
         // TODO: test
@@ -81,12 +83,9 @@ public class Chunk {
         }
     }
 
+    @Deprecated
     public void addEntity(Entity entity) {
         entities.add(entity);
-    }
-
-    public void removeEntity(Entity entity) {
-        entities.remove(entity);
     }
 
     public void generateTerrain() {

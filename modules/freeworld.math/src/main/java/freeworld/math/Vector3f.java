@@ -25,8 +25,32 @@ public record Vector3f(float x, float y, float z) {
         return new Vector3f(x() + x, y() + y, z() + z);
     }
 
+    public Vector3f add(Vector3f v) {
+        return new Vector3f(x() + v.x(), y() + v.y(), z() + v.z());
+    }
+
     public Vector3f sub(float x, float y, float z) {
         return new Vector3f(x() - x, y() - y, z() - z);
+    }
+
+    public Vector3f sub(Vector3f v) {
+        return new Vector3f(x() - v.x(), y() - v.y(), z() - v.z());
+    }
+
+    public Vector3f mul(float x, float y, float z) {
+        return new Vector3f(x() * x, y() * y, z() * z);
+    }
+
+    public Vector3f mul(Vector3f v) {
+        return new Vector3f(x() * v.x(), y() * v.y(), z() * v.z());
+    }
+
+    public Vector3f div(float x, float y, float z) {
+        return new Vector3f(x() / x, y() / y, z() / z);
+    }
+
+    public Vector3f div(Vector3f v) {
+        return new Vector3f(x() / v.x(), y() / v.y(), z() / v.z());
     }
 
     public Vector3d toVector3d() {

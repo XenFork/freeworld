@@ -163,7 +163,7 @@ public final class GameRenderer implements GLResource {
             0.01f,
             1000.0f
         ), camera.updateViewMatrix());
-        RenderSystem.setModelMatrix(Matrix4f.IDENTITY);
+        RenderSystem.setModelMatrix(Matrix4f.identity());
 
         RenderSystem.useProgram(positionColorTexProgram);
         RenderSystem.updateMatrices();
@@ -245,8 +245,8 @@ public final class GameRenderer implements GLResource {
                 client.scaledFramebufferHeight(),
                 -300.0f,
                 300.0f),
-            Matrix4f.IDENTITY);
-        RenderSystem.setModelMatrix(Matrix4f.IDENTITY);
+            Matrix4f.identity());
+        RenderSystem.setModelMatrix(Matrix4f.identity());
         renderScreen(guiGraphics, gl, partialTick);
     }
 
