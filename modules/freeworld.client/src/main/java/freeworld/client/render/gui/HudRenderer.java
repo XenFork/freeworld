@@ -79,7 +79,7 @@ public final class HudRenderer {
     private void renderDebugHud(GLStateMgr gl) {
         gl.setBlendFunc(GL10C.SRC_ALPHA, GL10C.ONE_MINUS_SRC_ALPHA);
         RenderSystem.bindTexture2D(gameRenderer.unifont().texture());
-        RenderSystem.useProgram(gameRenderer.textProgram());
+        RenderSystem.useProgram(gameRenderer.renderTypeTextProgram());
         Tessellator t = Tessellator.getInstance();
         t.begin(GLDrawMode.TRIANGLES);
 

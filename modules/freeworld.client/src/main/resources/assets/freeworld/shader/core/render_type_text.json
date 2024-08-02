@@ -1,6 +1,6 @@
 {
-  "vertex": "freeworld:core/text.vert",
-  "fragment": "freeworld:core/text.frag",
+  "vertex": "freeworld:core/render_type_text.vert",
+  "fragment": "freeworld:core/render_type_text.frag",
   "uniform": {
     "ProjectionViewMatrix": {
       "type": "mat4",

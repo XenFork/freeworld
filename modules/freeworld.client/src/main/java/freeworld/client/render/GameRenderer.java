@@ -60,7 +60,7 @@ public final class GameRenderer implements GLResource {
     private final FreeworldClient client;
     private GLProgram positionColorProgram;
     private GLProgram positionColorTexProgram;
-    private GLProgram textProgram;
+    private GLProgram renderTypeTextProgram;
     private BlockModelManager blockModelManager;
     private TextureManager textureManager;
     private GuiGraphics guiGraphics;
@@ -139,7 +139,7 @@ public final class GameRenderer implements GLResource {
     private void initGLPrograms(GLStateMgr gl) {
         positionColorProgram = initBuiltinProgram(gl, "init/position_color", VertexLayouts.POSITION_COLOR);
         positionColorTexProgram = initBuiltinProgram(gl, "init/position_color_tex", VertexLayouts.POSITION_COLOR_TEX);
-        textProgram = initBuiltinProgram(gl, "core/text", VertexLayouts.POSITION_COLOR_TEX);
+        renderTypeTextProgram = initBuiltinProgram(gl, "core/render_type_text", VertexLayouts.POSITION_COLOR_TEX);
     }
 
     private GLProgram initBuiltinProgram(GLStateMgr gl, String path, VertexLayout layout) {
@@ -280,7 +280,7 @@ public final class GameRenderer implements GLResource {
 
         if (positionColorProgram != null) positionColorProgram.close(gl);
         if (positionColorTexProgram != null) positionColorTexProgram.close(gl);
-        if (textProgram != null) textProgram.close(gl);
+        if (renderTypeTextProgram != null) renderTypeTextProgram.close(gl);
 
         Tessellator.getInstance().close(gl);
     }
@@ -297,8 +297,8 @@ public final class GameRenderer implements GLResource {
         return positionColorTexProgram;
     }
 
-    public GLProgram textProgram() {
-        return textProgram;
+    public GLProgram renderTypeTextProgram() {
+        return renderTypeTextProgram;
     }
 
     public BlockModelManager blockModelManager() {
