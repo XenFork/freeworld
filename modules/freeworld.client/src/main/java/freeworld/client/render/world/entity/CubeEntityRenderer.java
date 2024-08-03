@@ -15,6 +15,7 @@ import freeworld.client.render.RenderSystem;
 import freeworld.client.render.Tessellator;
 import freeworld.client.render.gl.GLDrawMode;
 import freeworld.client.render.gl.GLStateMgr;
+import freeworld.client.render.vertex.BufferBuilder;
 import freeworld.math.Matrix4f;
 import freeworld.world.entity.CubeEntity;
 
@@ -31,6 +32,7 @@ public class CubeEntityRenderer extends EntityRenderer<CubeEntity> {
     public void render(GLStateMgr gl, double partialTick, Matrix4f positionMatrix, CubeEntity entity) {
         RenderSystem.useProgram(context.gameRenderer().positionColorProgram());
         Tessellator t = Tessellator.getInstance();
+        BufferBuilder buffer = t.buffer();
         t.begin(GLDrawMode.TRIANGLES);
         float x0 = -0.5f;
         float y0 = 0.0f;
@@ -40,46 +42,46 @@ public class CubeEntityRenderer extends EntityRenderer<CubeEntity> {
         float z1 = 0.5f;
 
         // -x
-        t.indices(0, 1, 2, 2, 3, 0);
-        t.position(positionMatrix, x0, y1, z0).color(0, 255, 255).texCoord(0, 0).emit();
-        t.position(positionMatrix, x0, y0, z0).color(0, 255, 255).texCoord(0, 0).emit();
-        t.position(positionMatrix, x0, y0, z1).color(0, 255, 255).texCoord(0, 0).emit();
-        t.position(positionMatrix, x0, y1, z1).color(0, 255, 255).texCoord(0, 0).emit();
+        buffer.indices(0, 1, 2, 2, 3, 0);
+        buffer.position(positionMatrix, x0, y1, z0).color(0, 255, 255).texCoord(0, 0).emit();
+        buffer.position(positionMatrix, x0, y0, z0).color(0, 255, 255).texCoord(0, 0).emit();
+        buffer.position(positionMatrix, x0, y0, z1).color(0, 255, 255).texCoord(0, 0).emit();
+        buffer.position(positionMatrix, x0, y1, z1).color(0, 255, 255).texCoord(0, 0).emit();
 
         // +x
-        t.indices(0, 1, 2, 2, 3, 0);
-        t.position(positionMatrix, x1, y1, z1).color(255, 0, 0).texCoord(0, 0).emit();
-        t.position(positionMatrix, x1, y0, z1).color(255, 0, 0).texCoord(0, 0).emit();
-        t.position(positionMatrix, x1, y0, z0).color(255, 0, 0).texCoord(0, 0).emit();
-        t.position(positionMatrix, x1, y1, z0).color(255, 0, 0).texCoord(0, 0).emit();
+        buffer.indices(0, 1, 2, 2, 3, 0);
+        buffer.position(positionMatrix, x1, y1, z1).color(255, 0, 0).texCoord(0, 0).emit();
+        buffer.position(positionMatrix, x1, y0, z1).color(255, 0, 0).texCoord(0, 0).emit();
+        buffer.position(positionMatrix, x1, y0, z0).color(255, 0, 0).texCoord(0, 0).emit();
+        buffer.position(positionMatrix, x1, y1, z0).color(255, 0, 0).texCoord(0, 0).emit();
 
         // -y
-        t.indices(0, 1, 2, 2, 3, 0);
-        t.position(positionMatrix, x0, y0, z1).color(255, 0, 220).texCoord(0, 0).emit();
-        t.position(positionMatrix, x0, y0, z0).color(255, 0, 220).texCoord(0, 0).emit();
-        t.position(positionMatrix, x1, y0, z0).color(255, 0, 220).texCoord(0, 0).emit();
-        t.position(positionMatrix, x1, y0, z1).color(255, 0, 220).texCoord(0, 0).emit();
+        buffer.indices(0, 1, 2, 2, 3, 0);
+        buffer.position(positionMatrix, x0, y0, z1).color(255, 0, 220).texCoord(0, 0).emit();
+        buffer.position(positionMatrix, x0, y0, z0).color(255, 0, 220).texCoord(0, 0).emit();
+        buffer.position(positionMatrix, x1, y0, z0).color(255, 0, 220).texCoord(0, 0).emit();
+        buffer.position(positionMatrix, x1, y0, z1).color(255, 0, 220).texCoord(0, 0).emit();
 
         // +y
-        t.indices(0, 1, 2, 2, 3, 0);
-        t.position(positionMatrix, x0, y1, z0).color(0, 255, 33).texCoord(0, 0).emit();
-        t.position(positionMatrix, x0, y1, z1).color(0, 255, 33).texCoord(0, 0).emit();
-        t.position(positionMatrix, x1, y1, z1).color(0, 255, 33).texCoord(0, 0).emit();
-        t.position(positionMatrix, x1, y1, z0).color(0, 255, 33).texCoord(0, 0).emit();
+        buffer.indices(0, 1, 2, 2, 3, 0);
+        buffer.position(positionMatrix, x0, y1, z0).color(0, 255, 33).texCoord(0, 0).emit();
+        buffer.position(positionMatrix, x0, y1, z1).color(0, 255, 33).texCoord(0, 0).emit();
+        buffer.position(positionMatrix, x1, y1, z1).color(0, 255, 33).texCoord(0, 0).emit();
+        buffer.position(positionMatrix, x1, y1, z0).color(0, 255, 33).texCoord(0, 0).emit();
 
         // -z
-        t.indices(0, 1, 2, 2, 3, 0);
-        t.position(positionMatrix, x1, y1, z0).color(255, 216, 0).texCoord(0, 0).emit();
-        t.position(positionMatrix, x1, y0, z0).color(255, 216, 0).texCoord(0, 0).emit();
-        t.position(positionMatrix, x0, y0, z0).color(255, 216, 0).texCoord(0, 0).emit();
-        t.position(positionMatrix, x0, y1, z0).color(255, 216, 0).texCoord(0, 0).emit();
+        buffer.indices(0, 1, 2, 2, 3, 0);
+        buffer.position(positionMatrix, x1, y1, z0).color(255, 216, 0).texCoord(0, 0).emit();
+        buffer.position(positionMatrix, x1, y0, z0).color(255, 216, 0).texCoord(0, 0).emit();
+        buffer.position(positionMatrix, x0, y0, z0).color(255, 216, 0).texCoord(0, 0).emit();
+        buffer.position(positionMatrix, x0, y1, z0).color(255, 216, 0).texCoord(0, 0).emit();
 
         // +z
-        t.indices(0, 1, 2, 2, 3, 0);
-        t.position(positionMatrix, x0, y1, z1).color(0, 148, 255).texCoord(0, 0).emit();
-        t.position(positionMatrix, x0, y0, z1).color(0, 148, 255).texCoord(0, 0).emit();
-        t.position(positionMatrix, x1, y0, z1).color(0, 148, 255).texCoord(0, 0).emit();
-        t.position(positionMatrix, x1, y1, z1).color(0, 148, 255).texCoord(0, 0).emit();
+        buffer.indices(0, 1, 2, 2, 3, 0);
+        buffer.position(positionMatrix, x0, y1, z1).color(0, 148, 255).texCoord(0, 0).emit();
+        buffer.position(positionMatrix, x0, y0, z1).color(0, 148, 255).texCoord(0, 0).emit();
+        buffer.position(positionMatrix, x1, y0, z1).color(0, 148, 255).texCoord(0, 0).emit();
+        buffer.position(positionMatrix, x1, y1, z1).color(0, 148, 255).texCoord(0, 0).emit();
 
         t.end(gl);
     }

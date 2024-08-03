@@ -18,6 +18,7 @@ import freeworld.client.render.gl.GLDrawMode;
 import freeworld.client.render.gl.GLStateMgr;
 import freeworld.client.render.texture.TextureAtlas;
 import freeworld.client.render.texture.TextureManager;
+import freeworld.client.render.vertex.BufferBuilder;
 import freeworld.client.util.Color;
 import freeworld.client.util.GameClientVersion;
 import freeworld.math.Matrix4f;
@@ -81,6 +82,7 @@ public final class HudRenderer {
         RenderSystem.bindTexture2D(gameRenderer.unifont().texture());
         RenderSystem.useProgram(gameRenderer.renderTypeTextProgram());
         Tessellator t = Tessellator.getInstance();
+        BufferBuilder buffer = t.buffer();
         t.begin(GLDrawMode.TRIANGLES);
 
         PlayerEntity player = client.player();
@@ -88,7 +90,7 @@ public final class HudRenderer {
         Vector2d rotation = player.rotation();
         Vector3i blockPos = player.blockPos();
         Vector3i chunkPos = player.chunkPos();
-        gameRenderer.textRenderer().renderText(t,
+        gameRenderer.textRenderer().renderText(buffer,
             gameRenderer.unifont(),
             """
                 freeworld (core %s, client %s)
@@ -164,10 +166,11 @@ public final class HudRenderer {
         RenderSystem.bindTexture2D(gameRenderer.textureManager().getTexture(TextureManager.BLOCK_ATLAS));
         final FreeworldClient client = gameRenderer.client();
         final Tessellator tessellator = Tessellator.getInstance();
+        tessellator.begin(GLDrawMode.TRIANGLES);
+        BufferBuilder buffer = tessellator.buffer();
         for (int i = 0; i < 10; i++) {
             BlockType item = client.player().getHotBarItem(i);
-            tessellator.begin(GLDrawMode.TRIANGLES);
-            gameRenderer.blockRenderer().renderBlockModel(tessellator,
+            gameRenderer.blockRenderer().renderBlockModel(buffer,
                 gameRenderer.blockModelManager().get(Registries.BLOCK_TYPE.getId(item)),
                 Matrix4f.translation(width * 0.5f + (i - 5) * 20 + 3, 8, 10)
                     .rotateX((float) Math.toRadians(30.0))
@@ -177,8 +180,8 @@ public final class HudRenderer {
                 0,
                 0,
                 _ -> false);
-            tessellator.end(gl);
         }
+        tessellator.end(gl);
     }
 
     private float hotBarSelectorX(int selection) {

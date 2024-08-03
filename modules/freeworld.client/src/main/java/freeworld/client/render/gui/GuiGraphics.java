@@ -18,6 +18,7 @@ import freeworld.client.render.gl.GLProgram;
 import freeworld.client.render.gl.GLStateMgr;
 import freeworld.client.render.texture.Texture2D;
 import freeworld.client.render.texture.TextureRegion;
+import freeworld.client.render.vertex.BufferBuilder;
 
 /**
  * @author squid233
@@ -27,6 +28,7 @@ public final class GuiGraphics {
     private final GLStateMgr gl;
     private final GameRenderer gameRenderer;
     private final Tessellator tessellator = Tessellator.getInstance();
+    private final BufferBuilder buffer = tessellator.buffer();
     private GLProgram program = null;
     private Texture2D texture = null;
 
@@ -73,11 +75,11 @@ public final class GuiGraphics {
         final float rWidth = width * (1.0f - anchorX);
         final float bHeight = height * anchorY;
         final float tHeight = height * (1.0f - anchorY);
-        tessellator.indices(0, 1, 2, 2, 3, 0);
-        tessellator.position(x - lWidth, y + tHeight, 0).color(1.0f, 1.0f, 1.0f).texCoord(u0, v0).emit();
-        tessellator.position(x - lWidth, y - bHeight, 0).color(1.0f, 1.0f, 1.0f).texCoord(u0, v1).emit();
-        tessellator.position(x + rWidth, y - bHeight, 0).color(1.0f, 1.0f, 1.0f).texCoord(u1, v1).emit();
-        tessellator.position(x + rWidth, y + tHeight, 0).color(1.0f, 1.0f, 1.0f).texCoord(u1, v0).emit();
+        buffer.indices(0, 1, 2, 2, 3, 0);
+        buffer.position(x - lWidth, y + tHeight, 0).color(1.0f, 1.0f, 1.0f).texCoord(u0, v0).emit();
+        buffer.position(x - lWidth, y - bHeight, 0).color(1.0f, 1.0f, 1.0f).texCoord(u0, v1).emit();
+        buffer.position(x + rWidth, y - bHeight, 0).color(1.0f, 1.0f, 1.0f).texCoord(u1, v1).emit();
+        buffer.position(x + rWidth, y + tHeight, 0).color(1.0f, 1.0f, 1.0f).texCoord(u1, v0).emit();
     }
 
     public void drawSprite(Texture2D texture, float x, float y, float anchorX, float anchorY) {
@@ -103,10 +105,10 @@ public final class GuiGraphics {
     public void fillRect(float startX, float startY, float endX, float endY, float red, float green, float blue, float alpha) {
         updateProgram(gameRenderer.positionColorProgram());
         updateTexture(null);
-        tessellator.indices(0, 1, 2, 2, 3, 0);
-        tessellator.position(startX, endY, 0.0f).color(red, green, blue, alpha).texCoord(0f, 0f).emit();
-        tessellator.position(startX, startY, 0.0f).color(red, green, blue, alpha).texCoord(0f, 0f).emit();
-        tessellator.position(endX, startY, 0.0f).color(red, green, blue, alpha).texCoord(0f, 0f).emit();
-        tessellator.position(endX, endY, 0.0f).color(red, green, blue, alpha).texCoord(0f, 0f).emit();
+        buffer.indices(0, 1, 2, 2, 3, 0);
+        buffer.position(startX, endY, 0.0f).color(red, green, blue, alpha).texCoord(0f, 0f).emit();
+        buffer.position(startX, startY, 0.0f).color(red, green, blue, alpha).texCoord(0f, 0f).emit();
+        buffer.position(endX, startY, 0.0f).color(red, green, blue, alpha).texCoord(0f, 0f).emit();
+        buffer.position(endX, endY, 0.0f).color(red, green, blue, alpha).texCoord(0f, 0f).emit();
     }
 }

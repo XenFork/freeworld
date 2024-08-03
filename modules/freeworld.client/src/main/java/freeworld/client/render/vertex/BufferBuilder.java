@@ -23,7 +23,7 @@ import java.util.Objects;
  * @author squid233
  * @since 0.1.0
  */
-public final class DefaultVertexBuilder implements VertexBuilder {
+public final class BufferBuilder implements VertexBuilder {
     private static final Logger logger = Logging.caller();
     private final VertexLayout vertexLayout;
     private MemorySegment vertexData;
@@ -39,7 +39,7 @@ public final class DefaultVertexBuilder implements VertexBuilder {
     private VertexLayoutElement currentElement;
     private int currentElementIndex = 0;
 
-    public DefaultVertexBuilder(VertexLayout layout, int vertexCount, int indexCount) {
+    public BufferBuilder(VertexLayout layout, int vertexCount, int indexCount) {
         Objects.requireNonNull(layout);
         if (vertexCount <= 0) throw new IllegalArgumentException("vertexCount <= 0: " + vertexCount);
         if (indexCount <= 0) throw new IllegalArgumentException("indexCount <= 0: " + indexCount);
@@ -64,7 +64,7 @@ public final class DefaultVertexBuilder implements VertexBuilder {
     }
 
     @Override
-    public DefaultVertexBuilder indicesWithOffset(int offset, int... indices) {
+    public BufferBuilder indicesWithOffset(int offset, int... indices) {
         final int length = indices.length;
         if (indexCount + length > maxIndexCount) {
             logger.debug("Exceeds max index count: {} + {} > {}; expanding", indexCount, length, maxIndexCount);
@@ -84,7 +84,7 @@ public final class DefaultVertexBuilder implements VertexBuilder {
     }
 
     @Override
-    public DefaultVertexBuilder indices(int... indices) {
+    public BufferBuilder indices(int... indices) {
         return indicesWithOffset(vertexCount, indices);
     }
 

@@ -14,7 +14,7 @@ import freeworld.client.render.GameRenderer;
 import freeworld.client.render.RenderSystem;
 import freeworld.client.render.gl.GLResource;
 import freeworld.client.render.gl.GLStateMgr;
-import freeworld.client.render.vertex.DefaultVertexBuilder;
+import freeworld.client.render.vertex.BufferBuilder;
 import freeworld.client.render.vertex.VertexLayouts;
 import freeworld.client.world.chunk.ClientChunk;
 import freeworld.math.*;
@@ -53,7 +53,7 @@ public final class WorldRenderer implements GLResource, WorldListener {
     private final GameRenderer gameRenderer;
     private final World world;
     private final Scheduler scheduler = Schedulers.newParallel("WorldRenderer-Worker");
-    private final Pool<DefaultVertexBuilder> vertexBuilderPool = PoolBuilder
+    private final Pool<BufferBuilder> vertexBuilderPool = PoolBuilder
         .from(Mono.fromSupplier(WorldRenderer::createVertexBuilder).subscribeOn(scheduler))
         .buildPool();
     @Deprecated
@@ -83,8 +83,8 @@ public final class WorldRenderer implements GLResource, WorldListener {
         });
     }
 
-    private static DefaultVertexBuilder createVertexBuilder() {
-        return new DefaultVertexBuilder(VertexLayouts.POSITION_COLOR_TEXTURE, 30000, 45000);
+    private static BufferBuilder createVertexBuilder() {
+        return new BufferBuilder(VertexLayouts.POSITION_COLOR_TEXTURE, 30000, 45000);
     }
 
     private void uninstallChunks() {
@@ -229,7 +229,7 @@ public final class WorldRenderer implements GLResource, WorldListener {
         );
     }
 
-    public Pool<DefaultVertexBuilder> vertexBuilderPool() {
+    public Pool<BufferBuilder> vertexBuilderPool() {
         return vertexBuilderPool;
     }
 

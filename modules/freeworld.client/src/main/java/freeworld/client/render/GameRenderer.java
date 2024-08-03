@@ -26,6 +26,7 @@ import freeworld.client.render.model.block.BlockModelPart;
 import freeworld.client.render.screen.Screen;
 import freeworld.client.render.texture.TextureAtlas;
 import freeworld.client.render.texture.TextureManager;
+import freeworld.client.render.vertex.BufferBuilder;
 import freeworld.client.render.vertex.VertexLayout;
 import freeworld.client.render.vertex.VertexLayouts;
 import freeworld.client.render.world.WorldRenderer;
@@ -206,11 +207,12 @@ public final class GameRenderer implements GLResource {
             RenderSystem.bindTexture2D(null);
             RenderSystem.useProgram(positionColorProgram);
             final Tessellator tessellator = Tessellator.getInstance();
+            BufferBuilder buffer = tessellator.buffer();
             tessellator.begin(GLDrawMode.LINES);
             for (Lined line : lines) {
-                tessellator.indices(0, 1);
-                tessellator.position(mat, line.from().toVector3f()).color(0, 0, 0).texCoord(0f, 0f).emit();
-                tessellator.position(mat, line.to().toVector3f()).color(0, 0, 0).texCoord(0f, 0f).emit();
+                buffer.indices(0, 1);
+                buffer.position(mat, line.from().toVector3f()).color(0, 0, 0).texCoord(0f, 0f).emit();
+                buffer.position(mat, line.to().toVector3f()).color(0, 0, 0).texCoord(0f, 0f).emit();
             }
             tessellator.end(gl);
         }
