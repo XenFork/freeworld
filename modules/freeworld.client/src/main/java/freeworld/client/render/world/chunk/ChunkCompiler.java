@@ -10,14 +10,16 @@
 
 package freeworld.client.render.world.chunk;
 
-import freeworld.client.render.vertex.VertexBuilder;
+import freeworld.client.render.gl.GLDrawMode;
 import freeworld.client.render.model.block.BlockModel;
 import freeworld.client.render.model.block.BlockModelManager;
+import freeworld.client.render.vertex.BufferBuilder;
+import freeworld.client.render.vertex.VertexLayouts;
 import freeworld.client.render.world.block.BlockRenderer;
-import freeworld.registry.Registries;
 import freeworld.math.Vector3i;
-import freeworld.world.chunk.Chunk;
+import freeworld.registry.Registries;
 import freeworld.util.math.ChunkPos;
+import freeworld.world.chunk.Chunk;
 
 import java.lang.foreign.Arena;
 import java.lang.foreign.MemorySegment;
@@ -31,12 +33,12 @@ public final class ChunkCompiler {
     private ChunkCompiler() {
     }
 
-    public static ChunkVertexData compile(
-        VertexBuilder vertexBuilder,
+    public static BufferBuilder.BufferData compile(
+        BufferBuilder vertexBuilder,
         BlockRenderer blockRenderer,
         BlockModelManager blockModelManager,
         Chunk chunk) {
-        vertexBuilder.reset();
+        vertexBuilder.begin(GLDrawMode.TRIANGLES, VertexLayouts.POSITION_COLOR_TEXTURE);
         final int cx = chunk.x();
         final int cy = chunk.y();
         final int cz = chunk.z();
@@ -69,16 +71,14 @@ public final class ChunkCompiler {
             }
         }
 
+        BufferBuilder.BufferData buffer = vertexBuilder.end();
         final Arena arena = Arena.ofAuto();
-        final MemorySegment vertexDataSlice = vertexBuilder.vertexDataSlice();
-        final MemorySegment indexDataSlice = vertexBuilder.indexDataSlice();
-        return new ChunkVertexData(
-            vertexBuilder.vertexLayout(),
-            vertexBuilder.indexCount(),
-            arena.allocateFrom(ValueLayout.JAVA_BYTE, vertexDataSlice, ValueLayout.JAVA_BYTE, 0L, vertexDataSlice.byteSize()),
-            arena.allocateFrom(ValueLayout.JAVA_BYTE, indexDataSlice, ValueLayout.JAVA_BYTE, 0L, indexDataSlice.byteSize()),
-            vertexBuilder.shouldReallocateVertexData(),
-            vertexBuilder.shouldReallocateIndexData()
+        final MemorySegment vertexData = buffer.vertexData();
+        final MemorySegment indexData = buffer.indexData();
+        return new BufferBuilder.BufferData(
+            arena.allocateFrom(ValueLayout.JAVA_BYTE, vertexData, ValueLayout.JAVA_BYTE, 0L, vertexData.byteSize()),
+            arena.allocateFrom(ValueLayout.JAVA_BYTE, indexData, ValueLayout.JAVA_BYTE, 0L, indexData.byteSize()),
+            buffer.drawParameter()
         );
     }
 }

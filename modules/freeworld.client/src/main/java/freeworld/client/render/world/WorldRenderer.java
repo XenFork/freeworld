@@ -15,7 +15,6 @@ import freeworld.client.render.RenderSystem;
 import freeworld.client.render.gl.GLResource;
 import freeworld.client.render.gl.GLStateMgr;
 import freeworld.client.render.vertex.BufferBuilder;
-import freeworld.client.render.vertex.VertexLayouts;
 import freeworld.client.world.chunk.ClientChunk;
 import freeworld.math.*;
 import freeworld.util.Direction;
@@ -84,7 +83,7 @@ public final class WorldRenderer implements GLResource, WorldListener {
     }
 
     private static BufferBuilder createVertexBuilder() {
-        return new BufferBuilder(VertexLayouts.POSITION_COLOR_TEXTURE, 30000, 45000);
+        return new BufferBuilder(1024 * 1024 * 2, 45000);
     }
 
     private void uninstallChunks() {

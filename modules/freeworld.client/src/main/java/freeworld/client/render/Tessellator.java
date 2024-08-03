@@ -28,15 +28,17 @@ import java.lang.foreign.MemorySegment;
  * @since 0.1.0
  */
 public final class Tessellator implements GLResource {
-    private static final int MAX_VERTEX_COUNT = 60000;
+    private static final int INITIAL_CAPACITY = 1024 * 1024 * 2;
     private static final int MAX_INDEX_COUNT = 90000;
     private static final VertexLayout VERTEX_LAYOUT = VertexLayouts.POSITION_COLOR_TEXTURE;
-    private final BufferBuilder bufferBuilder = new BufferBuilder(VERTEX_LAYOUT, MAX_VERTEX_COUNT, MAX_INDEX_COUNT);
+    private final BufferBuilder bufferBuilder = new BufferBuilder(INITIAL_CAPACITY, MAX_INDEX_COUNT);
     private boolean drawing = false;
     private GLDrawMode drawMode = GLDrawMode.TRIANGLES;
     private int vao = 0;
     private int vbo = 0;
     private int ebo = 0;
+    private long vertexDataSize = 0L;
+    private long indexDataSize = 0L;
 
     private Tessellator() {
     }
@@ -52,49 +54,56 @@ public final class Tessellator implements GLResource {
         return bufferBuilder;
     }
 
-    @Deprecated
-    public void flush(GLStateMgr gl) {
-        if (!drawing) throw new IllegalStateException("Do not call Tessellator.flush when not drawing");
+    private void draw(GLStateMgr gl) {
+        BufferBuilder.BufferData buffer = bufferBuilder.end();
+        BufferBuilder.DrawParameter drawParameter = buffer.drawParameter();
 
-        final boolean firstFlush = vao == 0;
         if (vao == 0) vao = gl.genVertexArrays();
         if (vbo == 0) vbo = gl.genBuffers();
         if (ebo == 0) ebo = gl.genBuffers();
 
-        final MemorySegment vertexData = bufferBuilder.vertexDataSlice();
-        final MemorySegment indexData = bufferBuilder.indexDataSlice();
-        final int indexCount = bufferBuilder.indexCount();
+        final MemorySegment vertexData = buffer.vertexData();
+        final MemorySegment indexData = buffer.indexData();
+        final int indexCount = buffer.drawParameter().indexCount();
         gl.setVertexArrayBinding(vao);
         gl.setArrayBufferBinding(vbo);
-        if (firstFlush || bufferBuilder.shouldReallocateVertexData()) {
+        if (vertexData.byteSize() > vertexDataSize) {
+            vertexDataSize = vertexData.byteSize();
             gl.bufferData(GL15C.ARRAY_BUFFER, vertexData, GL15C.STREAM_DRAW);
             VERTEX_LAYOUT.specifyAttribPointers(gl);
         } else {
             gl.bufferSubData(GL15C.ARRAY_BUFFER, 0L, vertexData);
         }
         gl.bindBuffer(GL15C.ELEMENT_ARRAY_BUFFER, ebo);
-        if (firstFlush || bufferBuilder.shouldReallocateIndexData()) {
+        if (indexData.byteSize() > indexDataSize) {
+            indexDataSize = indexData.byteSize();
             gl.bufferData(GL15C.ELEMENT_ARRAY_BUFFER, indexData, GL15C.STREAM_DRAW);
         } else {
             gl.bufferSubData(GL15C.ELEMENT_ARRAY_BUFFER, 0L, indexData);
         }
-        gl.drawElements(drawMode.value(), indexCount, GL10C.UNSIGNED_INT, MemorySegment.NULL);
+        gl.drawElements(drawParameter.drawMode().value(), indexCount, GL10C.UNSIGNED_INT, MemorySegment.NULL);
+        drawMode = drawParameter.drawMode();
+    }
 
-        bufferBuilder.reset();
+    @Deprecated
+    public void flush(GLStateMgr gl) {
+        if (!drawing) throw new IllegalStateException("Do not call Tessellator.flush when not drawing");
+
+        draw(gl);
+        bufferBuilder.begin(drawMode, VERTEX_LAYOUT);
     }
 
     @Deprecated
     public void begin(GLDrawMode drawMode) {
         if (drawing) throw new IllegalStateException("Do not call Tessellator.begin while drawing");
-        bufferBuilder.reset();
+        bufferBuilder.begin(drawMode, VERTEX_LAYOUT);
         drawing = true;
-        this.drawMode = drawMode;
     }
 
     @Deprecated
     public void end(GLStateMgr gl) {
         if (!drawing) throw new IllegalStateException("Do not call Tessellator.end when not drawing");
-        flush(gl);
+        draw(gl);
         drawing = false;
     }
 

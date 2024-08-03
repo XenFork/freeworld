@@ -10,6 +10,7 @@
 
 package freeworld.client.render.vertex;
 
+import freeworld.client.render.gl.GLDrawMode;
 import freeworld.util.Logging;
 import org.slf4j.Logger;
 
@@ -17,7 +18,6 @@ import java.lang.foreign.Arena;
 import java.lang.foreign.MemorySegment;
 import java.lang.foreign.ValueLayout;
 import java.util.List;
-import java.util.Objects;
 
 /**
  * @author squid233
@@ -25,41 +25,76 @@ import java.util.Objects;
  */
 public final class BufferBuilder implements VertexBuilder {
     private static final Logger logger = Logging.caller();
-    private final VertexLayout vertexLayout;
+    private GLDrawMode drawMode;
+    private VertexLayout vertexLayout;
     private MemorySegment vertexData;
     private MemorySegment indexData;
-    private boolean shouldReallocateVertexData = true;
-    private boolean shouldReallocateIndexData = true;
+    private boolean building = false;
     private int maxIndexCount;
-    private long prevVertexDataOffset = 0L;
     private long vertexDataOffset = 0L;
-    private int prevIndexCount = 0;
     private int vertexCount = 0;
     private int indexCount = 0;
     private VertexLayoutElement currentElement;
     private int currentElementIndex = 0;
 
-    public BufferBuilder(VertexLayout layout, int vertexCount, int indexCount) {
-        Objects.requireNonNull(layout);
-        if (vertexCount <= 0) throw new IllegalArgumentException("vertexCount <= 0: " + vertexCount);
+    public BufferBuilder(long initialCapacity, int indexCount) {
+        if (initialCapacity <= 0) throw new IllegalArgumentException("initialCapacity <= 0: " + initialCapacity);
         if (indexCount <= 0) throw new IllegalArgumentException("indexCount <= 0: " + indexCount);
 
-        this.vertexLayout = layout;
-        this.vertexData = Arena.ofAuto().allocate((long) layout.stride() * vertexCount);
+        this.vertexData = Arena.ofAuto().allocate(initialCapacity);
         this.indexData = Arena.ofAuto().allocate(ValueLayout.JAVA_INT, indexCount);
         this.maxIndexCount = indexCount;
     }
 
-    @Override
-    public void reset() {
-        prevVertexDataOffset = vertexDataOffset;
+    public record BufferData(
+        MemorySegment vertexData,
+        MemorySegment indexData,
+        DrawParameter drawParameter
+    ) {
+    }
+
+    public record DrawParameter(
+        GLDrawMode drawMode,
+        int indexCount
+    ) {
+    }
+
+    public void begin(GLDrawMode drawMode, VertexLayout layout) {
+        if (building) {
+            throw new IllegalStateException("Already building");
+        }
+        this.building = true;
+        this.drawMode = drawMode;
+        this.vertexLayout = layout;
+        this.currentElement = layout.elements().getFirst();
+    }
+
+    public BufferData end() {
+        if (!building) {
+            throw new IllegalStateException("Not building");
+        }
+        building = false;
+        BufferData buffer = build();
+        reset();
+        return buffer;
+    }
+
+    private BufferData build() {
+        return new BufferData(
+            vertexData.asSlice(0L, vertexDataOffset),
+            indexData.asSlice(0L, ValueLayout.JAVA_INT.scale(0L, indexCount)),
+            new DrawParameter(
+                drawMode,
+                indexCount
+            )
+        );
+    }
+
+    private void reset() {
         vertexDataOffset = 0L;
-        prevIndexCount = indexCount;
         vertexCount = 0;
         indexCount = 0;
-        // TODO: 2024/8/3 squid233: begin(VertexLayout)
-//        currentElement = null;
-        currentElement = vertexLayout.elements().getFirst();
+        currentElement = null;
         currentElementIndex = 0;
     }
 
@@ -71,15 +106,11 @@ public final class BufferBuilder implements VertexBuilder {
             maxIndexCount = maxIndexCount * 3 / 2;
             MemorySegment prevData = indexData;
             indexData = Arena.ofAuto().allocate(ValueLayout.JAVA_INT, maxIndexCount).copyFrom(prevData);
-            shouldReallocateIndexData = true;
         }
         for (int i = 0; i < indices.length; i++) {
             indexData.setAtIndex(ValueLayout.JAVA_INT, indexCount + i, indices[i] + offset);
         }
         indexCount += length;
-        if (indexCount > prevIndexCount) {
-            shouldReallocateIndexData = true;
-        }
         return this;
     }
 
@@ -98,7 +129,6 @@ public final class BufferBuilder implements VertexBuilder {
             logger.debug("Exceeds max vertex data size: {}; expanding", byteSize);
             MemorySegment prevData = vertexData;
             vertexData = Arena.ofAuto().allocate(byteSize * 3 / 2).copyFrom(prevData);
-            shouldReallocateVertexData = true;
         }
     }
 
@@ -131,48 +161,5 @@ public final class BufferBuilder implements VertexBuilder {
         }
         vertexCount++;
         grow();
-        if (vertexDataOffset > prevVertexDataOffset) {
-            shouldReallocateVertexData = true;
-        }
-    }
-
-    @Override
-    public int vertexCount() {
-        return vertexCount;
-    }
-
-    @Override
-    public int indexCount() {
-        return indexCount;
-    }
-
-    @Override
-    public MemorySegment vertexData() {
-        return vertexData;
-    }
-
-    @Override
-    public MemorySegment indexData() {
-        return indexData;
-    }
-
-    @Override
-    public MemorySegment vertexDataSlice() {
-        return vertexData.asSlice(0L, vertexDataOffset);
-    }
-
-    @Override
-    public boolean shouldReallocateVertexData() {
-        return shouldReallocateVertexData;
-    }
-
-    @Override
-    public boolean shouldReallocateIndexData() {
-        return shouldReallocateIndexData;
-    }
-
-    @Override
-    public VertexLayout vertexLayout() {
-        return vertexLayout;
     }
 }

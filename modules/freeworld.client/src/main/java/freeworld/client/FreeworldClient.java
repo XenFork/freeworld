@@ -33,6 +33,7 @@ import freeworld.world.block.BlockType;
 import freeworld.world.block.BlockTypes;
 import freeworld.world.entity.EntityTypes;
 import freeworld.world.entity.player.PlayerEntity;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import overrun.marshal.Unmarshal;
@@ -47,7 +48,10 @@ import overrungl.util.value.Pair;
 
 import java.lang.foreign.MemorySegment;
 import java.lang.invoke.MethodHandles;
+import java.util.Queue;
 import java.util.Random;
+import java.util.concurrent.Executor;
+import java.util.concurrent.LinkedBlockingQueue;
 
 /**
  * Client logic
@@ -55,7 +59,7 @@ import java.util.Random;
  * @author squid233
  * @since 0.1.0
  */
-public final class FreeworldClient implements AutoCloseable {
+public final class FreeworldClient implements Executor, AutoCloseable {
     private static final FreeworldClient INSTANCE = new FreeworldClient();
     private static final Logger logger = Logging.caller();
     private static final int INIT_WINDOW_WIDTH = 854;
@@ -81,6 +85,7 @@ public final class FreeworldClient implements AutoCloseable {
     private int gameTick = 0;
     private int spaceTick = 0;
     private boolean debugHudEnabled = false;
+    private final Queue<Runnable> queue = new LinkedBlockingQueue<>();
 
     private FreeworldClient() {
         this.glfw = GLFW.INSTANCE;
@@ -332,6 +337,10 @@ public final class FreeworldClient implements AutoCloseable {
                 tick();
             }
             gameRenderer.render(gl, timer.partialTick());
+            Runnable task;
+            while ((task = queue.poll()) != null) {
+                task.run();
+            }
             glfw.swapBuffers(window);
         }
     }
@@ -356,6 +365,11 @@ public final class FreeworldClient implements AutoCloseable {
         if (screen != null) {
             screen.init(framebufferWidth / guiScale, framebufferHeight / guiScale);
         }
+    }
+
+    @Override
+    public void execute(@NotNull Runnable command) {
+        queue.offer(command);
     }
 
     public @Nullable Screen screen() {

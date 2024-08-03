@@ -14,9 +14,6 @@ import freeworld.math.Matrix4f;
 import freeworld.math.Vector3f;
 import freeworld.math.Vector4f;
 
-import java.lang.foreign.MemorySegment;
-import java.lang.foreign.ValueLayout;
-
 import static freeworld.client.util.ColorUtil.colorToInt;
 
 /**
@@ -24,9 +21,6 @@ import static freeworld.client.util.ColorUtil.colorToInt;
  * @since 0.1.0
  */
 public interface VertexBuilder {
-    @Deprecated
-    void reset();
-
     @Deprecated
     VertexBuilder indicesWithOffset(int offset, int... indices);
 
@@ -85,33 +79,4 @@ public interface VertexBuilder {
     void nextElement();
 
     void emit();
-
-    @Deprecated
-    int vertexCount();
-
-    @Deprecated
-    int indexCount();
-
-    @Deprecated
-    MemorySegment vertexData();
-
-    @Deprecated
-    MemorySegment indexData();
-
-    @Deprecated
-    MemorySegment vertexDataSlice();
-
-    @Deprecated
-    default MemorySegment indexDataSlice() {
-        return indexData().asSlice(0L, ValueLayout.JAVA_INT.scale(0L, indexCount()));
-    }
-
-    @Deprecated
-    boolean shouldReallocateVertexData();
-
-    @Deprecated
-    boolean shouldReallocateIndexData();
-
-    @Deprecated
-    VertexLayout vertexLayout();
 }
