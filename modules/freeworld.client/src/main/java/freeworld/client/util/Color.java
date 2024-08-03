@@ -10,6 +10,7 @@
 
 package freeworld.client.util;
 
+import freeworld.math.Vector4f;
 import freeworld.math.Vector4i;
 
 /**
@@ -21,6 +22,14 @@ public record Color(Vector4i rgba) {
 
     public Color(int red, int green, int blue, int alpha) {
         this(new Vector4i(red, green, blue, alpha));
+    }
+
+    public Color(float red, float green, float blue, float alpha) {
+        this(ColorUtil.colorToInt(red), ColorUtil.colorToInt(green), ColorUtil.colorToInt(blue), ColorUtil.colorToInt(alpha));
+    }
+
+    public Vector4f toVector4f() {
+        return new Vector4f(ColorUtil.colorToFloat(red()), ColorUtil.colorToFloat(green()), ColorUtil.colorToFloat(blue()), ColorUtil.colorToFloat(alpha()));
     }
 
     public int red() {

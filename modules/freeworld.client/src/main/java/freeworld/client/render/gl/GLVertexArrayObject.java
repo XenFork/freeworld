@@ -10,8 +10,11 @@
 
 package freeworld.client.render.gl;
 
+import freeworld.client.render.BufferRenderer;
+import freeworld.client.render.RenderSystem;
 import freeworld.client.render.vertex.BufferBuilder;
 import freeworld.client.render.vertex.VertexLayout;
+import freeworld.math.Matrix4f;
 import overrungl.opengl.GL;
 import overrungl.opengl.GL15C;
 
@@ -40,15 +43,32 @@ public final class GLVertexArrayObject implements GLResource {
     }
 
     public void bind(GLStateMgr gl) {
+        BufferRenderer.resetVertexArrayObject();
         gl.setVertexArrayBinding(vao);
     }
 
-    public void unbind(GLStateMgr gl) {
+    public static void unbind(GLStateMgr gl) {
+        BufferRenderer.resetVertexArrayObject();
         gl.setVertexArrayBinding(0);
     }
 
     public void draw(GLStateMgr gl) {
         gl.drawElements(drawMode.value(), indexCount, GL.UNSIGNED_INT, MemorySegment.NULL);
+    }
+
+    public void draw(GLStateMgr gl, Matrix4f projectionViewMatrix, Matrix4f modelMatrix, GLProgram program) {
+        if (program.projectionViewMatrixUniform != null) {
+            program.projectionViewMatrixUniform.set(projectionViewMatrix);
+        }
+        if (program.modelMatrixUniform != null) {
+            program.modelMatrixUniform.set(modelMatrix);
+        }
+        if (program.colorModulatorUniform != null) {
+            program.colorModulatorUniform.set(RenderSystem.colorModulator().toVector4f());
+        }
+        program.bind(gl);
+        draw(gl);
+        program.unbind(gl);
     }
 
     public void specify(GLStateMgr gl, BufferBuilder.BufferData bufferData) {

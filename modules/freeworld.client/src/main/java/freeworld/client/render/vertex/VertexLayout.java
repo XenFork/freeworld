@@ -10,7 +10,9 @@
 
 package freeworld.client.render.vertex;
 
+import freeworld.client.FreeworldClient;
 import freeworld.client.render.gl.GLStateMgr;
+import freeworld.client.render.gl.GLVertexArrayObject;
 
 import java.lang.foreign.MemorySegment;
 import java.util.Collections;
@@ -26,6 +28,7 @@ public final class VertexLayout {
     private final Map<String, VertexLayoutElement> elementMap;
     private final List<VertexLayoutElement> elementList;
     private final int stride;
+    private GLVertexArrayObject vertexArrayObject;
 
     public VertexLayout(Map<String, VertexLayoutElement> elementMap) {
         this.elementMap = Collections.unmodifiableMap(elementMap);
@@ -81,6 +84,13 @@ public final class VertexLayout {
 
     public int stride() {
         return stride;
+    }
+
+    public GLVertexArrayObject vertexArrayObject(GLStateMgr gl) {
+        if (vertexArrayObject == null) {
+            vertexArrayObject = FreeworldClient.getInstance().gameRenderer().createVaoForLayout(gl);
+        }
+        return vertexArrayObject;
     }
 
     @Override

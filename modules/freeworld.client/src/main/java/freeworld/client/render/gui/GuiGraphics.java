@@ -12,103 +12,58 @@ package freeworld.client.render.gui;
 
 import freeworld.client.render.GameRenderer;
 import freeworld.client.render.RenderSystem;
-import freeworld.client.render.Tessellator;
-import freeworld.client.render.gl.GLDrawMode;
-import freeworld.client.render.gl.GLProgram;
-import freeworld.client.render.gl.GLStateMgr;
 import freeworld.client.render.texture.Texture2D;
 import freeworld.client.render.texture.TextureRegion;
-import freeworld.client.render.vertex.BufferBuilder;
+import freeworld.client.render.vertex.VertexBuilder;
 
 /**
  * @author squid233
  * @since 0.1.0
  */
 public final class GuiGraphics {
-    private final GLStateMgr gl;
     private final GameRenderer gameRenderer;
-    private final Tessellator tessellator = Tessellator.getInstance();
-    private final BufferBuilder buffer = tessellator.buffer();
-    private GLProgram program = null;
-    private Texture2D texture = null;
 
-    public GuiGraphics(GLStateMgr gl, GameRenderer gameRenderer) {
-        this.gl = gl;
+    public GuiGraphics(GameRenderer gameRenderer) {
         this.gameRenderer = gameRenderer;
     }
 
-    private void updateProgram(GLProgram program) {
-        if (this.program != program) {
-            tessellator.flush(gl);
-            this.program = program;
-            RenderSystem.useProgram(program);
-        }
-    }
-
-    private void updateTexture(Texture2D texture) {
-        if (this.texture != texture) {
-            tessellator.flush(gl);
-            this.texture = texture;
-            RenderSystem.bindTexture2D(texture);
-        }
-    }
-
-    public void beginDraw(GLDrawMode drawMode) {
-        program = RenderSystem.currentProgram();
-        texture = RenderSystem.textureBinding2D();
-        RenderSystem.updateMatrices();
-        tessellator.begin(drawMode);
-    }
-
-    public void beginDraw() {
-        beginDraw(GLDrawMode.TRIANGLES);
-    }
-
-    public void endDraw() {
-        tessellator.end(gl);
-    }
-
-    public void drawSprite(Texture2D texture, float x, float y, float width, float height, float anchorX, float anchorY, float u0, float u1, float v0, float v1) {
-        updateProgram(gameRenderer.positionColorTexProgram());
-        updateTexture(texture);
+    public void drawSprite(VertexBuilder builder, float x, float y, float width, float height, float anchorX, float anchorY, float u0, float u1, float v0, float v1) {
         final float lWidth = width * anchorX;
         final float rWidth = width * (1.0f - anchorX);
         final float bHeight = height * anchorY;
         final float tHeight = height * (1.0f - anchorY);
-        buffer.indices(0, 1, 2, 2, 3, 0);
-        buffer.position(x - lWidth, y + tHeight, 0).color(1.0f, 1.0f, 1.0f).texCoord(u0, v0).emit();
-        buffer.position(x - lWidth, y - bHeight, 0).color(1.0f, 1.0f, 1.0f).texCoord(u0, v1).emit();
-        buffer.position(x + rWidth, y - bHeight, 0).color(1.0f, 1.0f, 1.0f).texCoord(u1, v1).emit();
-        buffer.position(x + rWidth, y + tHeight, 0).color(1.0f, 1.0f, 1.0f).texCoord(u1, v0).emit();
+        builder.indices(0, 1, 2, 2, 3, 0);
+        builder.position(x - lWidth, y + tHeight, 0).color(1.0f, 1.0f, 1.0f).texCoord(u0, v0).emit();
+        builder.position(x - lWidth, y - bHeight, 0).color(1.0f, 1.0f, 1.0f).texCoord(u0, v1).emit();
+        builder.position(x + rWidth, y - bHeight, 0).color(1.0f, 1.0f, 1.0f).texCoord(u1, v1).emit();
+        builder.position(x + rWidth, y + tHeight, 0).color(1.0f, 1.0f, 1.0f).texCoord(u1, v0).emit();
     }
 
-    public void drawSprite(Texture2D texture, float x, float y, float anchorX, float anchorY) {
-        drawSprite(texture, x, y, texture.width(), texture.height(), anchorX, anchorY, 0.0f, 1.0f, 0.0f, 1.0f);
+    public void drawSprite(VertexBuilder builder, Texture2D texture, float x, float y, float anchorX, float anchorY) {
+        drawSprite(builder, x, y, texture.width(), texture.height(), anchorX, anchorY, 0.0f, 1.0f, 0.0f, 1.0f);
     }
 
-    public void drawSprite(Texture2D texture, float x, float y) {
-        drawSprite(texture, x, y, 0.0f, 0.0f);
+    public void drawSprite(VertexBuilder builder, Texture2D texture, float x, float y) {
+        drawSprite(builder, texture, x, y, 0.0f, 0.0f);
     }
 
-    public void drawSprite(TextureRegion textureRegion, float x, float y, float anchorX, float anchorY) {
+    public void drawSprite(VertexBuilder builder, TextureRegion textureRegion, float x, float y, float anchorX, float anchorY) {
         if (textureRegion == null) {
-            drawSprite(gameRenderer.textureManager().getOrLoad(gl, Texture2D.MISSING), x, y, anchorX, anchorY);
+            drawSprite(builder, gameRenderer.textureManager().getOrLoad(RenderSystem.stateManager(), Texture2D.MISSING), x, y, anchorX, anchorY);
             return;
         }
-        drawSprite(textureRegion.atlas(), x, y, textureRegion.width(), textureRegion.height(), anchorX, anchorY, textureRegion.u0(), textureRegion.u1(), textureRegion.v0(), textureRegion.v1());
+        drawSprite(builder, x, y, textureRegion.width(), textureRegion.height(), anchorX, anchorY, textureRegion.u0(), textureRegion.u1(), textureRegion.v0(), textureRegion.v1());
     }
 
-    public void drawSprite(TextureRegion textureRegion, float x, float y) {
-        drawSprite(textureRegion, x, y, 0.0f, 0.0f);
+    public void drawSprite(VertexBuilder builder, TextureRegion textureRegion, float x, float y) {
+        drawSprite(builder, textureRegion, x, y, 0.0f, 0.0f);
     }
 
-    public void fillRect(float startX, float startY, float endX, float endY, float red, float green, float blue, float alpha) {
-        updateProgram(gameRenderer.positionColorProgram());
-        updateTexture(null);
-        buffer.indices(0, 1, 2, 2, 3, 0);
-        buffer.position(startX, endY, 0.0f).color(red, green, blue, alpha).texCoord(0f, 0f).emit();
-        buffer.position(startX, startY, 0.0f).color(red, green, blue, alpha).texCoord(0f, 0f).emit();
-        buffer.position(endX, startY, 0.0f).color(red, green, blue, alpha).texCoord(0f, 0f).emit();
-        buffer.position(endX, endY, 0.0f).color(red, green, blue, alpha).texCoord(0f, 0f).emit();
+    public void fillRect(VertexBuilder builder, float startX, float startY, float endX, float endY, float red, float green, float blue, float alpha) {
+        builder.indices(0, 1, 2, 2, 3, 0);
+        builder.position(startX, endY, 0.0f).color(red, green, blue, alpha).emit();
+        builder.position(startX, startY, 0.0f).color(red, green, blue, alpha).emit();
+        builder.position(endX, startY, 0.0f).color(red, green, blue, alpha).emit();
+        builder.position(endX, endY, 0.0f).color(red, green, blue, alpha).emit();
     }
 }

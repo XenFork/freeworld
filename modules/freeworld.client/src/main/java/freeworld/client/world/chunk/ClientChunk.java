@@ -114,7 +114,7 @@ public final class ClientChunk extends Chunk implements AutoCloseable {
     public void render(GLStateMgr gl) {
         if (state.vertexArrayObject != null) {
             state.vertexArrayObject.bind(gl);
-            state.vertexArrayObject.draw(gl);
+            state.vertexArrayObject.draw(gl, RenderSystem.projectionViewMatrix(), RenderSystem.modelMatrix(), RenderSystem.currentProgram());
         }
     }
 

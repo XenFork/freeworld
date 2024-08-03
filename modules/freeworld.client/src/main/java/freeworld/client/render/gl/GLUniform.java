@@ -12,6 +12,7 @@ package freeworld.client.render.gl;
 
 import freeworld.client.render.RenderSystem;
 import freeworld.math.Matrix4f;
+import freeworld.math.Vector4f;
 
 import java.lang.foreign.Arena;
 import java.lang.foreign.MemorySegment;
@@ -54,6 +55,10 @@ public final class GLUniform {
         value.set(ValueLayout.JAVA_FLOAT, 12L, w);
     }
 
+    public void set(Vector4f v) {
+        set(v.x(), v.y(), v.z(), v.w());
+    }
+
     public void set(Matrix4f mat) {
         markDirty();
         mat.get(value);
@@ -63,7 +68,7 @@ public final class GLUniform {
         if (!dirty) {
             return;
         }
-        if (gl.flags().GL_ARB_separate_shader_objects) {
+        if (gl.getFlags().GL_ARB_separate_shader_objects) {
             switch (type) {
                 case INT -> gl.programUniform1iv(program.id(), location, 1, value);
                 case VEC4 -> gl.programUniform4fv(program.id(), location, 1, value);

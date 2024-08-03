@@ -11,12 +11,7 @@
 package freeworld.client.render;
 
 import freeworld.client.FreeworldClient;
-import freeworld.client.render.text.TextRenderer;
-import freeworld.client.render.text.Unifont;
-import freeworld.client.render.gl.GLDrawMode;
-import freeworld.client.render.gl.GLProgram;
-import freeworld.client.render.gl.GLResource;
-import freeworld.client.render.gl.GLStateMgr;
+import freeworld.client.render.gl.*;
 import freeworld.client.render.gui.GuiGraphics;
 import freeworld.client.render.gui.HudRenderer;
 import freeworld.client.render.model.block.BlockModel;
@@ -24,6 +19,8 @@ import freeworld.client.render.model.block.BlockModelFace;
 import freeworld.client.render.model.block.BlockModelManager;
 import freeworld.client.render.model.block.BlockModelPart;
 import freeworld.client.render.screen.Screen;
+import freeworld.client.render.text.TextRenderer;
+import freeworld.client.render.text.Unifont;
 import freeworld.client.render.texture.TextureAtlas;
 import freeworld.client.render.texture.TextureManager;
 import freeworld.client.render.vertex.BufferBuilder;
@@ -44,11 +41,10 @@ import freeworld.world.block.BlockHitResult;
 import freeworld.world.entity.Entity;
 import freeworld.world.entity.EntityType;
 import org.slf4j.Logger;
+import overrungl.opengl.GL;
 import overrungl.opengl.GL10C;
 
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 /**
  * The game renderer.
@@ -59,9 +55,9 @@ import java.util.Set;
 public final class GameRenderer implements GLResource {
     private static final Logger logger = Logging.caller();
     private final FreeworldClient client;
-    private GLProgram positionColorProgram;
-    private GLProgram positionColorTexProgram;
-    private GLProgram renderTypeTextProgram;
+    private static GLProgram positionColorProgram;
+    private static GLProgram positionColorTexProgram;
+    private static GLProgram renderTypeTextProgram;
     private BlockModelManager blockModelManager;
     private TextureManager textureManager;
     private GuiGraphics guiGraphics;
@@ -72,6 +68,7 @@ public final class GameRenderer implements GLResource {
     private Unifont unifont;
     private Map<EntityType<?>, EntityRenderer<?>> entityRendererMap;
     private BlockHitResult hitResult = new BlockHitResult(true, null, Vector3i.ZERO, Direction.SOUTH);
+    private final List<GLVertexArrayObject> layoutVAOs = new ArrayList<>();
 
     public GameRenderer(FreeworldClient client) {
         this.client = client;
@@ -102,7 +99,7 @@ public final class GameRenderer implements GLResource {
         blockRenderer = new BlockRenderer(this);
         worldRenderer = new WorldRenderer(this, client.world());
 
-        guiGraphics = new GuiGraphics(gl, this);
+        guiGraphics = new GuiGraphics(this);
         hudRenderer = new HudRenderer(this);
 
         unifont = new Unifont();
@@ -137,13 +134,13 @@ public final class GameRenderer implements GLResource {
         logger.info("Created {}x{}x{} {}", atlas.width(), atlas.height(), atlas.mipmapLevel(), identifier);
     }
 
-    private void initGLPrograms(GLStateMgr gl) {
+    private static void initGLPrograms(GLStateMgr gl) {
         positionColorProgram = initBuiltinProgram(gl, "init/position_color", VertexLayouts.POSITION_COLOR);
         positionColorTexProgram = initBuiltinProgram(gl, "init/position_color_tex", VertexLayouts.POSITION_COLOR_TEXTURE);
-        renderTypeTextProgram = initBuiltinProgram(gl, "core/render_type_text", VertexLayouts.POSITION_COLOR_TEXTURE);
+        renderTypeTextProgram = initBuiltinProgram(gl, "core/render_type_text", VertexLayouts.TEXT);
     }
 
-    private GLProgram initBuiltinProgram(GLStateMgr gl, String path, VertexLayout layout) {
+    private static GLProgram initBuiltinProgram(GLStateMgr gl, String path, VertexLayout layout) {
         return new GLProgram(gl, Identifier.ofBuiltin(path), layout);
     }
 
@@ -162,9 +159,9 @@ public final class GameRenderer implements GLResource {
     }
 
     private void renderWorld(GLStateMgr gl, double partialTick) {
-        gl.disableBlend();
-        gl.enableCullFace();
-        gl.enableDepthTest();
+        gl.setDisableBlend();
+        gl.setEnableCullFace();
+        gl.setEnableDepthTest();
         gl.setDepthFunc(GL10C.LEQUAL);
 
         final Camera camera = client.camera();
@@ -178,21 +175,20 @@ public final class GameRenderer implements GLResource {
         ), camera.updateViewMatrix());
         RenderSystem.setModelMatrix(Matrix4f.identity());
 
-        RenderSystem.useProgram(positionColorTexProgram);
-
         worldRenderer.compileChunks(player);
 
         hitResult = worldRenderer.selectBlock(player);
 
         if (!hitResult.missed()) {
-            gl.enablePolygonOffsetFill();
+            gl.setEnablePolygonOffsetFill();
             gl.setPolygonOffset(1.0f, 1.0f);
             gl.setLineWidth(2.0f);
         }
+        RenderSystem.useProgram(positionColorTexProgram);
         RenderSystem.bindTexture2D(textureManager.getTexture(TextureManager.BLOCK_ATLAS));
         worldRenderer.renderChunks(gl, player);
         if (!hitResult.missed()) {
-            gl.disablePolygonOffsetFill();
+            gl.setDisablePolygonOffsetFill();
             gl.setLineWidth(1.0f);
         }
 
@@ -203,13 +199,13 @@ public final class GameRenderer implements GLResource {
             RenderSystem.useProgram(positionColorProgram);
             final Tessellator tessellator = Tessellator.getInstance();
             BufferBuilder buffer = tessellator.buffer();
-            tessellator.begin(GLDrawMode.LINES);
+            buffer.begin(GLDrawMode.LINES, VertexLayouts.POSITION_COLOR);
             for (Lined line : lines) {
                 buffer.indices(0, 1);
-                buffer.position(mat, line.from().toVector3f()).color(0, 0, 0).texCoord(0f, 0f).emit();
-                buffer.position(mat, line.to().toVector3f()).color(0, 0, 0).texCoord(0f, 0f).emit();
+                buffer.position(mat, line.from().toVector3f()).color(0, 0, 0).emit();
+                buffer.position(mat, line.to().toVector3f()).color(0, 0, 0).emit();
             }
-            tessellator.end(gl);
+            tessellator.draw(gl);
         }
 
         renderWorldEntities(gl, partialTick);
@@ -237,9 +233,9 @@ public final class GameRenderer implements GLResource {
     }
 
     private void renderHud(GLStateMgr gl, double partialTick) {
-        gl.disableCullFace();
-        gl.disableDepthTest();
-        gl.enableBlend();
+        gl.setDisableCullFace();
+        gl.setDisableDepthTest();
+        gl.setEnableBlend();
         gl.setBlendFunc(GL10C.SRC_ALPHA, GL10C.ONE_MINUS_SRC_ALPHA);
         hudRenderer.update(client.scaledFramebufferWidth(), client.scaledFramebufferHeight());
         hudRenderer.render(guiGraphics, gl, partialTick);
@@ -248,9 +244,9 @@ public final class GameRenderer implements GLResource {
     private void renderScreen(GuiGraphics graphics, GLStateMgr gl, double partialTick) {
         final Screen screen = client.screen();
         if (screen != null) {
-            gl.disableCullFace();
-            gl.disableDepthTest();
-            gl.enableBlend();
+            gl.setDisableCullFace();
+            gl.setDisableDepthTest();
+            gl.setEnableBlend();
             gl.setBlendFunc(GL10C.SRC_ALPHA, GL10C.ONE_MINUS_SRC_ALPHA);
             RenderSystem.setProjectionViewMatrix(Matrix4f.setOrtho(0.0f,
                     client.scaledFramebufferWidth(),
@@ -279,22 +275,32 @@ public final class GameRenderer implements GLResource {
         if (positionColorTexProgram != null) positionColorTexProgram.close(gl);
         if (renderTypeTextProgram != null) renderTypeTextProgram.close(gl);
 
-        Tessellator.getInstance().close(gl);
+        for (GLVertexArrayObject vao : layoutVAOs) {
+            vao.close(gl);
+        }
+
+        BufferRenderer.reset(gl);
+    }
+
+    public GLVertexArrayObject createVaoForLayout(GLStateMgr gl) {
+        GLVertexArrayObject vertexArrayObject = new GLVertexArrayObject(gl, GL.DYNAMIC_DRAW);
+        layoutVAOs.add(vertexArrayObject);
+        return vertexArrayObject;
     }
 
     public FreeworldClient client() {
         return client;
     }
 
-    public GLProgram positionColorProgram() {
+    public static GLProgram positionColorProgram() {
         return positionColorProgram;
     }
 
-    public GLProgram positionColorTexProgram() {
+    public static GLProgram positionColorTexProgram() {
         return positionColorTexProgram;
     }
 
-    public GLProgram renderTypeTextProgram() {
+    public static GLProgram renderTypeTextProgram() {
         return renderTypeTextProgram;
     }
 

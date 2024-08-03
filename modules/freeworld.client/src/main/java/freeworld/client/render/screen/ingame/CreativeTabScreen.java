@@ -10,10 +10,16 @@
 
 package freeworld.client.render.screen.ingame;
 
-import freeworld.client.FreeworldClient;
+import freeworld.client.render.GameRenderer;
+import freeworld.client.render.RenderSystem;
+import freeworld.client.render.Tessellator;
+import freeworld.client.render.gl.GLDrawMode;
 import freeworld.client.render.gl.GLStateMgr;
 import freeworld.client.render.gui.GuiGraphics;
 import freeworld.client.render.screen.Screen;
+import freeworld.client.render.texture.Texture2D;
+import freeworld.client.render.vertex.BufferBuilder;
+import freeworld.client.render.vertex.VertexLayouts;
 import freeworld.util.Identifier;
 import overrungl.glfw.GLFW;
 
@@ -24,23 +30,25 @@ import overrungl.glfw.GLFW;
 public class CreativeTabScreen extends Screen {
     private static final Identifier BACKGROUND_TEXTURE = Identifier.ofBuiltin("gui/screen/creative_tab/background");
 
-    public CreativeTabScreen(FreeworldClient client) {
-        super(client);
-    }
-
     @Override
     public void render(GuiGraphics graphics, GLStateMgr gl, double partialTick) {
         super.render(graphics, gl, partialTick);
-        graphics.beginDraw();
-        drawBackground(graphics, partialTick);
+        drawBackground(graphics, gl, partialTick);
+        Texture2D texture = client.gameRenderer().textureManager().getOrLoad(gl, BACKGROUND_TEXTURE);
+        RenderSystem.useProgram(GameRenderer.positionColorTexProgram());
+        RenderSystem.bindTexture2D(texture);
+        Tessellator t = Tessellator.getInstance();
+        BufferBuilder buffer = t.buffer();
+        buffer.begin(GLDrawMode.TRIANGLES, VertexLayouts.POSITION_COLOR_TEXTURE);
         graphics.drawSprite(
-            client.gameRenderer().textureManager().getOrLoad(gl, BACKGROUND_TEXTURE),
+            buffer,
+            texture,
             width * 0.5f,
             height * 0.5f,
             0.5f,
             0.5f
         );
-        graphics.endDraw();
+        t.draw(gl);
     }
 
     @Override

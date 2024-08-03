@@ -51,11 +51,15 @@ public final class BufferBuilder implements VertexBuilder {
         MemorySegment indexData,
         DrawParameter drawParameter
     ) {
+        public boolean isEmpty() {
+            return drawParameter.vertexCount == 0;
+        }
     }
 
     public record DrawParameter(
         VertexLayout vertexLayout,
         GLDrawMode drawMode,
+        int vertexCount,
         int indexCount
     ) {
     }
@@ -87,6 +91,7 @@ public final class BufferBuilder implements VertexBuilder {
             new DrawParameter(
                 vertexLayout,
                 drawMode,
+                vertexCount,
                 indexCount
             )
         );

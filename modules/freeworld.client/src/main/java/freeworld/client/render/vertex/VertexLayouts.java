@@ -25,13 +25,20 @@ public final class VertexLayouts {
     public static final VertexLayoutElement UV_ELEMENT = new VertexLayoutElement(GLDataType.FLOAT, VertexFormat.UV, 2);
     public static final VertexLayoutElement PADDING_ELEMENT = new VertexLayoutElement(GLDataType.BYTE, VertexFormat.PADDING, 1);
     public static final VertexLayout POSITION_COLOR = new VertexLayout(
-        new MapBuilder<String, VertexLayoutElement>()
+        mapBuilder()
             .add("Position", POSITION_ELEMENT)
             .add("Color", COLOR_ELEMENT)
             .build()
     );
     public static final VertexLayout POSITION_COLOR_TEXTURE = new VertexLayout(
-        new MapBuilder<String, VertexLayoutElement>()
+        mapBuilder()
+            .add("Position", POSITION_ELEMENT)
+            .add("Color", COLOR_ELEMENT)
+            .add("UV", UV_ELEMENT)
+            .build()
+    );
+    public static final VertexLayout TEXT = new VertexLayout(
+        mapBuilder()
             .add("Position", POSITION_ELEMENT)
             .add("Color", COLOR_ELEMENT)
             .add("UV", UV_ELEMENT)
@@ -39,5 +46,9 @@ public final class VertexLayouts {
     );
 
     private VertexLayouts() {
+    }
+
+    private static MapBuilder<String, VertexLayoutElement> mapBuilder() {
+        return new MapBuilder<>();
     }
 }

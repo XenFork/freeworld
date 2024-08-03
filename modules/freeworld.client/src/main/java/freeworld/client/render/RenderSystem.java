@@ -13,6 +13,7 @@ package freeworld.client.render;
 import freeworld.client.render.gl.GLProgram;
 import freeworld.client.render.gl.GLStateMgr;
 import freeworld.client.render.texture.Texture2D;
+import freeworld.client.util.Color;
 import freeworld.math.Matrix4f;
 import freeworld.util.Logging;
 import org.jetbrains.annotations.ApiStatus;
@@ -31,6 +32,7 @@ public final class RenderSystem {
     private static Matrix4f projectionMatrix = Matrix4f.identity();
     private static Matrix4f viewMatrix = Matrix4f.identity();
     private static Matrix4f modelMatrix = Matrix4f.identity();
+    private static Color colorModulator = Color.WHITE;
 
     public static void initialize(GLStateMgr gl) {
         logger.info("Initializing render system");
@@ -41,7 +43,6 @@ public final class RenderSystem {
         currentProgram = program;
         if (program != null) {
             program.bind(stateMgr);
-            updateMatrices();
         } else {
             stateMgr.setCurrentProgram(0);
         }
@@ -83,14 +84,6 @@ public final class RenderSystem {
     public static void setProjectionViewMatrix(Matrix4f projection, Matrix4f view) {
         setProjectionMatrix(projection);
         setViewMatrix(view);
-        updateProjectionViewMatrix();
-    }
-
-    public static void updateProjectionViewMatrix() {
-        if (currentProgram != null && currentProgram.projectionViewMatrixUniform != null) {
-            currentProgram.projectionViewMatrixUniform.set(projectionViewMatrix());
-            currentProgram.specifyUniforms(stateMgr);
-        }
     }
 
     public static Matrix4f projectionViewMatrix() {
@@ -99,23 +92,18 @@ public final class RenderSystem {
 
     public static void setModelMatrix(Matrix4f matrix) {
         modelMatrix = matrix;
-        updateModelMatrix();
-    }
-
-    public static void updateModelMatrix() {
-        if (currentProgram != null && currentProgram.modelMatrixUniform != null) {
-            currentProgram.modelMatrixUniform.set(modelMatrix);
-            currentProgram.specifyUniforms(stateMgr);
-        }
     }
 
     public static Matrix4f modelMatrix() {
         return modelMatrix;
     }
 
-    public static void updateMatrices() {
-        updateProjectionViewMatrix();
-        updateModelMatrix();
+    public static void setColorModulator(Color color) {
+        colorModulator = color;
+    }
+
+    public static Color colorModulator() {
+        return colorModulator;
     }
 
     @ApiStatus.Internal

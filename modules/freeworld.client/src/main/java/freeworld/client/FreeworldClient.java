@@ -11,6 +11,7 @@
 package freeworld.client;
 
 import freeworld.client.event.CursorPosEvent;
+import freeworld.client.render.BufferRenderer;
 import freeworld.client.render.Camera;
 import freeworld.client.render.GameRenderer;
 import freeworld.client.render.RenderSystem;
@@ -150,7 +151,7 @@ public final class FreeworldClient implements Executor, AutoCloseable {
                                 setScreen(null);
                             }
                         } else if (world != null) {
-                            setScreen(new PauseScreen(this));
+                            setScreen(new PauseScreen());
                         }
                     }
                     default -> {
@@ -167,7 +168,7 @@ public final class FreeworldClient implements Executor, AutoCloseable {
                                     case GLFW.KEY_8 -> player.selectHotBar(7);
                                     case GLFW.KEY_9 -> player.selectHotBar(8);
                                     case GLFW.KEY_0 -> player.selectHotBar(9);
-                                    case GLFW.KEY_E -> setScreen(new CreativeTabScreen(this));
+                                    case GLFW.KEY_E -> setScreen(new CreativeTabScreen());
                                     case GLFW.KEY_SPACE -> {
                                         if (gameTick - spaceTick < 5) {
                                             player.flying = !player.flying();
@@ -201,7 +202,7 @@ public final class FreeworldClient implements Executor, AutoCloseable {
         gl.viewport(0, 0, width, height);
 
         if (screen != null) {
-            screen.onResize(framebufferWidth / guiScale, framebufferHeight / guiScale);
+            screen.onResize(scaledFramebufferWidth(), scaledFramebufferHeight());
         }
     }
 
@@ -325,22 +326,22 @@ public final class FreeworldClient implements Executor, AutoCloseable {
         gameRenderer = new GameRenderer(this);
         gameRenderer.init(gl);
 
-        setScreen(new PauseScreen(this));
+        setScreen(new PauseScreen());
     }
 
     public void run() {
         timer.update();
         while (!glfw.windowShouldClose(window)) {
+            Runnable task;
+            while ((task = queue.poll()) != null) {
+                task.run();
+            }
             glfw.pollEvents();
             timer.update();
             for (int i = 0, c = timer.tickCount(); i < c; i++) {
                 tick();
             }
             gameRenderer.render(gl, timer.partialTick());
-            Runnable task;
-            while ((task = queue.poll()) != null) {
-                task.run();
-            }
             glfw.swapBuffers(window);
         }
     }
@@ -362,8 +363,9 @@ public final class FreeworldClient implements Executor, AutoCloseable {
             this.screen.onClose();
         }
         this.screen = screen;
+        BufferRenderer.reset(gl);
         if (screen != null) {
-            screen.init(framebufferWidth / guiScale, framebufferHeight / guiScale);
+            screen.init(this, scaledFramebufferWidth(), scaledFramebufferHeight());
         }
     }
 

@@ -19,6 +19,7 @@ import freeworld.client.render.gl.GLStateMgr;
 import freeworld.client.render.texture.TextureAtlas;
 import freeworld.client.render.texture.TextureManager;
 import freeworld.client.render.vertex.BufferBuilder;
+import freeworld.client.render.vertex.VertexLayouts;
 import freeworld.client.util.Color;
 import freeworld.client.util.GameClientVersion;
 import freeworld.math.Matrix4f;
@@ -63,7 +64,7 @@ public final class HudRenderer {
             Matrix4f.identity());
         RenderSystem.setModelMatrix(Matrix4f.identity());
 
-        RenderSystem.useProgram(gameRenderer.positionColorTexProgram());
+        RenderSystem.useProgram(GameRenderer.positionColorTexProgram());
 
         // gui
         renderCrossing(graphics, gl);
@@ -80,10 +81,10 @@ public final class HudRenderer {
     private void renderDebugHud(GLStateMgr gl) {
         gl.setBlendFunc(GL10C.SRC_ALPHA, GL10C.ONE_MINUS_SRC_ALPHA);
         RenderSystem.bindTexture2D(gameRenderer.unifont().texture());
-        RenderSystem.useProgram(gameRenderer.renderTypeTextProgram());
+        RenderSystem.useProgram(GameRenderer.renderTypeTextProgram());
         Tessellator t = Tessellator.getInstance();
         BufferBuilder buffer = t.buffer();
-        t.begin(GLDrawMode.TRIANGLES);
+        buffer.begin(GLDrawMode.TRIANGLES, VertexLayouts.TEXT);
 
         PlayerEntity player = client.player();
         Vector3d position = player.position();
@@ -120,29 +121,36 @@ public final class HudRenderer {
             Color.WHITE,
             true);
 
-        t.end(gl);
+        t.draw(gl);
     }
 
     private void renderCrossing(GuiGraphics graphics, GLStateMgr gl) {
+        TextureAtlas atlas = gameRenderer.textureManager().getTexture(TextureManager.GUI_ATLAS);
+        RenderSystem.bindTexture2D(atlas);
         gl.setBlendFuncSeparate(GL10C.ONE_MINUS_DST_COLOR, GL10C.ONE_MINUS_SRC_ALPHA, GL10C.ONE, GL10C.ZERO);
-        graphics.beginDraw();
+        Tessellator t = Tessellator.getInstance();
+        BufferBuilder buffer = t.buffer();
+        buffer.begin(GLDrawMode.TRIANGLES, VertexLayouts.POSITION_COLOR_TEXTURE);
         graphics.drawSprite(
-            gameRenderer.textureManager()
-                .<TextureAtlas>getTexture(TextureManager.GUI_ATLAS)
-                .getRegion(CROSSING_TEXTURE),
+            buffer,
+            atlas.getRegion(CROSSING_TEXTURE),
             width * 0.5f,
             height * 0.5f,
             0.5f,
             0.5f
         );
-        graphics.endDraw();
+        t.draw(gl);
     }
 
     private void renderHotBar(GuiGraphics graphics, GLStateMgr gl) {
         final TextureAtlas atlas = gameRenderer.textureManager().getTexture(TextureManager.GUI_ATLAS);
-        graphics.beginDraw();
+        RenderSystem.bindTexture2D(atlas);
         gl.setBlendFunc(GL10C.SRC_ALPHA, GL10C.ONE_MINUS_SRC_ALPHA);
+        Tessellator t = Tessellator.getInstance();
+        BufferBuilder buffer = t.buffer();
+        buffer.begin(GLDrawMode.TRIANGLES, VertexLayouts.POSITION_COLOR_TEXTURE);
         graphics.drawSprite(
+            buffer,
             atlas.getRegion(HOT_BAR_TEXTURE),
             width * 0.5f,
             1.0f,
@@ -150,15 +158,16 @@ public final class HudRenderer {
             0.0f
         );
         graphics.drawSprite(
+            buffer,
             atlas.getRegion(HOT_BAR_SELECTED_TEXTURE),
             hotBarSelectorX(gameRenderer.client().player().selectedHotBar()),
             0.0f,
             0.0f,
             0.0f
         );
-        graphics.endDraw();
+        t.draw(gl);
 
-        gl.enableDepthTest();
+        gl.setEnableDepthTest();
         renderHotBarItems(gl);
     }
 
@@ -166,8 +175,8 @@ public final class HudRenderer {
         RenderSystem.bindTexture2D(gameRenderer.textureManager().getTexture(TextureManager.BLOCK_ATLAS));
         final FreeworldClient client = gameRenderer.client();
         final Tessellator tessellator = Tessellator.getInstance();
-        tessellator.begin(GLDrawMode.TRIANGLES);
         BufferBuilder buffer = tessellator.buffer();
+        buffer.begin(GLDrawMode.TRIANGLES, VertexLayouts.POSITION_COLOR_TEXTURE);
         for (int i = 0; i < 10; i++) {
             BlockType item = client.player().getHotBarItem(i);
             gameRenderer.blockRenderer().renderBlockModel(buffer,
@@ -181,7 +190,7 @@ public final class HudRenderer {
                 0,
                 _ -> false);
         }
-        tessellator.end(gl);
+        tessellator.draw(gl);
     }
 
     private float hotBarSelectorX(int selection) {

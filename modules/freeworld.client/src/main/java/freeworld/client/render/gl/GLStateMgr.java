@@ -46,12 +46,12 @@ public abstract class GLStateMgr implements GL {
     }
 
     @Skip
-    public int arrayBufferBinding() {
+    public int getArrayBufferBinding() {
         return arrayBufferBinding;
     }
 
     @Skip
-    public void enableBlend() {
+    public void setEnableBlend() {
         if (!this.blend) {
             this.blend = true;
             enable(BLEND);
@@ -59,7 +59,7 @@ public abstract class GLStateMgr implements GL {
     }
 
     @Skip
-    public void disableBlend() {
+    public void setDisableBlend() {
         if (this.blend) {
             this.blend = false;
             disable(BLEND);
@@ -67,7 +67,7 @@ public abstract class GLStateMgr implements GL {
     }
 
     @Skip
-    public boolean blend() {
+    public boolean getBlend() {
         return blend;
     }
 
@@ -91,27 +91,27 @@ public abstract class GLStateMgr implements GL {
     }
 
     @Skip
-    public int blendSrcRGB() {
+    public int getBlendSrcRGB() {
         return blendSrcRGB;
     }
 
     @Skip
-    public int blendSrcAlpha() {
+    public int getBlendSrcAlpha() {
         return blendSrcAlpha;
     }
 
     @Skip
-    public int blendDstRGB() {
+    public int getBlendDstRGB() {
         return blendDstRGB;
     }
 
     @Skip
-    public int blendDstAlpha() {
+    public int getBlendDstAlpha() {
         return blendDstAlpha;
     }
 
     @Skip
-    public void enableCullFace() {
+    public void setEnableCullFace() {
         if (!this.cullFace) {
             this.cullFace = true;
             enable(CULL_FACE);
@@ -119,7 +119,7 @@ public abstract class GLStateMgr implements GL {
     }
 
     @Skip
-    public void disableCullFace() {
+    public void setDisableCullFace() {
         if (this.cullFace) {
             this.cullFace = false;
             disable(CULL_FACE);
@@ -127,7 +127,7 @@ public abstract class GLStateMgr implements GL {
     }
 
     @Skip
-    public boolean cullFace() {
+    public boolean getCullFace() {
         return cullFace;
     }
 
@@ -140,7 +140,7 @@ public abstract class GLStateMgr implements GL {
     }
 
     @Skip
-    public int currentProgram() {
+    public int getCurrentProgram() {
         return currentProgram;
     }
 
@@ -153,12 +153,12 @@ public abstract class GLStateMgr implements GL {
     }
 
     @Skip
-    public int depthFunc() {
+    public int getDepthFunc() {
         return depthFunc;
     }
 
     @Skip
-    public void enableDepthTest() {
+    public void setEnableDepthTest() {
         if (!this.depthTest) {
             this.depthTest = true;
             enable(DEPTH_TEST);
@@ -166,7 +166,7 @@ public abstract class GLStateMgr implements GL {
     }
 
     @Skip
-    public void disableDepthTest() {
+    public void setDisableDepthTest() {
         if (this.depthTest) {
             this.depthTest = false;
             disable(DEPTH_TEST);
@@ -174,7 +174,7 @@ public abstract class GLStateMgr implements GL {
     }
 
     @Skip
-    public boolean depthTest() {
+    public boolean getDepthTest() {
         return depthTest;
     }
 
@@ -187,12 +187,12 @@ public abstract class GLStateMgr implements GL {
     }
 
     @Skip
-    public float lineWidth() {
+    public float getLineWidth() {
         return lineWidth;
     }
 
     @Skip
-    public void enablePolygonOffsetFill() {
+    public void setEnablePolygonOffsetFill() {
         if (!this.polygonOffsetFill) {
             this.polygonOffsetFill = true;
             enable(POLYGON_OFFSET_FILL);
@@ -200,7 +200,7 @@ public abstract class GLStateMgr implements GL {
     }
 
     @Skip
-    public void disablePolygonOffsetFill() {
+    public void setDisablePolygonOffsetFill() {
         if (this.polygonOffsetFill) {
             this.polygonOffsetFill = false;
             disable(POLYGON_OFFSET_FILL);
@@ -208,7 +208,7 @@ public abstract class GLStateMgr implements GL {
     }
 
     @Skip
-    public boolean polygonOffsetFill() {
+    public boolean getPolygonOffsetFill() {
         return polygonOffsetFill;
     }
 
@@ -223,12 +223,12 @@ public abstract class GLStateMgr implements GL {
     }
 
     @Skip
-    public float polygonOffsetFactor() {
+    public float getPolygonOffsetFactor() {
         return polygonOffsetFactor;
     }
 
     @Skip
-    public float polygonOffsetUnits() {
+    public float getPolygonOffsetUnits() {
         return polygonOffsetUnits;
     }
 
@@ -241,7 +241,7 @@ public abstract class GLStateMgr implements GL {
     }
 
     @Skip
-    public int textureBinding2D() {
+    public int getTextureBinding2D() {
         return textureBinding2D;
     }
 
@@ -254,12 +254,12 @@ public abstract class GLStateMgr implements GL {
     }
 
     @Skip
-    public int vertexArrayBinding() {
+    public int getVertexArrayBinding() {
         return vertexArrayBinding;
     }
 
     @Skip
-    public GLFlags flags() {
+    public GLFlags getFlags() {
         return FreeworldClient.getInstance().glFlags();
     }
 }

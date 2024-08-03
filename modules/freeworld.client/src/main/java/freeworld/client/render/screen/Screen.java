@@ -11,25 +11,29 @@
 package freeworld.client.render.screen;
 
 import freeworld.client.FreeworldClient;
+import freeworld.client.render.Tessellator;
+import freeworld.client.render.gl.GLDrawMode;
 import freeworld.client.render.gl.GLStateMgr;
 import freeworld.client.render.gui.GuiGraphics;
+import freeworld.client.render.vertex.BufferBuilder;
+import freeworld.client.render.vertex.VertexLayouts;
 
 /**
  * @author squid233
  * @since 0.1.0
  */
 public class Screen {
-    protected final FreeworldClient client;
-    protected float width = 0;
-    protected float height = 0;
+    protected FreeworldClient client;
+    protected int width = 0;
+    protected int height = 0;
 
-    public Screen(FreeworldClient client) {
-        this.client = client;
+    public Screen() {
     }
 
     // process
 
-    public void init(float width, float height) {
+    public final void init(FreeworldClient client, int width, int height) {
+        this.client = client;
         this.width = width;
         this.height = height;
         onInit();
@@ -38,13 +42,17 @@ public class Screen {
     protected void onInit() {
     }
 
-    public void onResize(float width, float height) {
+    public void onResize(int width, int height) {
         this.width = width;
         this.height = height;
     }
 
-    protected void drawBackground(GuiGraphics graphics, double partialTick) {
-        graphics.fillRect(0.0f, 0.0f, width, height, 0.0f, 0.0f, 0.0f, 0.5f);
+    protected void drawBackground(GuiGraphics graphics, GLStateMgr gl, double partialTick) {
+        Tessellator t = Tessellator.getInstance();
+        BufferBuilder buffer = t.buffer();
+        buffer.begin(GLDrawMode.TRIANGLES, VertexLayouts.POSITION_COLOR);
+        graphics.fillRect(buffer, 0.0f, 0.0f, width, height, 0.0f, 0.0f, 0.0f, 0.5f);
+        t.draw(gl);
     }
 
     public void render(GuiGraphics graphics, GLStateMgr gl, double partialTick) {

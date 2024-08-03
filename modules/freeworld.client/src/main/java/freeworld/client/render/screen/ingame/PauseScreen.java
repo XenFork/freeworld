@@ -10,7 +10,6 @@
 
 package freeworld.client.render.screen.ingame;
 
-import freeworld.client.FreeworldClient;
 import freeworld.client.render.gl.GLStateMgr;
 import freeworld.client.render.gui.GuiGraphics;
 import freeworld.client.render.screen.Screen;
@@ -20,15 +19,9 @@ import freeworld.client.render.screen.Screen;
  * @since 0.1.0
  */
 public class PauseScreen extends Screen {
-    public PauseScreen(FreeworldClient client) {
-        super(client);
-    }
-
     @Override
     public void render(GuiGraphics graphics, GLStateMgr gl, double partialTick) {
         super.render(graphics, gl, partialTick);
-        graphics.beginDraw();
-        drawBackground(graphics, partialTick);
-        graphics.endDraw();
+        drawBackground(graphics, gl, partialTick);
     }
 }

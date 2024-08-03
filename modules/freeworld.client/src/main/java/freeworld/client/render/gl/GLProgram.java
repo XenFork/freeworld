@@ -228,12 +228,14 @@ public final class GLProgram implements GLResource {
 
     public void bind(GLStateMgr gl) {
         gl.setCurrentProgram(id());
-    }
 
-    public void specifyUniforms(GLStateMgr gl) {
         for (GLUniform uniform : uniformMap.values()) {
             uniform.specify(gl);
         }
+    }
+
+    public void unbind(GLStateMgr gl) {
+        gl.setCurrentProgram(0);
     }
 
     public GLUniform getUniform(String name) {
