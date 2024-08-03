@@ -89,7 +89,7 @@ public final class RenderSystem {
     public static void updateProjectionViewMatrix() {
         if (currentProgram != null && currentProgram.hasUniform(GLProgram.UNIFORM_PROJECTION_VIEW_MATRIX)) {
             currentProgram.getUniform(GLProgram.UNIFORM_PROJECTION_VIEW_MATRIX).set(projectionViewMatrix());
-            currentProgram.uploadUniforms(stateMgr);
+            currentProgram.specifyUniforms(stateMgr);
         }
     }
 
@@ -105,7 +105,7 @@ public final class RenderSystem {
     public static void updateModelMatrix() {
         if (currentProgram != null && currentProgram.hasUniform(GLProgram.UNIFORM_MODEL_MATRIX)) {
             currentProgram.getUniform(GLProgram.UNIFORM_MODEL_MATRIX).set(modelMatrix);
-            currentProgram.uploadUniforms(stateMgr);
+            currentProgram.specifyUniforms(stateMgr);
         }
     }
 

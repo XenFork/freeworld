@@ -11,6 +11,7 @@
 package freeworld.client.render.vertex;
 
 import freeworld.client.render.gl.GLStateMgr;
+import overrungl.opengl.GL20C;
 
 import java.lang.foreign.MemorySegment;
 
@@ -22,25 +23,28 @@ public enum VertexFormat {
     POSITION("Position", (gl, index, size, type, stride, pointer) -> {
         gl.enableVertexAttribArray(index);
         gl.vertexAttribPointer(index, size, type, false, stride, pointer);
-    }),
+    }, GL20C::disableVertexAttribArray),
     COLOR("Color", (gl, index, size, type, stride, pointer) -> {
         gl.enableVertexAttribArray(index);
         gl.vertexAttribPointer(index, size, type, true, stride, pointer);
-    }),
+    }, GL20C::disableVertexAttribArray),
     UV("UV", (gl, index, size, type, stride, pointer) -> {
         gl.enableVertexAttribArray(index);
         gl.vertexAttribPointer(index, size, type, false, stride, pointer);
-    }),
+    }, GL20C::disableVertexAttribArray),
     PADDING("Padding", (_, _, _, _, _, _) -> {
+    }, (_, _) -> {
     }),
     ;
 
     private final String stringName;
     private final Specifier specifier;
+    private final Disabler disabler;
 
-    VertexFormat(String stringName, Specifier specifier) {
+    VertexFormat(String stringName, Specifier specifier, Disabler disabler) {
         this.stringName = stringName;
         this.specifier = specifier;
+        this.disabler = disabler;
     }
 
     @FunctionalInterface
@@ -48,8 +52,17 @@ public enum VertexFormat {
         void accept(GLStateMgr gl, int index, int size, int type, int stride, MemorySegment pointer);
     }
 
+    @FunctionalInterface
+    public interface Disabler {
+        void disable(GLStateMgr gl, int index);
+    }
+
     public void specify(GLStateMgr gl, int index, int size, int type, int stride, MemorySegment pointer) {
         specifier.accept(gl, index, size, type, stride, pointer);
+    }
+
+    public void disable(GLStateMgr gl, int index) {
+        disabler.disable(gl, index);
     }
 
     @Override

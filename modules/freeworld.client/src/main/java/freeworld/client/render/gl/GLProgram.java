@@ -274,9 +274,9 @@ public final class GLProgram implements GLResource {
         gl.setCurrentProgram(id());
     }
 
-    public void uploadUniforms(GLStateMgr gl) {
+    public void specifyUniforms(GLStateMgr gl) {
         for (GLUniform uniform : uniformMap.values()) {
-            uniform.upload(gl);
+            uniform.specify(gl);
         }
     }
 

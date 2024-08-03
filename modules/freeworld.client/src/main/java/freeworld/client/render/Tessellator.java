@@ -13,13 +13,11 @@ package freeworld.client.render;
 import freeworld.client.render.gl.GLDrawMode;
 import freeworld.client.render.gl.GLResource;
 import freeworld.client.render.gl.GLStateMgr;
+import freeworld.client.render.gl.GLVertexArrayObject;
 import freeworld.client.render.vertex.BufferBuilder;
 import freeworld.client.render.vertex.VertexLayout;
 import freeworld.client.render.vertex.VertexLayouts;
-import overrungl.opengl.GL10C;
 import overrungl.opengl.GL15C;
-
-import java.lang.foreign.MemorySegment;
 
 /**
  * A tessellator that allows rendering things dynamically.
@@ -34,11 +32,7 @@ public final class Tessellator implements GLResource {
     private final BufferBuilder bufferBuilder = new BufferBuilder(INITIAL_CAPACITY, MAX_INDEX_COUNT);
     private boolean drawing = false;
     private GLDrawMode drawMode = GLDrawMode.TRIANGLES;
-    private int vao = 0;
-    private int vbo = 0;
-    private int ebo = 0;
-    private long vertexDataSize = 0L;
-    private long indexDataSize = 0L;
+    private GLVertexArrayObject vertexArrayObject = null;
 
     private Tessellator() {
     }
@@ -58,30 +52,11 @@ public final class Tessellator implements GLResource {
         BufferBuilder.BufferData buffer = bufferBuilder.end();
         BufferBuilder.DrawParameter drawParameter = buffer.drawParameter();
 
-        if (vao == 0) vao = gl.genVertexArrays();
-        if (vbo == 0) vbo = gl.genBuffers();
-        if (ebo == 0) ebo = gl.genBuffers();
-
-        final MemorySegment vertexData = buffer.vertexData();
-        final MemorySegment indexData = buffer.indexData();
-        final int indexCount = buffer.drawParameter().indexCount();
-        gl.setVertexArrayBinding(vao);
-        gl.setArrayBufferBinding(vbo);
-        if (vertexData.byteSize() > vertexDataSize) {
-            vertexDataSize = vertexData.byteSize();
-            gl.bufferData(GL15C.ARRAY_BUFFER, vertexData, GL15C.STREAM_DRAW);
-            VERTEX_LAYOUT.specifyAttribPointers(gl);
-        } else {
-            gl.bufferSubData(GL15C.ARRAY_BUFFER, 0L, vertexData);
+        if (vertexArrayObject == null) {
+            vertexArrayObject = new GLVertexArrayObject(gl, GL15C.STREAM_DRAW);
         }
-        gl.bindBuffer(GL15C.ELEMENT_ARRAY_BUFFER, ebo);
-        if (indexData.byteSize() > indexDataSize) {
-            indexDataSize = indexData.byteSize();
-            gl.bufferData(GL15C.ELEMENT_ARRAY_BUFFER, indexData, GL15C.STREAM_DRAW);
-        } else {
-            gl.bufferSubData(GL15C.ELEMENT_ARRAY_BUFFER, 0L, indexData);
-        }
-        gl.drawElements(drawParameter.drawMode().value(), indexCount, GL10C.UNSIGNED_INT, MemorySegment.NULL);
+        vertexArrayObject.specify(gl, buffer);
+        vertexArrayObject.draw(gl);
         drawMode = drawParameter.drawMode();
     }
 
@@ -109,7 +84,6 @@ public final class Tessellator implements GLResource {
 
     @Override
     public void close(GLStateMgr gl) {
-        gl.deleteVertexArrays(vao);
-        gl.deleteBuffers(vbo, ebo);
+        vertexArrayObject.close(gl);
     }
 }

@@ -44,7 +44,7 @@ public final class VertexLayout {
         }
     }
 
-    public void specifyAttribPointers(GLStateMgr gl) {
+    public void specifyAttributes(GLStateMgr gl) {
         long offset = 0L;
         int i = 0;
         for (var element : elementList) {
@@ -61,6 +61,17 @@ public final class VertexLayout {
                 i++;
             }
             offset += element.byteSize();
+        }
+    }
+
+    public void disableAttributes(GLStateMgr gl) {
+        int i = 0;
+        for (VertexLayoutElement element : elementList) {
+            VertexFormat format = element.format();
+            if (format != VertexFormat.PADDING) {
+                format.disable(gl, i);
+            }
+            i++;
         }
     }
 

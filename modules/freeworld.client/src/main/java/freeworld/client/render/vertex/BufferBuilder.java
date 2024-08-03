@@ -54,6 +54,7 @@ public final class BufferBuilder implements VertexBuilder {
     }
 
     public record DrawParameter(
+        VertexLayout vertexLayout,
         GLDrawMode drawMode,
         int indexCount
     ) {
@@ -84,6 +85,7 @@ public final class BufferBuilder implements VertexBuilder {
             vertexData.asSlice(0L, vertexDataOffset),
             indexData.asSlice(0L, ValueLayout.JAVA_INT.scale(0L, indexCount)),
             new DrawParameter(
+                vertexLayout,
                 drawMode,
                 indexCount
             )
