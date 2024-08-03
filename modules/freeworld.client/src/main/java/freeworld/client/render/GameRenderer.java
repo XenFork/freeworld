@@ -144,12 +144,7 @@ public final class GameRenderer implements GLResource {
     }
 
     private GLProgram initBuiltinProgram(GLStateMgr gl, String path, VertexLayout layout) {
-        final Identifier identifier = Identifier.ofBuiltin(path);
-        final GLProgram program = GLProgram.load(gl, identifier, layout);
-        if (program == null) {
-            throw new IllegalStateException("Failed to initialize GLProgram " + identifier);
-        }
-        return program;
+        return new GLProgram(gl, Identifier.ofBuiltin(path), layout);
     }
 
     public void render(GLStateMgr gl, double partialTick) {

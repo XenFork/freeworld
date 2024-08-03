@@ -11,15 +11,13 @@
 package freeworld.client.render.gl;
 
 import com.google.gson.JsonArray;
-import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import freeworld.client.render.vertex.VertexLayout;
 import freeworld.util.Identifier;
-import freeworld.util.file.BuiltinFiles;
 import freeworld.util.Logging;
+import freeworld.util.file.BuiltinFiles;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import overrungl.opengl.GL;
 import overrungl.opengl.GL10C;
@@ -40,41 +38,26 @@ import java.util.Objects;
  * @since 0.1.0
  */
 public final class GLProgram implements GLResource {
-    public static final String UNIFORM_PROJECTION_VIEW_MATRIX = "ProjectionViewMatrix";
-    public static final String UNIFORM_MODEL_MATRIX = "ModelMatrix";
-    public static final String UNIFORM_COLOR_MODULATOR = "ColorModulator";
     private static final Logger logger = Logging.caller();
     private final int id;
     private final Identifier identifier;
+    private final VertexLayout vertexLayout;
     private final Map<String, GLUniform> uniformMap;
     private final Arena uniformArena;
+    public final GLUniform projectionViewMatrixUniform;
+    public final GLUniform modelMatrixUniform;
+    public final GLUniform colorModulatorUniform;
 
-    private GLProgram(int id, Identifier identifier, Map<String, GLUniform> uniformMap, Arena uniformArena) {
-        this.id = id;
-        this.identifier = identifier;
-        this.uniformMap = uniformMap;
-        this.uniformArena = uniformArena;
-    }
-
-    @Nullable
-    public static GLProgram load(GLStateMgr gl, @NotNull Identifier identifier, @NotNull VertexLayout vertexLayout) {
+    public GLProgram(GLStateMgr gl, @NotNull Identifier identifier, @NotNull VertexLayout vertexLayout) {
         Objects.requireNonNull(identifier);
         Objects.requireNonNull(vertexLayout);
+        this.identifier = identifier;
+        this.vertexLayout = vertexLayout;
 
-        final GLProgram program = loadFromJson(gl, identifier, vertexLayout);
-        if (program != null) {
-            logger.debug("Created {}", program);
-            return program;
-        }
-        return null;
-    }
-
-    private static GLProgram loadFromJson(GLStateMgr gl, Identifier identifier, VertexLayout vertexLayout) {
         final String path = "assets/" + identifier.withPath(s -> "shader/" + s + ".json").toResourcePath();
         final BufferedReader reader = BuiltinFiles.readTextAsReader(BuiltinFiles.load(path));
         if (reader == null) {
-            logger.error("Failed to load GLProgram {} from file {}", identifier, path);
-            return null;
+            throw exception(identifier, path);
         }
 
         final Identifier vshId;
@@ -85,57 +68,28 @@ public final class GLProgram implements GLResource {
 
         // JSON stuff
         try (reader) {
-            final JsonElement jsonElement = JsonParser.parseReader(reader);
-            if (!jsonElement.isJsonObject()) {
-                malformedJson(identifier, path, "not a JSON object");
-                return null;
-            }
-            final JsonObject jsonObject = jsonElement.getAsJsonObject();
+            final JsonObject jsonObject = JsonParser.parseReader(reader).getAsJsonObject();
 
             // shaders
             vshId = getShaderId(identifier, path, jsonObject, "vertex");
-            if (vshId == null) return null;
             fshId = getShaderId(identifier, path, jsonObject, "fragment");
-            if (fshId == null) return null;
 
             // uniform
             if (jsonObject.has("uniform")) {
-                final JsonElement uniformElement = jsonObject.get("uniform");
-                if (!uniformElement.isJsonObject()) {
-                    malformedJson(identifier, path, "uniform is not a JSON object");
-                    return null;
-                }
-                final JsonObject uniform = uniformElement.getAsJsonObject();
+                final JsonObject uniform = jsonObject.get("uniform").getAsJsonObject();
                 uniformTypeMap = HashMap.newHashMap(uniform.size());
                 uniformValueMap = HashMap.newHashMap(uniform.size());
                 for (var entry : uniform.entrySet()) {
                     final String name = entry.getKey();
-                    final JsonElement valueElement = entry.getValue();
-                    if (!valueElement.isJsonObject()) {
-                        malformedJson(identifier, path, "uniform." + name + " is not a JSON object");
-                        return null;
-                    }
-                    final JsonObject valueObject = valueElement.getAsJsonObject();
-                    final JsonElement typeElement = valueObject.get("type");
-                    if (!typeElement.isJsonPrimitive() || !typeElement.getAsJsonPrimitive().isString()) {
-                        malformedJson(identifier, path, "uniform." + name + ".type is not a string");
-                        return null;
-                    }
-                    final String type = typeElement.getAsString();
+                    final JsonObject valueObject = entry.getValue().getAsJsonObject();
+                    final String type = valueObject.get("type").getAsString();
                     final GLUniformType uniformType = GLUniformType.fromString(type);
                     if (uniformType == null) {
-                        malformedJson(identifier, path, "uniform." + name + ".type is an invalid type: " + type);
-                        return null;
+                        throw malformedJson(identifier, path, "uniform." + name + ".type is an invalid type: " + type);
                     }
                     uniformTypeMap.put(name, uniformType);
                     if (valueObject.has("value")) {
-                        final JsonElement uniformValueElement = valueObject.get("value");
-                        if (!uniformValueElement.isJsonArray()) {
-                            malformedJson(identifier, path, "uniform." + name + ".value is not an array");
-                            return null;
-                        }
-                        final JsonArray valueArray = uniformValueElement.getAsJsonArray();
-                        uniformValueMap.put(name, valueArray);
+                        uniformValueMap.put(name, valueObject.get("value").getAsJsonArray());
                     }
                 }
                 hasUniform = true;
@@ -145,8 +99,7 @@ public final class GLProgram implements GLResource {
                 uniformValueMap = Map.of();
             }
         } catch (Exception e) {
-            logger.error("Failed to load GLProgram {} from file {}", identifier, path, e);
-            return null;
+            throw exception(identifier, path, e);
         }
 
         // OpenGL stuff
@@ -154,35 +107,36 @@ public final class GLProgram implements GLResource {
         final String vshPath = "assets/" + vshId.withPathPrefix("shader/").toResourcePath();
         final String vshSrc = BuiltinFiles.readText(BuiltinFiles.load(vshPath), vshPath);
         if (vshSrc == null) {
-            return null;
+            throw exception(identifier, "failed to load vertex shader");
         }
         final int vsh = compileShader(gl, GL.VERTEX_SHADER, "vertex", vshSrc);
         if (vsh == -1) {
-            return null;
+            throw exception(identifier, "failed to compile vertex shader");
         }
 
         final String fshPath = "assets/" + fshId.withPathPrefix("shader/").toResourcePath();
         final String fshSrc = BuiltinFiles.readText(BuiltinFiles.load(fshPath), fshPath);
         if (fshSrc == null) {
             gl.deleteShader(vsh);
-            return null;
+            throw exception(identifier, "failed to load fragment shader");
         }
         final int fsh = compileShader(gl, GL.FRAGMENT_SHADER, "fragment", fshSrc);
         if (fsh == -1) {
+            gl.deleteShader(vsh);
             gl.deleteShader(fsh);
-            return null;
+            throw exception(identifier, "failed to compile fragment shader");
         }
 
-        final int id = gl.createProgram();
+        this.id = gl.createProgram();
         vertexLayout.bindLocations(gl, id);
         gl.attachShader(id, vsh);
         gl.attachShader(id, fsh);
         gl.linkProgram(id);
         try {
             if (gl.getProgramiv(id, GL20C.LINK_STATUS) == GL10C.FALSE) {
-                logger.error("Failed to link GLProgram {} ({}): {}", identifier, id, gl.getProgramInfoLog(id));
+                String log = gl.getProgramInfoLog(id);
                 gl.deleteProgram(id);
-                return null;
+                throw exception(identifier, "failed to link GLProgram " + identifier + ": " + log);
             }
         } finally {
             gl.detachShader(id, vsh);
@@ -191,10 +145,8 @@ public final class GLProgram implements GLResource {
             gl.deleteShader(fsh);
         }
 
-        final Map<String, GLUniform> uniformMap = hasUniform ? HashMap.newHashMap(uniformTypeMap.size()) : Map.of();
-        final Arena uniformArena = hasUniform ? Arena.ofConfined() : null;
-
-        final GLProgram program = new GLProgram(id, identifier, uniformMap, uniformArena);
+        this.uniformMap = hasUniform ? HashMap.newHashMap(uniformTypeMap.size()) : Map.of();
+        this.uniformArena = hasUniform ? Arena.ofConfined() : null;
 
         if (hasUniform) {
             try {
@@ -202,11 +154,11 @@ public final class GLProgram implements GLResource {
                     final String name = entry.getKey();
                     final int location = gl.getUniformLocation(id, name);
                     if (location == -1) {
-                        logger.warn("Unknown uniform {} in {}; ignoring.", name, program);
+                        logger.warn("Unknown uniform {} in {}; ignoring.", name, this);
                         continue;
                     }
                     final GLUniformType type = entry.getValue();
-                    final GLUniform uniform = new GLUniform(program, type, location, uniformArena);
+                    final GLUniform uniform = new GLUniform(this, type, location, uniformArena);
                     uniformMap.put(name, uniform);
 
                     final JsonArray array = uniformValueMap.get(name);
@@ -236,26 +188,30 @@ public final class GLProgram implements GLResource {
             }
         }
 
-        return program;
+        projectionViewMatrixUniform = getUniform("ProjectionViewMatrix");
+        modelMatrixUniform = getUniform("ModelMatrix");
+        colorModulatorUniform = getUniform("ColorModulator");
     }
 
     private static Identifier getShaderId(Identifier identifier, String path, JsonObject jsonObject, String name) {
-        final JsonElement jsonElement = jsonObject.get(name);
-        if (!jsonElement.isJsonPrimitive() || !jsonElement.getAsJsonPrimitive().isString()) {
-            malformedJson(identifier, path, name + " is not a string");
-            return null;
-        }
-        final String asString = jsonElement.getAsString();
+        final String asString = jsonObject.get(name).getAsString();
         final Identifier id = Identifier.of(asString);
         if (id == null) {
-            malformedJson(identifier, path, name + " shader is invalid: " + asString);
-            return null;
+            throw malformedJson(identifier, path, name + " shader is invalid: " + asString);
         }
         return id;
     }
 
-    private static void malformedJson(Identifier identifier, String file, String msg) {
-        logger.error("Failed to load GLProgram {}: malformed JSON from file {}: {}", identifier, file, msg);
+    private static IllegalStateException malformedJson(Identifier identifier, String file, String msg) {
+        return exception(identifier, "malformed JSON from file " + file + ": " + msg);
+    }
+
+    private static IllegalStateException exception(Identifier identifier, String msg) {
+        return new IllegalStateException("Failed to load GLProgram " + identifier + ": " + msg);
+    }
+
+    private static IllegalStateException exception(Identifier identifier, String msg, Throwable cause) {
+        return new IllegalStateException("Failed to load GLProgram " + identifier + ": " + msg, cause);
     }
 
     private static int compileShader(GLStateMgr gl, int type, String name, String src) {
@@ -270,7 +226,7 @@ public final class GLProgram implements GLResource {
         return shader;
     }
 
-    public void use(GLStateMgr gl) {
+    public void bind(GLStateMgr gl) {
         gl.setCurrentProgram(id());
     }
 
@@ -307,5 +263,9 @@ public final class GLProgram implements GLResource {
 
     public Identifier identifier() {
         return identifier;
+    }
+
+    public VertexLayout vertexLayout() {
+        return vertexLayout;
     }
 }

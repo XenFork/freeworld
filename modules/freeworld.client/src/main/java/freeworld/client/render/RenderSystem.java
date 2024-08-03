@@ -40,7 +40,7 @@ public final class RenderSystem {
     public static void useProgram(@Nullable GLProgram program) {
         currentProgram = program;
         if (program != null) {
-            program.use(stateMgr);
+            program.bind(stateMgr);
             updateMatrices();
         } else {
             stateMgr.setCurrentProgram(0);
@@ -87,8 +87,8 @@ public final class RenderSystem {
     }
 
     public static void updateProjectionViewMatrix() {
-        if (currentProgram != null && currentProgram.hasUniform(GLProgram.UNIFORM_PROJECTION_VIEW_MATRIX)) {
-            currentProgram.getUniform(GLProgram.UNIFORM_PROJECTION_VIEW_MATRIX).set(projectionViewMatrix());
+        if (currentProgram != null && currentProgram.projectionViewMatrixUniform != null) {
+            currentProgram.projectionViewMatrixUniform.set(projectionViewMatrix());
             currentProgram.specifyUniforms(stateMgr);
         }
     }
@@ -103,8 +103,8 @@ public final class RenderSystem {
     }
 
     public static void updateModelMatrix() {
-        if (currentProgram != null && currentProgram.hasUniform(GLProgram.UNIFORM_MODEL_MATRIX)) {
-            currentProgram.getUniform(GLProgram.UNIFORM_MODEL_MATRIX).set(modelMatrix);
+        if (currentProgram != null && currentProgram.modelMatrixUniform != null) {
+            currentProgram.modelMatrixUniform.set(modelMatrix);
             currentProgram.specifyUniforms(stateMgr);
         }
     }
