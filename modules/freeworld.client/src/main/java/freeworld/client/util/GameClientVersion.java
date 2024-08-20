@@ -31,7 +31,7 @@ public record GameClientVersion(String version) {
 
     public static GameClientVersion load() {
         String lines;
-        try (BufferedReader reader = new BufferedReader(new InputStreamReader(Objects.requireNonNull(GameClientVersion.class.getResourceAsStream("/client_version.json"))))) {
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(Objects.requireNonNull(GameClientVersion.class.getClassLoader().getResourceAsStream("client_version.json"))))) {
             lines = reader.lines().collect(Collectors.joining("\n"));
         } catch (Exception e) {
             throw new RuntimeException("Failed to load client version", e);

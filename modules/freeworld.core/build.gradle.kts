@@ -10,8 +10,19 @@
 
 val coreVersion: String by rootProject
 
+val annotationsVersion: String by rootProject
+val gsonVersion: String by rootProject
+val logbackVersion: String by rootProject
+val reactorVersion: String by rootProject
+
 dependencies {
     api(project(":freeworld-math"))
+    compileOnlyApi("org.jetbrains:annotations:$annotationsVersion")
+    api("ch.qos.logback:logback-classic:$logbackVersion")
+    api("com.google.code.gson:gson:$gsonVersion")
+    api(platform("io.projectreactor:reactor-bom:$reactorVersion"))
+    api("io.projectreactor:reactor-core")
+    api("io.projectreactor.addons:reactor-pool")
 }
 
 tasks.processResources {

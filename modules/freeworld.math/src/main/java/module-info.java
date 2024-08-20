@@ -16,6 +16,4 @@
  */
 module freeworld.math {
     exports freeworld.math;
-
-    requires static org.jetbrains.annotations;
 }

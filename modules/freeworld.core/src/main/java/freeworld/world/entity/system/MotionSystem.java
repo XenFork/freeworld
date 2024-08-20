@@ -4,8 +4,8 @@
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
- * License as published by the Free Software Foundation;
- * only version 2.1 of the License.
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
  */
 
 package freeworld.world.entity.system;
@@ -54,9 +54,6 @@ public final class MotionSystem implements EntitySystem {
                             continue;
                         }
                         final BlockType blockType = world.getBlock(x, y, z);
-                        if (blockType.air()) {
-                            continue;
-                        }
                         for (AABBox box : blockType.collisionShape().toBoxes()) {
                             boxes.add(box.move(x, y, z));
                         }
@@ -64,18 +61,18 @@ public final class MotionSystem implements EntitySystem {
                 }
             }
 
+            AABBox boundingBox = entity.boundingBox;
             for (AABBox box : boxes) {
-                moveY = box.clipYCollide(entity.boundingBox(), moveY);
+                moveY = box.clipYCollide(boundingBox, moveY);
             }
-            entity.boundingBox = entity.boundingBox().move(0.0, moveY, 0.0);
+            boundingBox = boundingBox.move(0.0, moveY, 0.0);
             for (AABBox box : boxes) {
-                moveX = box.clipXCollide(entity.boundingBox(), moveX);
+                moveX = box.clipXCollide(boundingBox, moveX);
             }
-            entity.boundingBox = entity.boundingBox().move(moveX, 0.0, 0.0);
+            boundingBox = boundingBox.move(moveX, 0.0, 0.0);
             for (AABBox box : boxes) {
-                moveZ = box.clipZCollide(entity.boundingBox(), moveZ);
+                moveZ = box.clipZCollide(boundingBox, moveZ);
             }
-            entity.boundingBox = entity.boundingBox().move(0.0, 0.0, moveZ);
 
             entity.onGround = originV.y() != moveY && originV.y() < 0.0;
 

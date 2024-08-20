@@ -31,7 +31,7 @@ public record GameCoreVersion(String version) {
 
     public static GameCoreVersion load() {
         String lines;
-        try (BufferedReader reader = new BufferedReader(new InputStreamReader(Objects.requireNonNull(GameCoreVersion.class.getResourceAsStream("/core_version.json"))))) {
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(Objects.requireNonNull(GameCoreVersion.class.getClassLoader().getResourceAsStream("core_version.json"))))) {
             lines = reader.lines().collect(Collectors.joining("\n"));
         } catch (Exception e) {
             throw new RuntimeException("Failed to load core version", e);

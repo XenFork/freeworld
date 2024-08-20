@@ -91,14 +91,17 @@ public final class HudRenderer {
         Vector2d rotation = player.rotation();
         Vector3i blockPos = player.blockPos();
         Vector3i chunkPos = player.chunkPos();
+        Vector3d velocity = player.velocity();
+        Vector3d acceleration = player.acceleration();
         gameRenderer.textRenderer().renderText(buffer,
             gameRenderer.unifont(),
             """
                 freeworld (core %s, client %s)
 
                 Position: %f %f %f / %f %f
-                Block: %d %d %d
-                Chunk: %d %d %d in %d %d %d""".formatted(
+                Block: %d %d %d [%d %d %d in %d %d %d]
+                Velocity: %f %f %f
+                Acceleration: %f %f %f""".formatted(
                 GameCoreVersion.get().version(),
                 GameClientVersion.get().version(),
                 position.x(),
@@ -114,7 +117,13 @@ public final class HudRenderer {
                 ChunkPos.toBlockPosInChunk(blockPos.z()),
                 chunkPos.x(),
                 chunkPos.y(),
-                chunkPos.z()
+                chunkPos.z(),
+                velocity.x(),
+                velocity.y(),
+                velocity.z(),
+                acceleration.x(),
+                acceleration.y(),
+                acceleration.z()
             ),
             0,
             height - gameRenderer.unifont().lineHeight(),

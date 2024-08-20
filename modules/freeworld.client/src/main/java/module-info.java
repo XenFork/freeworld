@@ -40,7 +40,6 @@ module freeworld.client {
     requires overrungl.glfw;
     requires overrungl.opengl;
     requires overrungl.stb;
-    requires org.apache.commons.pool2;
     requires static org.jetbrains.annotations;
     requires org.reactivestreams;
     requires reactor.core;

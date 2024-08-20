@@ -84,12 +84,6 @@ val coreVersion: String by rootProject
 val clientVersion: String by rootProject
 val mathVersion: String by rootProject
 
-val annotationsVersion: String by rootProject
-val commonsPoolVersion: String by rootProject
-val gsonVersion: String by rootProject
-val logbackVersion: String by rootProject
-val reactorVersion: String by rootProject
-
 class GameModule(
     val artifactId: String,
     val version: String,
@@ -133,18 +127,6 @@ allprojects {
 
 subprojects {
     apply(plugin = "java-library")
-
-    val compileOnly by configurations
-    val implementation by configurations
-    dependencies {
-        compileOnly("org.jetbrains:annotations:$annotationsVersion")
-        implementation("ch.qos.logback:logback-classic:$logbackVersion")
-        implementation("com.google.code.gson:gson:$gsonVersion")
-        implementation("org.apache.commons:commons-pool2:$commonsPoolVersion")
-        implementation(platform("io.projectreactor:reactor-bom:$reactorVersion"))
-        implementation("io.projectreactor:reactor-core")
-        implementation("io.projectreactor.addons:reactor-pool")
-    }
 }
 
 gameModules.forEach {

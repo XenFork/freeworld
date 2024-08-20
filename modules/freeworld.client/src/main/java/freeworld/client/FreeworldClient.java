@@ -135,7 +135,7 @@ public final class FreeworldClient implements Executor, AutoCloseable {
         world = new World("New world", new Random().nextLong());
         player = world.createEntity(EntityTypes.PLAYER, new Vector3d(0.0, 64.0, 0.0));
 
-        World.forInChunkRange(player, WorldRenderer.RENDER_RADIUS, (x, y, z) -> world.getOrCreateChunk(x, y, z));
+        World.forChunksInRange(player, WorldRenderer.RENDER_RADIUS, (x, y, z) -> world.getOrCreateChunk(x, y, z));
 
         initGL();
         run();

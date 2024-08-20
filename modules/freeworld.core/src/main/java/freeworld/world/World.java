@@ -4,8 +4,8 @@
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
- * License as published by the Free Software Foundation;
- * only version 2.1 of the License.
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
  */
 
 package freeworld.world;
@@ -43,7 +43,7 @@ public final class World {
         this.seed = seed;
     }
 
-    public static void forInChunkRange(Entity player, int chunkRadius, Int3Consumer consumer) {
+    public static void forChunksInRange(Entity player, int chunkRadius, Int3Consumer consumer) {
         Vector3i chunkPos = player.chunkPos();
         int minX = chunkPos.x() - chunkRadius;
         int maxX = chunkPos.x() + chunkRadius;
@@ -67,7 +67,7 @@ public final class World {
     public void tick() {
         motionSystem.process(this, players);
         for (PlayerEntity player : players) {
-            forInChunkRange(player, TICKING_RADIUS, (x, y, z) -> getOrCreateChunk(x, y, z).tick());
+            forChunksInRange(player, TICKING_RADIUS, (x, y, z) -> getOrCreateChunk(x, y, z).tick());
         }
     }
 

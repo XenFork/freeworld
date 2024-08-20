@@ -28,13 +28,16 @@ public final class BufferBuilder implements VertexBuilder {
     private GLDrawMode drawMode;
     private VertexLayout vertexLayout;
     private MemorySegment vertexData;
+    @Deprecated
     private MemorySegment indexData;
     private boolean building = false;
+    @Deprecated
     private int maxIndexCount;
     private long vertexDataOffset = 0L;
     private int vertexCount = 0;
+    @Deprecated
     private int indexCount = 0;
-    private VertexLayoutElement currentElement;
+    private VertexLayoutElement currentElement = null;
     private int currentElementIndex = 0;
 
     public BufferBuilder(long initialCapacity, int indexCount) {

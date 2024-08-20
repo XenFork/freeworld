@@ -55,6 +55,9 @@ public final class WorldRenderer implements GLResource, WorldListener {
     private final Pool<BufferBuilder> vertexBuilderPool = PoolBuilder
         .from(Mono.fromSupplier(WorldRenderer::createVertexBuilder).subscribeOn(scheduler))
         .buildPool();
+    /**
+     * @deprecated to be replaced with a client-sided chunk manager
+     */
     @Deprecated
     private final Map<Vector3i, ClientChunk> chunks = new HashMap<>(2048);
     @Deprecated
@@ -88,7 +91,7 @@ public final class WorldRenderer implements GLResource, WorldListener {
 
     private void uninstallChunks() {
         final List<Vector3i> list = new ArrayList<>(512);
-        World.forInChunkRange(gameRenderer.client().player(), RENDER_RADIUS, (x, y, z) -> list.add(new Vector3i(x, y, z)));
+        World.forChunksInRange(gameRenderer.client().player(), RENDER_RADIUS, (x, y, z) -> list.add(new Vector3i(x, y, z)));
         final var it = chunks.entrySet().iterator();
         while (it.hasNext()) {
             final var e = it.next();
@@ -100,13 +103,13 @@ public final class WorldRenderer implements GLResource, WorldListener {
     }
 
     public void compileChunks(Entity player) {
-        World.forInChunkRange(player, RENDER_RADIUS, (x, y, z) -> getChunkOrCreate(x, y, z).compile());
+        World.forChunksInRange(player, RENDER_RADIUS, (x, y, z) -> getChunkOrCreate(x, y, z).compile());
     }
 
     public void renderChunks(GLStateMgr gl, Entity player) {
         builtChunkCount = 0;
         FrustumIntersection frustumIntersection = new FrustumIntersection(RenderSystem.projectionViewMatrix());
-        World.forInChunkRange(player, RENDER_RADIUS, (x, y, z) -> {
+        World.forChunksInRange(player, RENDER_RADIUS, (x, y, z) -> {
             ClientChunk chunk = getChunkOrCreate(x, y, z);
             if (frustumIntersection.testAab(
                 chunk.fromX(),

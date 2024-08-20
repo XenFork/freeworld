@@ -213,7 +213,7 @@ public final class GameRenderer implements GLResource {
 
     private void renderWorldEntities(GLStateMgr gl, double partialTick) {
         RenderSystem.useProgram(positionColorProgram);
-        World.forInChunkRange(client.player(), WorldRenderer.RENDER_RADIUS, (x, y, z) -> {
+        World.forChunksInRange(client.player(), WorldRenderer.RENDER_RADIUS, (x, y, z) -> {
             for (Entity entity : client.world().getOrCreateChunk(x, y, z).entities()) {
                 var renderer = getEntityRenderer(entity);
                 if (renderer != null) {

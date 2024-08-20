@@ -67,39 +67,40 @@ public final class GLProgram implements GLResource {
         final Map<String, JsonArray> uniformValueMap;
 
         // JSON stuff
+        final JsonObject jsonObject;
         try (reader) {
-            final JsonObject jsonObject = JsonParser.parseReader(reader).getAsJsonObject();
-
-            // shaders
-            vshId = getShaderId(identifier, path, jsonObject, "vertex");
-            fshId = getShaderId(identifier, path, jsonObject, "fragment");
-
-            // uniform
-            if (jsonObject.has("uniform")) {
-                final JsonObject uniform = jsonObject.get("uniform").getAsJsonObject();
-                uniformTypeMap = HashMap.newHashMap(uniform.size());
-                uniformValueMap = HashMap.newHashMap(uniform.size());
-                for (var entry : uniform.entrySet()) {
-                    final String name = entry.getKey();
-                    final JsonObject valueObject = entry.getValue().getAsJsonObject();
-                    final String type = valueObject.get("type").getAsString();
-                    final GLUniformType uniformType = GLUniformType.fromString(type);
-                    if (uniformType == null) {
-                        throw malformedJson(identifier, path, "uniform." + name + ".type is an invalid type: " + type);
-                    }
-                    uniformTypeMap.put(name, uniformType);
-                    if (valueObject.has("value")) {
-                        uniformValueMap.put(name, valueObject.get("value").getAsJsonArray());
-                    }
-                }
-                hasUniform = true;
-            } else {
-                hasUniform = false;
-                uniformTypeMap = Map.of();
-                uniformValueMap = Map.of();
-            }
+            jsonObject = JsonParser.parseReader(reader).getAsJsonObject();
         } catch (Exception e) {
             throw exception(identifier, path, e);
+        }
+
+        // shaders
+        vshId = getShaderId(identifier, path, jsonObject, "vertex");
+        fshId = getShaderId(identifier, path, jsonObject, "fragment");
+
+        // uniform
+        if (jsonObject.has("uniform")) {
+            final JsonObject uniform = jsonObject.get("uniform").getAsJsonObject();
+            uniformTypeMap = HashMap.newHashMap(uniform.size());
+            uniformValueMap = HashMap.newHashMap(uniform.size());
+            for (var entry : uniform.entrySet()) {
+                final String name = entry.getKey();
+                final JsonObject valueObject = entry.getValue().getAsJsonObject();
+                final String type = valueObject.get("type").getAsString();
+                final GLUniformType uniformType = GLUniformType.fromString(type);
+                if (uniformType == null) {
+                    throw malformedJson(identifier, path, "uniform." + name + ".type is an invalid type: " + type);
+                }
+                uniformTypeMap.put(name, uniformType);
+                if (valueObject.has("value")) {
+                    uniformValueMap.put(name, valueObject.get("value").getAsJsonArray());
+                }
+            }
+            hasUniform = true;
+        } else {
+            hasUniform = false;
+            uniformTypeMap = Map.of();
+            uniformValueMap = Map.of();
         }
 
         // OpenGL stuff

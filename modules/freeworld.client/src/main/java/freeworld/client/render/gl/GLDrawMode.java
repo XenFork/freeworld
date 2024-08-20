@@ -15,22 +15,37 @@ package freeworld.client.render.gl;
  * @since 0.1.0
  */
 public enum GLDrawMode {
-    LINES(GLStateMgr.LINES, 2),
-    TRIANGLES(GLStateMgr.TRIANGLES, 3);
+    LINES(GLStateMgr.LINES, 2, 2),
+    TRIANGLES(GLStateMgr.TRIANGLES, 3, 3),
+    QUADS(GLStateMgr.TRIANGLES, 4, 4),
+    ;
 
     private final int value;
-    private final int count;
+    private final int firstCount;
+    private final int additionCount;
 
-    GLDrawMode(int value, int count) {
+    GLDrawMode(int value, int firstCount, int additionCount) {
         this.value = value;
-        this.count = count;
+        this.firstCount = firstCount;
+        this.additionCount = additionCount;
     }
 
     public int value() {
         return value;
     }
 
-    public int count() {
-        return count;
+    public int firstCount() {
+        return firstCount;
+    }
+
+    public int additionCount() {
+        return additionCount;
+    }
+
+    public int getIndexCount(int vertexCount) {
+        return switch (this) {
+            case LINES, TRIANGLES -> vertexCount;
+            case QUADS -> vertexCount / 4 * 6;
+        };
     }
 }

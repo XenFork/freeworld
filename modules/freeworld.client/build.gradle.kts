@@ -15,6 +15,7 @@ plugins {
 val clientVersion: String by rootProject
 val jdkEnablePreview: String by rootProject
 val overrunglVersion: String by rootProject
+val jdkVersion: String by rootProject
 
 val overrunglOs = System.getProperty("os.name")!!.let { name ->
     when {
@@ -39,6 +40,15 @@ val overrunglArch = System.getProperty("os.arch")!!.let { arch ->
     }
 }
 
+val nativeAccessList = listOf(
+    "freeworld.client",
+    "io.github.overrun.marshal",
+    "overrungl.core",
+    "overrungl.glfw",
+    "overrungl.opengl",
+    "overrungl.stb"
+)
+
 configurations.runtimeClasspath.get().attributes {
     attribute(OperatingSystemFamily.OPERATING_SYSTEM_ATTRIBUTE, objects.named(overrunglOs))
     attribute(MachineArchitecture.ARCHITECTURE_ATTRIBUTE, objects.named(overrunglArch))
@@ -54,22 +64,13 @@ dependencies {
 }
 
 application {
-    applicationName = "freeworld"
+    applicationName = "freeworld-client"
     mainModule = "freeworld.client"
     mainClass = "freeworld.client.main.Main"
     applicationDefaultJvmArgs = buildList {
         if (jdkEnablePreview.toBoolean()) add("--enable-preview")
         add(
-            "--enable-native-access=${
-                listOf(
-                    "freeworld.client",
-                    "io.github.overrun.marshal",
-                    "overrungl.core",
-                    "overrungl.glfw",
-                    "overrungl.opengl",
-                    "overrungl.stb"
-                ).joinToString(separator = ",")
-            }"
+            "--enable-native-access=${nativeAccessList.joinToString(separator = ",")}"
         )
     }
 }
@@ -81,5 +82,31 @@ tasks.processResources {
     inputs.properties(map)
     filesMatching("client_version.json") {
         expand(map)
+    }
+}
+
+tasks.register<JavaExec>("runClient") {
+    group = "freeworld run"
+
+    classpath = sourceSets.main.get().runtimeClasspath
+    mainModule = "freeworld.client"
+    mainClass = "freeworld.client.main.Main"
+
+    val runDir = rootDir.resolve("run/client")
+    workingDir = runDir
+
+    if (jdkEnablePreview.toBoolean()) {
+        jvmArgs("--enable-preview")
+    }
+    jvmArgs("--enable-native-access=${nativeAccessList.joinToString(separator = ",")}")
+
+    javaLauncher = javaToolchains.launcherFor {
+        languageVersion.set(JavaLanguageVersion.of(jdkVersion))
+    }
+
+    doFirst {
+        if (!runDir.exists()) {
+            runDir.mkdirs()
+        }
     }
 }
