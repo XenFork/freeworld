@@ -1,6 +1,6 @@
 /*
  * freeworld - 3D sandbox game
- * Copyright (C) 2024  XenFork Union
+ * Copyright (C) 2025  XenFork Union
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -10,14 +10,17 @@
 
 package freeworld.client.render.gl;
 
+import static overrungl.opengl.GL10.GL_LINES;
+import static overrungl.opengl.GL10.GL_TRIANGLES;
+
 /**
  * @author squid233
  * @since 0.1.0
  */
 public enum GLDrawMode {
-    LINES(GLStateMgr.LINES, 2, 2),
-    TRIANGLES(GLStateMgr.TRIANGLES, 3, 3),
-    QUADS(GLStateMgr.TRIANGLES, 4, 4),
+    LINES(GL_LINES, 2, 2),
+    TRIANGLES(GL_TRIANGLES, 3, 3),
+    QUADS(GL_TRIANGLES, 4, 4),
     ;
 
     private final int value;

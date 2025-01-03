@@ -1,6 +1,6 @@
 /*
  * freeworld - 3D sandbox game
- * Copyright (C) 2024  XenFork Union
+ * Copyright (C) 2025  XenFork Union
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -21,7 +21,8 @@ import freeworld.client.render.texture.Texture2D;
 import freeworld.client.render.vertex.BufferBuilder;
 import freeworld.client.render.vertex.VertexLayouts;
 import freeworld.util.Identifier;
-import overrungl.glfw.GLFW;
+
+import static overrungl.glfw.GLFW.GLFW_KEY_E;
 
 /**
  * @author squid233
@@ -54,7 +55,7 @@ public class CreativeTabScreen extends Screen {
     @Override
     public void onKeyPressed(int key) {
         super.onKeyPressed(key);
-        if (key == GLFW.KEY_E) {
+        if (key == GLFW_KEY_E) {
             client.setScreen(null);
         }
     }

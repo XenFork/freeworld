@@ -1,6 +1,6 @@
 /*
  * freeworld - 3D sandbox game
- * Copyright (C) 2024  XenFork Union
+ * Copyright (C) 2025  XenFork Union
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -15,12 +15,9 @@ import freeworld.client.render.gl.GLStateMgr;
 import freeworld.util.Identifier;
 import freeworld.util.Logging;
 import org.slf4j.Logger;
-import overrungl.opengl.GL;
-import overrungl.opengl.GL10C;
 import overrungl.stb.STBRPContext;
 import overrungl.stb.STBRPNode;
 import overrungl.stb.STBRPRect;
-import overrungl.stb.STBRectPack;
 
 import java.lang.foreign.Arena;
 import java.lang.foreign.MemorySegment;
@@ -28,6 +25,10 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+
+import static overrungl.opengl.GL10.*;
+import static overrungl.opengl.GL12.GL_TEXTURE_MAX_LEVEL;
+import static overrungl.stb.STBRectPack.*;
 
 /**
  * @author squid233
@@ -47,7 +48,6 @@ public final class TextureAtlas extends Texture2D {
     public static TextureAtlas load(GLStateMgr gl, Set<Identifier> identifierSet, int initMipmapLevel) {
         var identifierList = List.copyOf(identifierSet);
         final int numIds = identifierList.size();
-        final STBRectPack stbrp = STBRectPack.INSTANCE;
         try (Arena arena = Arena.ofConfined()) {
             final Map<Identifier, NativeImage> imageMap = HashMap.newHashMap(numIds);
             identifierList.forEach(identifier -> {
@@ -61,9 +61,9 @@ public final class TextureAtlas extends Texture2D {
                 }
             });
 
-            final STBRPContext context = STBRPContext.OF.of(arena);
-            final STBRPNode nodes = STBRPNode.OF.of(arena, numIds);
-            final STBRPRect rects = STBRPRect.OF.of(arena, numIds);
+            final STBRPContext context = STBRPContext.alloc(arena);
+            final STBRPNode nodes = STBRPNode.alloc(arena, numIds);
+            final STBRPRect rects = STBRPRect.alloc(arena, numIds);
             int mipmapLevel = initMipmapLevel;
             for (int i = 0; i < numIds; i++) {
                 final NativeImage image = imageMap.get(identifierList.get(i));
@@ -75,58 +75,57 @@ public final class TextureAtlas extends Texture2D {
                 } else if (mipmapLevel > 0) {
                     mipmapLevel = Math.min(Integer.numberOfTrailingZeros(width), Integer.numberOfTrailingZeros(height));
                 }
-                rects.slice(i).id(i)
-                    .w(width)
-                    .h(height);
+                rects.idAt(i, i)
+                    .wAt(i, width)
+                    .hAt(i, height);
             }
 
             int packerSize = 256;
             do {
-                stbrp.initTarget(context, packerSize, packerSize, nodes, numIds);
-                stbrp.setupHeuristic(context, STBRectPack.HEURISTIC_Skyline_BF_sortHeight);
+                stbrp_init_target(context, packerSize, packerSize, nodes, numIds);
+                stbrp_setup_heuristic(context, STBRP_HEURISTIC_Skyline_BF_sortHeight);
                 packerSize *= 2;
-            } while (stbrp.packRects(context, rects, numIds) == 0);
+            } while (stbrp_pack_rects(context, rects, numIds) == 0);
             packerSize /= 2;
 
             final Map<Identifier, TextureRegion> regionMap = HashMap.newHashMap(numIds);
-            final int id = gl.genTextures();
+            final int id = gl.GenTextures();
             final TextureAtlas atlas = new TextureAtlas(id, packerSize, packerSize, mipmapLevel, regionMap);
             RenderSystem.bindTexture2D(atlas);
-            gl.texParameteri(GL10C.TEXTURE_2D, GL10C.TEXTURE_MIN_FILTER, mipmapLevel > 0 ? GL10C.NEAREST_MIPMAP_NEAREST : GL10C.NEAREST);
-            gl.texParameteri(GL10C.TEXTURE_2D, GL10C.TEXTURE_MAG_FILTER, GL10C.NEAREST);
-            gl.texParameteri(GL10C.TEXTURE_2D, GL.TEXTURE_MAX_LEVEL, mipmapLevel);
-            gl.texImage2D(GL10C.TEXTURE_2D,
+            gl.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, mipmapLevel > 0 ? GL_NEAREST_MIPMAP_NEAREST : GL_NEAREST);
+            gl.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+            gl.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, mipmapLevel);
+            gl.TexImage2D(GL_TEXTURE_2D,
                 0,
-                GL10C.RGBA,
+                GL_RGBA,
                 packerSize,
                 packerSize,
                 0,
-                GL10C.RGBA,
-                GL10C.UNSIGNED_BYTE,
+                GL_RGBA,
+                GL_UNSIGNED_BYTE,
                 MemorySegment.NULL);
             for (int i = 0; i < numIds; i++) {
-                final STBRPRect slice = rects.slice(i);
-                if (slice.was_packed() != 0) {
-                    final Identifier identifier = identifierList.get(slice.id());
-                    final int xo = slice.x();
-                    final int yo = slice.y();
-                    final int width = slice.w();
-                    final int height = slice.h();
+                if (rects.was_packedAt(i) != 0) {
+                    final Identifier identifier = identifierList.get(rects.idAt(i));
+                    final int xo = rects.xAt(i);
+                    final int yo = rects.yAt(i);
+                    final int width = rects.wAt(i);
+                    final int height = rects.hAt(i);
                     regionMap.put(identifier, new TextureRegion(atlas, xo, yo, width, height));
                     NativeImage nativeImage = imageMap.get(identifier);
-                    gl.texSubImage2D(GL10C.TEXTURE_2D,
+                    gl.TexSubImage2D(GL_TEXTURE_2D,
                         0,
                         xo,
                         yo,
                         width,
                         height,
                         nativeImage.formats().format().glEnum(),
-                        GL10C.UNSIGNED_BYTE,
+                        GL_UNSIGNED_BYTE,
                         nativeImage.segment());
                 }
             }
             if (mipmapLevel > 0) {
-                gl.generateMipmap(GL10C.TEXTURE_2D);
+                gl.GenerateMipmap(GL_TEXTURE_2D);
             }
             return atlas;
         }

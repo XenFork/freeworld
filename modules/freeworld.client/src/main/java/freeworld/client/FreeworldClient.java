@@ -1,6 +1,6 @@
 /*
  * freeworld - 3D sandbox game
- * Copyright (C) 2024  XenFork Union
+ * Copyright (C) 2025  XenFork Union
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -19,9 +19,8 @@ import freeworld.client.render.gl.GLStateMgr;
 import freeworld.client.render.screen.Screen;
 import freeworld.client.render.screen.ingame.CreativeTabScreen;
 import freeworld.client.render.screen.ingame.PauseScreen;
-import freeworld.client.render.world.entity.EntityRenderers;
-import freeworld.world.block.BlockHitResult;
 import freeworld.client.render.world.WorldRenderer;
+import freeworld.client.render.world.entity.EntityRenderers;
 import freeworld.math.Vector2d;
 import freeworld.math.Vector3d;
 import freeworld.math.Vector3i;
@@ -30,6 +29,7 @@ import freeworld.util.Logging;
 import freeworld.util.Timer;
 import freeworld.util.math.MathUtil;
 import freeworld.world.World;
+import freeworld.world.block.BlockHitResult;
 import freeworld.world.block.BlockType;
 import freeworld.world.block.BlockTypes;
 import freeworld.world.entity.EntityTypes;
@@ -37,22 +37,24 @@ import freeworld.world.entity.player.PlayerEntity;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
-import overrun.marshal.Unmarshal;
 import overrungl.OverrunGL;
 import overrungl.glfw.GLFW;
 import overrungl.glfw.GLFWCallbacks;
 import overrungl.glfw.GLFWErrorCallback;
 import overrungl.glfw.GLFWVidMode;
 import overrungl.opengl.GLFlags;
-import overrungl.opengl.GLLoader;
-import overrungl.util.value.Pair;
+import overrungl.opengl.GLLoadFunc;
+import overrungl.util.MemoryStack;
+import overrungl.util.Unmarshal;
 
 import java.lang.foreign.MemorySegment;
-import java.lang.invoke.MethodHandles;
+import java.lang.foreign.ValueLayout;
 import java.util.Queue;
 import java.util.Random;
 import java.util.concurrent.Executor;
 import java.util.concurrent.LinkedBlockingQueue;
+
+import static overrungl.glfw.GLFW.*;
 
 /**
  * Client logic
@@ -66,7 +68,6 @@ public final class FreeworldClient implements Executor, AutoCloseable {
     private static final int INIT_WINDOW_WIDTH = 854;
     private static final int INIT_WINDOW_HEIGHT = 480;
     private static final double MOUSE_SENSITIVITY = 0.15;
-    private final GLFW glfw;
     private GLFlags glFlags;
     private GLStateMgr gl;
     private MemorySegment window;
@@ -89,45 +90,48 @@ public final class FreeworldClient implements Executor, AutoCloseable {
     private final Queue<Runnable> queue = new LinkedBlockingQueue<>();
 
     private FreeworldClient() {
-        this.glfw = GLFW.INSTANCE;
     }
 
     public void start() {
         logger.info("Starting client");
 
         OverrunGL.setApiLogger(logger::error);
-        GLFWErrorCallback.createLog(logger::error).set();
+        glfwSetErrorCallback(GLFWErrorCallback.createLog(logger::error));
 
-        if (!glfw.init()) {
+        if (!glfwInit()) {
             throw new IllegalStateException("Failed to initialize GLFW");
         }
 
-        glfw.defaultWindowHints();
+        glfwDefaultWindowHints();
 
         // center window
-        final GLFWVidMode videoMode = glfw.getVideoMode(glfw.getPrimaryMonitor());
+        final GLFWVidMode videoMode = glfwGetVideoMode(glfwGetPrimaryMonitor());
         if (videoMode != null) {
-            glfw.windowHint(GLFW.POSITION_X, (videoMode.width() - INIT_WINDOW_WIDTH) / 2);
-            glfw.windowHint(GLFW.POSITION_Y, (videoMode.height() - INIT_WINDOW_HEIGHT) / 2);
+            glfwWindowHint(GLFW_POSITION_X, (videoMode.width() - INIT_WINDOW_WIDTH) / 2);
+            glfwWindowHint(GLFW_POSITION_Y, (videoMode.height() - INIT_WINDOW_HEIGHT) / 2);
         }
 
-        window = glfw.createWindow(INIT_WINDOW_WIDTH, INIT_WINDOW_HEIGHT, "freeworld", MemorySegment.NULL, MemorySegment.NULL);
+        window = glfwCreateWindow(INIT_WINDOW_WIDTH, INIT_WINDOW_HEIGHT, "freeworld", MemorySegment.NULL, MemorySegment.NULL);
         if (Unmarshal.isNullPointer(window)) {
             throw new IllegalStateException("Failed to create GLFW window");
         }
 
-        mouseInput = new MouseInput(this, window);
+        mouseInput = new MouseInput(window);
         CursorPosEvent.DISABLED.subscribe(this::onCursorPosDisabled);
-        glfw.setKeyCallback(window, (_, key, scancode, action, mods) -> onKey(key, scancode, action, mods));
-        glfw.setFramebufferSizeCallback(window, (_, width, height) -> onResize(width, height));
-        glfw.setScrollCallback(window, (_, scrollX, scrollY) -> onScroll(scrollX, scrollY));
+        glfwSetKeyCallback(window, (_, key, scancode, action, mods) -> onKey(key, scancode, action, mods));
+        glfwSetFramebufferSizeCallback(window, (_, width, height) -> onResize(width, height));
+        glfwSetScrollCallback(window, (_, scrollX, scrollY) -> onScroll(scrollX, scrollY));
 
-        final Pair.OfInt framebufferSize = glfw.getFramebufferSize(window);
-        framebufferWidth = framebufferSize.x();
-        framebufferHeight = framebufferSize.y();
+        try (MemoryStack stack = MemoryStack.pushLocal()) {
+            var pw = stack.ints(0);
+            var ph = stack.ints(0);
+            glfwGetFramebufferSize(window, pw, ph);
+            framebufferWidth = pw.get(ValueLayout.JAVA_INT, 0);
+            framebufferHeight = ph.get(ValueLayout.JAVA_INT, 0);
+        }
 
-        if (glfw.rawMouseMotionSupported()) {
-            glfw.setInputMode(window, GLFW.RAW_MOUSE_MOTION, GLFW.TRUE);
+        if (glfwRawMouseMotionSupported()) {
+            glfwSetInputMode(window, GLFW_RAW_MOUSE_MOTION, GLFW_TRUE);
         }
 
         BlockTypes.bootstrap();
@@ -143,9 +147,9 @@ public final class FreeworldClient implements Executor, AutoCloseable {
 
     private void onKey(int key, int scancode, int action, int mods) {
         switch (action) {
-            case GLFW.PRESS -> {
+            case GLFW_PRESS -> {
                 switch (key) {
-                    case GLFW.KEY_ESCAPE -> {
+                    case GLFW_KEY_ESCAPE -> {
                         if (screen != null) {
                             if (screen.escapeCanClose()) {
                                 setScreen(null);
@@ -158,24 +162,24 @@ public final class FreeworldClient implements Executor, AutoCloseable {
                         if (screen == null) {
                             if (world != null) {
                                 switch (key) {
-                                    case GLFW.KEY_1 -> player.selectHotBar(0);
-                                    case GLFW.KEY_2 -> player.selectHotBar(1);
-                                    case GLFW.KEY_3 -> player.selectHotBar(2);
-                                    case GLFW.KEY_4 -> player.selectHotBar(3);
-                                    case GLFW.KEY_5 -> player.selectHotBar(4);
-                                    case GLFW.KEY_6 -> player.selectHotBar(5);
-                                    case GLFW.KEY_7 -> player.selectHotBar(6);
-                                    case GLFW.KEY_8 -> player.selectHotBar(7);
-                                    case GLFW.KEY_9 -> player.selectHotBar(8);
-                                    case GLFW.KEY_0 -> player.selectHotBar(9);
-                                    case GLFW.KEY_E -> setScreen(new CreativeTabScreen());
-                                    case GLFW.KEY_SPACE -> {
+                                    case GLFW_KEY_1 -> player.selectHotBar(0);
+                                    case GLFW_KEY_2 -> player.selectHotBar(1);
+                                    case GLFW_KEY_3 -> player.selectHotBar(2);
+                                    case GLFW_KEY_4 -> player.selectHotBar(3);
+                                    case GLFW_KEY_5 -> player.selectHotBar(4);
+                                    case GLFW_KEY_6 -> player.selectHotBar(5);
+                                    case GLFW_KEY_7 -> player.selectHotBar(6);
+                                    case GLFW_KEY_8 -> player.selectHotBar(7);
+                                    case GLFW_KEY_9 -> player.selectHotBar(8);
+                                    case GLFW_KEY_0 -> player.selectHotBar(9);
+                                    case GLFW_KEY_E -> setScreen(new CreativeTabScreen());
+                                    case GLFW_KEY_SPACE -> {
                                         if (gameTick - spaceTick < 5) {
                                             player.flying = !player.flying();
                                         }
                                         spaceTick = gameTick;
                                     }
-                                    case GLFW.KEY_F3 -> debugHudEnabled = !debugHudEnabled;
+                                    case GLFW_KEY_F3 -> debugHudEnabled = !debugHudEnabled;
                                 }
                             }
                         } else {
@@ -199,7 +203,7 @@ public final class FreeworldClient implements Executor, AutoCloseable {
     private void onResize(int width, int height) {
         framebufferWidth = width;
         framebufferHeight = height;
-        gl.viewport(0, 0, width, height);
+        gl.Viewport(0, 0, width, height);
 
         if (screen != null) {
             screen.onResize(scaledFramebufferWidth(), scaledFramebufferHeight());
@@ -251,18 +255,18 @@ public final class FreeworldClient implements Executor, AutoCloseable {
                 speed = 0.02;
             }
         }
-        if (glfw.getKey(window, GLFW.KEY_LEFT_CONTROL) == GLFW.PRESS) speed *= 2.0;
+        if (glfwGetKey(window, GLFW_KEY_LEFT_CONTROL) == GLFW_PRESS) speed *= 2.0;
         double xo = 0.0;
         double yo = 0.0;
         double zo = 0.0;
-        if (glfw.getKey(window, GLFW.KEY_W) == GLFW.PRESS) zo -= 1.0;
-        if (glfw.getKey(window, GLFW.KEY_S) == GLFW.PRESS) zo += 1.0;
-        if (glfw.getKey(window, GLFW.KEY_A) == GLFW.PRESS) xo -= 1.0;
-        if (glfw.getKey(window, GLFW.KEY_D) == GLFW.PRESS) xo += 1.0;
-        if ((player.onGround() || player.flying()) && glfw.getKey(window, GLFW.KEY_SPACE) == GLFW.PRESS) {
+        if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) zo -= 1.0;
+        if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) zo += 1.0;
+        if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS) xo -= 1.0;
+        if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS) xo += 1.0;
+        if ((player.onGround() || player.flying()) && glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS) {
             yo += 1.0;
         }
-        if (player.flying() && glfw.getKey(window, GLFW.KEY_LEFT_SHIFT) == GLFW.PRESS) {
+        if (player.flying() && glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS) {
             yo -= 1.0;
         }
         player.acceleration = MathUtil.moveRelative(xo, yo * (player.flying() ? speed : 0.5), zo, player.rotation().y(), speed);
@@ -270,7 +274,7 @@ public final class FreeworldClient implements Executor, AutoCloseable {
         if (blockDestroyTimer >= 2) {
             final BlockHitResult hitResult = gameRenderer.hitResult();
             if (!hitResult.missed() &&
-                glfw.getMouseButton(window, GLFW.MOUSE_BUTTON_LEFT) == GLFW.PRESS) {
+                glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS) {
                 Vector3i position = hitResult.position();
                 world.setBlock(position.x(), position.y(), position.z(), BlockTypes.AIR);
                 blockDestroyTimer = 0;
@@ -279,7 +283,7 @@ public final class FreeworldClient implements Executor, AutoCloseable {
         if (blockPlaceTimer >= 2) {
             final BlockHitResult hitResult = gameRenderer.hitResult();
             if (!hitResult.missed() &&
-                glfw.getMouseButton(window, GLFW.MOUSE_BUTTON_RIGHT) == GLFW.PRESS) {
+                glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_RIGHT) == GLFW_PRESS) {
                 final Direction face = hitResult.face();
                 final BlockType type = player.getHandItem();
                 if (!type.air()) {
@@ -297,7 +301,7 @@ public final class FreeworldClient implements Executor, AutoCloseable {
         blockDestroyTimer++;
         blockPlaceTimer++;
 
-        if (glfw.getKey(window, GLFW.KEY_G) == GLFW.PRESS) {
+        if (glfwGetKey(window, GLFW_KEY_G) == GLFW_PRESS) {
             world.createEntity(EntityTypes.CUBE, player.position());
         }
     }
@@ -315,9 +319,10 @@ public final class FreeworldClient implements Executor, AutoCloseable {
     }
 
     private void initGL() {
-        glfw.makeContextCurrent(window);
-        glFlags = GLLoader.loadFlags(glfw::getProcAddress);
-        gl = GLLoader.loadContext(MethodHandles.lookup(), glFlags, GLStateMgr.class);
+        glfwMakeContextCurrent(window);
+        GLLoadFunc func = GLFW::glfwGetProcAddress;
+        glFlags = new GLFlags(func);
+        gl = new GLStateMgr(func);
 
         RenderSystem.initialize(gl);
 
@@ -331,18 +336,18 @@ public final class FreeworldClient implements Executor, AutoCloseable {
 
     public void run() {
         timer.update();
-        while (!glfw.windowShouldClose(window)) {
+        while (!glfwWindowShouldClose(window)) {
             Runnable task;
             while ((task = queue.poll()) != null) {
                 task.run();
             }
-            glfw.pollEvents();
+            glfwPollEvents();
             timer.update();
             for (int i = 0, c = timer.tickCount(); i < c; i++) {
                 tick();
             }
             gameRenderer.render(gl, timer.partialTick());
-            glfw.swapBuffers(window);
+            glfwSwapBuffers(window);
         }
     }
 
@@ -352,10 +357,10 @@ public final class FreeworldClient implements Executor, AutoCloseable {
         gameRenderer.close(gl);
         if (!Unmarshal.isNullPointer(window)) {
             GLFWCallbacks.free(window);
-            glfw.destroyWindow(window);
+            glfwDestroyWindow(window);
         }
-        glfw.terminate();
-        glfw.setErrorCallback(null);
+        glfwTerminate();
+        glfwSetErrorCallback(MemorySegment.NULL);
     }
 
     public void setScreen(@Nullable Screen screen) {
@@ -376,10 +381,6 @@ public final class FreeworldClient implements Executor, AutoCloseable {
 
     public @Nullable Screen screen() {
         return screen;
-    }
-
-    public GLFW glfw() {
-        return glfw;
     }
 
     public GLFlags glFlags() {

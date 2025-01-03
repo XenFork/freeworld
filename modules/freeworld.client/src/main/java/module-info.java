@@ -36,7 +36,6 @@ module freeworld.client {
     exports freeworld.client.world.chunk;
 
     requires transitive freeworld.core;
-    requires io.github.overrun.marshal;
     requires overrungl.glfw;
     requires overrungl.opengl;
     requires overrungl.stb;

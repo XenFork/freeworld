@@ -1,6 +1,6 @@
 /*
  * freeworld - 3D sandbox game
- * Copyright (C) 2024  XenFork Union
+ * Copyright (C) 2025  XenFork Union
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -23,7 +23,7 @@ val overrunglOs = System.getProperty("os.name")!!.let { name ->
         arrayOf("Linux", "SunOS", "Unit").any { name.startsWith(it) } -> "linux"
         arrayOf("Mac OS X", "Darwin").any { name.startsWith(it) } -> "macos"
         arrayOf("Windows").any { name.startsWith(it) } -> "windows"
-        else -> throw Error("Unrecognized or unsupported platform $name. Please set \"overrunglOs\" manually")
+        else -> throw Error("Unrecognized platform $name. Please set \"overrunglOs\" manually")
     }
 }
 val overrunglArch = System.getProperty("os.arch")!!.let { arch ->
@@ -34,33 +34,31 @@ val overrunglArch = System.getProperty("os.arch")!!.let { arch ->
         } else if (arch.startsWith("ppc")) "ppc64le"
         else if (arch.startsWith("riscv")) "riscv64"
         else "x64"
-
-        "macos", "windows" -> if (arch.startsWith("aarch64")) "arm64" else "x64"
-        else -> throw Error("Unrecognized or unsupported platform $overrunglOs. Please set \"overrunglArch\" manually")
+        "macos" -> if (arch.startsWith("aarch64")) "arm64" else "x64"
+        "windows" -> if (arch.startsWith("aarch64")) "arm64" else "x64"
+        else -> throw Error("Unrecognized platform $overrunglOs. Please set \"overrunglArch\" manually")
     }
 }
 
+val overrunglNatives = "natives-$overrunglOs-$overrunglArch"
+
 val nativeAccessList = listOf(
     "freeworld.client",
-    "io.github.overrun.marshal",
     "overrungl.core",
     "overrungl.glfw",
     "overrungl.opengl",
     "overrungl.stb"
 )
 
-configurations.runtimeClasspath.get().attributes {
-    attribute(OperatingSystemFamily.OPERATING_SYSTEM_ATTRIBUTE, objects.named(overrunglOs))
-    attribute(MachineArchitecture.ARCHITECTURE_ATTRIBUTE, objects.named(overrunglArch))
-}
-
 dependencies {
     api(project(":freeworld"))
     implementation(platform("io.github.over-run:overrungl-bom:$overrunglVersion"))
     implementation("io.github.over-run:overrungl")
     implementation("io.github.over-run:overrungl-glfw")
+    implementation("io.github.over-run:overrungl-glfw::$overrunglNatives")
     implementation("io.github.over-run:overrungl-opengl")
     implementation("io.github.over-run:overrungl-stb")
+    implementation("io.github.over-run:overrungl-stb::$overrunglNatives")
 }
 
 application {

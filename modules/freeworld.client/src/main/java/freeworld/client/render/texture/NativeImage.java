@@ -1,6 +1,6 @@
 /*
  * freeworld - 3D sandbox game
- * Copyright (C) 2024  XenFork Union
+ * Copyright (C) 2025  XenFork Union
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -10,15 +10,17 @@
 
 package freeworld.client.render.texture;
 
-import freeworld.util.file.BuiltinFiles;
 import freeworld.util.Logging;
+import freeworld.util.file.BuiltinFiles;
 import org.slf4j.Logger;
-import overrun.marshal.Unmarshal;
 import overrungl.stb.STBImage;
+import overrungl.util.Unmarshal;
 
 import java.lang.foreign.Arena;
 import java.lang.foreign.MemorySegment;
 import java.lang.foreign.ValueLayout;
+
+import static overrungl.stb.STBImage.*;
 
 /**
  * A data class that represents a native image.
@@ -43,16 +45,15 @@ public record NativeImage(int width, int height, MemorySegment segment, ImageFor
         final MemorySegment px = arena.allocate(ValueLayout.JAVA_INT);
         final MemorySegment py = arena.allocate(ValueLayout.JAVA_INT);
         final MemorySegment pc = arena.allocate(ValueLayout.JAVA_INT);
-        final STBImage stbImage = STBImage.INSTANCE;
-        final MemorySegment result = stbImage.loadFromMemory(segment, px, py, pc, formats.format().stbEnum());
+        final MemorySegment result = stbi_load_from_memory(segment, px, py, pc, formats.format().stbEnum());
         if (Unmarshal.isNullPointer(result)) {
-            logger.error("Failed to load image from {}: {}", path, stbImage.failureReason());
+            logger.error("Failed to load image from {}: {}", path, stbi_failure_reason());
             return fail();
         }
         return of(
             px.get(ValueLayout.JAVA_INT, 0L),
             py.get(ValueLayout.JAVA_INT, 0L),
-            result.reinterpret(arena, stbImage::free),
+            result.reinterpret(arena, STBImage::stbi_image_free),
             formats
         );
     }

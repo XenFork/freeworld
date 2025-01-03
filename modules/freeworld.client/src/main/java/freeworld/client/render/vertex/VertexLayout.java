@@ -1,6 +1,6 @@
 /*
  * freeworld - 3D sandbox game
- * Copyright (C) 2024  XenFork Union
+ * Copyright (C) 2025  XenFork Union
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -41,7 +41,7 @@ public final class VertexLayout {
         for (var entry : elementMap.entrySet()) {
             VertexLayoutElement element = entry.getValue();
             if (element.format() != VertexFormat.PADDING) {
-                gl.bindAttribLocation(program, i, entry.getKey());
+                gl.BindAttribLocation(program, i, entry.getKey());
                 i++;
             }
         }

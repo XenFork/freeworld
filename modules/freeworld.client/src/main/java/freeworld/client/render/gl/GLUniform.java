@@ -1,6 +1,6 @@
 /*
  * freeworld - 3D sandbox game
- * Copyright (C) 2024  XenFork Union
+ * Copyright (C) 2025  XenFork Union
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -10,6 +10,7 @@
 
 package freeworld.client.render.gl;
 
+import freeworld.client.FreeworldClient;
 import freeworld.client.render.RenderSystem;
 import freeworld.math.Matrix4f;
 import freeworld.math.Vector4f;
@@ -68,18 +69,18 @@ public final class GLUniform {
         if (!dirty) {
             return;
         }
-        if (gl.getFlags().GL_ARB_separate_shader_objects) {
+        if (FreeworldClient.getInstance().glFlags().GL_ARB_separate_shader_objects) {
             switch (type) {
-                case INT -> gl.programUniform1iv(program.id(), location, 1, value);
-                case VEC4 -> gl.programUniform4fv(program.id(), location, 1, value);
-                case MAT4 -> gl.programUniformMatrix4fv(program.id(), location, 1, false, value);
+                case INT -> gl.ProgramUniform1iv(program.id(), location, 1, value);
+                case VEC4 -> gl.ProgramUniform4fv(program.id(), location, 1, value);
+                case MAT4 -> gl.ProgramUniformMatrix4fv(program.id(), location, 1, false, value);
             }
         } else {
             RenderSystem.useProgram(program);
             switch (type) {
-                case INT -> gl.uniform1iv(location, 1, value);
-                case VEC4 -> gl.uniform4fv(location, 1, value);
-                case MAT4 -> gl.uniformMatrix4fv(location, 1, false, value);
+                case INT -> gl.Uniform1iv(location, 1, value);
+                case VEC4 -> gl.Uniform4fv(location, 1, value);
+                case MAT4 -> gl.UniformMatrix4fv(location, 1, false, value);
             }
         }
         dirty = false;

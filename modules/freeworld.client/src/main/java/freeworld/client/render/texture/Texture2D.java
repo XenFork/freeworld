@@ -1,6 +1,6 @@
 /*
  * freeworld - 3D sandbox game
- * Copyright (C) 2024  XenFork Union
+ * Copyright (C) 2025  XenFork Union
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -11,15 +11,16 @@
 package freeworld.client.render.texture;
 
 import freeworld.client.render.RenderSystem;
-import freeworld.client.render.gl.GLStateMgr;
 import freeworld.client.render.gl.GLResource;
+import freeworld.client.render.gl.GLStateMgr;
 import freeworld.util.Identifier;
 import freeworld.util.Logging;
 import org.slf4j.Logger;
-import overrungl.opengl.GL;
-import overrungl.opengl.GL10C;
 
 import java.lang.foreign.Arena;
+
+import static overrungl.opengl.GL10.*;
+import static overrungl.opengl.GL12.GL_TEXTURE_MAX_LEVEL;
 
 /**
  * @author squid233
@@ -54,23 +55,23 @@ public sealed class Texture2D implements GLResource permits ImagedTexture, Textu
             final int mipmapLevel = hasMipmap ? Math.min(Integer.numberOfTrailingZeros(width), Integer.numberOfTrailingZeros(height)) : 0;
             ImageFormats formats = image.formats();
 
-            final int id = gl.genTextures();
+            final int id = gl.GenTextures();
             final Texture2D texture = new Texture2D(id, width, height, mipmapLevel);
             RenderSystem.bindTexture2D(texture);
-            gl.texParameteri(GL10C.TEXTURE_2D, GL10C.TEXTURE_MIN_FILTER, hasMipmap ? GL10C.NEAREST_MIPMAP_NEAREST : GL10C.NEAREST);
-            gl.texParameteri(GL10C.TEXTURE_2D, GL10C.TEXTURE_MAG_FILTER, GL10C.NEAREST);
-            gl.texParameteri(GL10C.TEXTURE_2D, GL.TEXTURE_MAX_LEVEL, mipmapLevel);
-            gl.texImage2D(GL10C.TEXTURE_2D,
+            gl.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, hasMipmap ? GL_NEAREST_MIPMAP_NEAREST : GL_NEAREST);
+            gl.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+            gl.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, mipmapLevel);
+            gl.TexImage2D(GL_TEXTURE_2D,
                 0,
                 formats.internalFormat().glEnum(),
                 width,
                 height,
                 0,
                 formats.format().glEnum(),
-                GL10C.UNSIGNED_BYTE,
+                GL_UNSIGNED_BYTE,
                 image.segment());
             if (hasMipmap) {
-                gl.generateMipmap(GL10C.TEXTURE_2D);
+                gl.GenerateMipmap(GL_TEXTURE_2D);
             }
             return texture;
         }
@@ -102,6 +103,6 @@ public sealed class Texture2D implements GLResource permits ImagedTexture, Textu
 
     @Override
     public void close(GLStateMgr gl) {
-        gl.deleteTextures(id());
+        gl.DeleteTextures(id());
     }
 }

@@ -1,6 +1,6 @@
 /*
  * freeworld - 3D sandbox game
- * Copyright (C) 2024  XenFork Union
+ * Copyright (C) 2025  XenFork Union
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -60,7 +60,7 @@ public final class LogbackConfigurator extends ContextAwareBase implements Confi
         } else {
             layout.setPattern(PATTERN_ANSI);
         }
-        layout.getInstanceConverterMap().put("levelColor", LevelColorConverter.class.getName());
+        layout.getInstanceConverterMap().put("levelColor", LevelColorConverter::new);
         layout.start();
         final var encoder = new LayoutWrappingEncoder<ILoggingEvent>();
         encoder.setContext(context);

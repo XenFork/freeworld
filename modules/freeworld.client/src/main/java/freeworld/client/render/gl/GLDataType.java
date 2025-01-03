@@ -1,6 +1,6 @@
 /*
  * freeworld - 3D sandbox game
- * Copyright (C) 2024  XenFork Union
+ * Copyright (C) 2025  XenFork Union
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -10,16 +10,16 @@
 
 package freeworld.client.render.gl;
 
-import overrungl.opengl.GL;
+import static overrungl.opengl.GL10.*;
 
 /**
  * @author squid233
  * @since 0.1.0
  */
 public enum GLDataType {
-    BYTE("Byte", "b", GL.BYTE, Byte.BYTES),
-    UNSIGNED_BYTE("Unsigned Byte", "ub", GL.UNSIGNED_BYTE, Byte.BYTES),
-    FLOAT("Float", "f", GL.FLOAT, Float.BYTES);
+    BYTE("Byte", "b", GL_BYTE, Byte.BYTES),
+    UNSIGNED_BYTE("Unsigned Byte", "ub", GL_UNSIGNED_BYTE, Byte.BYTES),
+    FLOAT("Float", "f", GL_FLOAT, Float.BYTES);
 
     private final String stringValue;
     private final String simpleStringValue;

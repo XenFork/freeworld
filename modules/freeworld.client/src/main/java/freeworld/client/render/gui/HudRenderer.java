@@ -1,6 +1,6 @@
 /*
  * freeworld - 3D sandbox game
- * Copyright (C) 2024  XenFork Union
+ * Copyright (C) 2025  XenFork Union
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -32,7 +32,8 @@ import freeworld.util.Identifier;
 import freeworld.util.math.ChunkPos;
 import freeworld.world.block.BlockType;
 import freeworld.world.entity.player.PlayerEntity;
-import overrungl.opengl.GL10C;
+
+import static overrungl.opengl.GL10.*;
 
 /**
  * @author squid233
@@ -79,7 +80,7 @@ public final class HudRenderer {
     }
 
     private void renderDebugHud(GLStateMgr gl) {
-        gl.setBlendFunc(GL10C.SRC_ALPHA, GL10C.ONE_MINUS_SRC_ALPHA);
+        gl.setBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
         RenderSystem.bindTexture2D(gameRenderer.unifont().texture());
         RenderSystem.useProgram(GameRenderer.renderTypeTextProgram());
         Tessellator t = Tessellator.getInstance();
@@ -136,7 +137,7 @@ public final class HudRenderer {
     private void renderCrossing(GuiGraphics graphics, GLStateMgr gl) {
         TextureAtlas atlas = gameRenderer.textureManager().getTexture(TextureManager.GUI_ATLAS);
         RenderSystem.bindTexture2D(atlas);
-        gl.setBlendFuncSeparate(GL10C.ONE_MINUS_DST_COLOR, GL10C.ONE_MINUS_SRC_ALPHA, GL10C.ONE, GL10C.ZERO);
+        gl.setBlendFuncSeparate(GL_ONE_MINUS_DST_COLOR, GL_ONE_MINUS_SRC_ALPHA, GL_ONE, GL_ZERO);
         Tessellator t = Tessellator.getInstance();
         BufferBuilder buffer = t.buffer();
         buffer.begin(GLDrawMode.TRIANGLES, VertexLayouts.POSITION_COLOR_TEXTURE);
@@ -154,7 +155,7 @@ public final class HudRenderer {
     private void renderHotBar(GuiGraphics graphics, GLStateMgr gl) {
         final TextureAtlas atlas = gameRenderer.textureManager().getTexture(TextureManager.GUI_ATLAS);
         RenderSystem.bindTexture2D(atlas);
-        gl.setBlendFunc(GL10C.SRC_ALPHA, GL10C.ONE_MINUS_SRC_ALPHA);
+        gl.setBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
         Tessellator t = Tessellator.getInstance();
         BufferBuilder buffer = t.buffer();
         buffer.begin(GLDrawMode.TRIANGLES, VertexLayouts.POSITION_COLOR_TEXTURE);

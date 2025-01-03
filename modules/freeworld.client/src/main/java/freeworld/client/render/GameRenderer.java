@@ -1,6 +1,6 @@
 /*
  * freeworld - 3D sandbox game
- * Copyright (C) 2024  XenFork Union
+ * Copyright (C) 2025  XenFork Union
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -41,10 +41,11 @@ import freeworld.world.block.BlockHitResult;
 import freeworld.world.entity.Entity;
 import freeworld.world.entity.EntityType;
 import org.slf4j.Logger;
-import overrungl.opengl.GL;
-import overrungl.opengl.GL10C;
 
 import java.util.*;
+
+import static overrungl.opengl.GL10.*;
+import static overrungl.opengl.GL15.GL_DYNAMIC_DRAW;
 
 /**
  * The game renderer.
@@ -79,7 +80,7 @@ public final class GameRenderer implements GLResource {
 
         initGLPrograms(gl);
 
-        gl.clearColor(0.4f, 0.6f, 0.9f, 1.0f);
+        gl.ClearColor(0.4f, 0.6f, 0.9f, 1.0f);
 
         blockModelManager = new BlockModelManager();
         blockModelManager.bootstrap();
@@ -145,13 +146,13 @@ public final class GameRenderer implements GLResource {
     }
 
     public void render(GLStateMgr gl, double partialTick) {
-        gl.clear(GL10C.COLOR_BUFFER_BIT | GL10C.DEPTH_BUFFER_BIT);
+        gl.Clear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         if (worldRenderer != null) {
             renderWorld(gl, partialTick);
         }
 
-        gl.clear(GL10C.DEPTH_BUFFER_BIT);
+        gl.Clear(GL_DEPTH_BUFFER_BIT);
         if (client.world() != null) {
             renderHud(gl, partialTick);
         }
@@ -162,7 +163,7 @@ public final class GameRenderer implements GLResource {
         gl.setDisableBlend();
         gl.setEnableCullFace();
         gl.setEnableDepthTest();
-        gl.setDepthFunc(GL10C.LEQUAL);
+        gl.setDepthFunc(GL_LEQUAL);
 
         final Camera camera = client.camera();
         final Entity player = client.player();
@@ -236,7 +237,7 @@ public final class GameRenderer implements GLResource {
         gl.setDisableCullFace();
         gl.setDisableDepthTest();
         gl.setEnableBlend();
-        gl.setBlendFunc(GL10C.SRC_ALPHA, GL10C.ONE_MINUS_SRC_ALPHA);
+        gl.setBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
         hudRenderer.update(client.scaledFramebufferWidth(), client.scaledFramebufferHeight());
         hudRenderer.render(guiGraphics, gl, partialTick);
     }
@@ -247,7 +248,7 @@ public final class GameRenderer implements GLResource {
             gl.setDisableCullFace();
             gl.setDisableDepthTest();
             gl.setEnableBlend();
-            gl.setBlendFunc(GL10C.SRC_ALPHA, GL10C.ONE_MINUS_SRC_ALPHA);
+            gl.setBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
             RenderSystem.setProjectionViewMatrix(Matrix4f.setOrtho(0.0f,
                     client.scaledFramebufferWidth(),
                     0.0f,
@@ -283,7 +284,7 @@ public final class GameRenderer implements GLResource {
     }
 
     public GLVertexArrayObject createVaoForLayout(GLStateMgr gl) {
-        GLVertexArrayObject vertexArrayObject = new GLVertexArrayObject(gl, GL.DYNAMIC_DRAW);
+        GLVertexArrayObject vertexArrayObject = new GLVertexArrayObject(gl, GL_DYNAMIC_DRAW);
         layoutVAOs.add(vertexArrayObject);
         return vertexArrayObject;
     }

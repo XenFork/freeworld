@@ -1,6 +1,6 @@
 /*
  * freeworld - 3D sandbox game
- * Copyright (C) 2024  XenFork Union
+ * Copyright (C) 2025  XenFork Union
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -20,13 +20,14 @@ import freeworld.client.render.world.WorldRenderer;
 import freeworld.client.render.world.chunk.ChunkCompiler;
 import freeworld.world.World;
 import freeworld.world.chunk.Chunk;
-import overrungl.opengl.GL15C;
 import reactor.core.Disposable;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.lang.ref.Cleaner;
 import java.util.concurrent.atomic.AtomicReference;
+
+import static overrungl.opengl.GL15.GL_DYNAMIC_DRAW;
 
 /**
  * @author squid233
@@ -120,7 +121,7 @@ public final class ClientChunk extends Chunk implements AutoCloseable {
 
     private void buildBuffer(GLStateMgr gl, BufferBuilder.BufferData data) {
         if (state.vertexArrayObject == null) {
-            state.vertexArrayObject = new GLVertexArrayObject(gl, GL15C.DYNAMIC_DRAW);
+            state.vertexArrayObject = new GLVertexArrayObject(gl, GL_DYNAMIC_DRAW);
         }
         state.vertexArrayObject.specify(gl, data);
     }

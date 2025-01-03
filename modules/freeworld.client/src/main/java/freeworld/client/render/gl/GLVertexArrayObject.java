@@ -1,6 +1,6 @@
 /*
  * freeworld - 3D sandbox game
- * Copyright (C) 2024  XenFork Union
+ * Copyright (C) 2025  XenFork Union
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -15,10 +15,12 @@ import freeworld.client.render.RenderSystem;
 import freeworld.client.render.vertex.BufferBuilder;
 import freeworld.client.render.vertex.VertexLayout;
 import freeworld.math.Matrix4f;
-import overrungl.opengl.GL;
-import overrungl.opengl.GL15C;
 
 import java.lang.foreign.MemorySegment;
+
+import static overrungl.opengl.GL10.GL_UNSIGNED_INT;
+import static overrungl.opengl.GL15.GL_ARRAY_BUFFER;
+import static overrungl.opengl.GL15.GL_ELEMENT_ARRAY_BUFFER;
 
 /**
  * @author squid233
@@ -37,9 +39,9 @@ public final class GLVertexArrayObject implements GLResource {
 
     public GLVertexArrayObject(GLStateMgr gl, int usage) {
         this.usage = usage;
-        this.vao = gl.genVertexArrays();
-        this.vbo = gl.genBuffers();
-        this.ebo = gl.genBuffers();
+        this.vao = gl.GenVertexArrays();
+        this.vbo = gl.GenBuffers();
+        this.ebo = gl.GenBuffers();
     }
 
     public void bind(GLStateMgr gl) {
@@ -53,7 +55,7 @@ public final class GLVertexArrayObject implements GLResource {
     }
 
     public void draw(GLStateMgr gl) {
-        gl.drawElements(drawMode.value(), indexCount, GL.UNSIGNED_INT, MemorySegment.NULL);
+        gl.DrawElements(drawMode.value(), indexCount, GL_UNSIGNED_INT, MemorySegment.NULL);
     }
 
     public void draw(GLStateMgr gl, Matrix4f projectionViewMatrix, Matrix4f modelMatrix, GLProgram program) {
@@ -84,7 +86,7 @@ public final class GLVertexArrayObject implements GLResource {
         gl.setArrayBufferBinding(vbo);
         if (vertexData.byteSize() > vboSize) {
             vboSize = vertexData.byteSize();
-            gl.bufferData(GL15C.ARRAY_BUFFER, vertexData, usage);
+            gl.BufferData(GL_ARRAY_BUFFER, vertexData, usage);
             if (!layout.equals(this.layout)) {
                 if (this.layout != null) {
                     this.layout.disableAttributes(gl);
@@ -93,17 +95,17 @@ public final class GLVertexArrayObject implements GLResource {
                 this.layout = layout;
             }
         } else {
-            gl.bufferSubData(GL15C.ARRAY_BUFFER, 0L, vertexData);
+            gl.BufferSubData(GL_ARRAY_BUFFER, 0L, vertexData.byteSize(), vertexData);
         }
     }
 
     private void specifyIndexData(GLStateMgr gl, MemorySegment indexData) {
-        gl.bindBuffer(GL15C.ELEMENT_ARRAY_BUFFER, ebo);
+        gl.BindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
         if (indexData.byteSize() > eboSize) {
             eboSize = indexData.byteSize();
-            gl.bufferData(GL15C.ELEMENT_ARRAY_BUFFER, indexData, usage);
+            gl.BufferData(GL_ELEMENT_ARRAY_BUFFER, indexData, usage);
         } else {
-            gl.bufferSubData(GL15C.ELEMENT_ARRAY_BUFFER, 0L, indexData);
+            gl.BufferSubData(GL_ELEMENT_ARRAY_BUFFER, 0L, indexData.byteSize(), indexData);
         }
     }
 
@@ -121,7 +123,8 @@ public final class GLVertexArrayObject implements GLResource {
 
     @Override
     public void close(GLStateMgr gl) {
-        gl.deleteVertexArrays(vao);
-        gl.deleteBuffers(vbo, ebo);
+        gl.DeleteVertexArrays(vao);
+        gl.DeleteBuffers(vbo);
+        gl.DeleteBuffers(ebo);
     }
 }

@@ -1,6 +1,6 @@
 /*
  * freeworld - 3D sandbox game
- * Copyright (C) 2024  XenFork Union
+ * Copyright (C) 2025  XenFork Union
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -11,16 +11,16 @@
 package freeworld.client;
 
 import freeworld.client.event.CursorPosEvent;
-import overrungl.glfw.GLFW;
 
 import java.lang.foreign.MemorySegment;
+
+import static overrungl.glfw.GLFW.*;
 
 /**
  * @author squid233
  * @since 0.1.0
  */
 public final class MouseInput {
-    private final GLFW glfw;
     private final MemorySegment window;
     private double cursorX;
     private double cursorY;
@@ -28,10 +28,9 @@ public final class MouseInput {
     private double cursorDeltaY;
     private boolean disabled = false;
 
-    public MouseInput(FreeworldClient client, MemorySegment window) {
-        this.glfw = client.glfw();
+    public MouseInput(MemorySegment window) {
         this.window = window;
-        glfw.setCursorPosCallback(window, (_, x, y) -> {
+        glfwSetCursorPosCallback(window, (_, x, y) -> {
             cursorDeltaX = x - cursorX;
             cursorDeltaY = y - cursorY;
             if (disabled) {
@@ -44,12 +43,12 @@ public final class MouseInput {
 
     public void enable() {
         disabled = false;
-        glfw.setInputMode(window, GLFW.CURSOR, GLFW.CURSOR_NORMAL);
+        glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
     }
 
     public void disable() {
         disabled = true;
-        glfw.setInputMode(window, GLFW.CURSOR, GLFW.CURSOR_DISABLED);
+        glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
     }
 
     public double cursorX() {

@@ -1,6 +1,6 @@
 /*
  * freeworld - 3D sandbox game
- * Copyright (C) 2024  XenFork Union
+ * Copyright (C) 2025  XenFork Union
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -19,9 +19,6 @@ import freeworld.util.Logging;
 import freeworld.util.file.BuiltinFiles;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
-import overrungl.opengl.GL;
-import overrungl.opengl.GL10C;
-import overrungl.opengl.GL20C;
 
 import java.io.BufferedReader;
 import java.lang.foreign.Arena;
@@ -30,6 +27,8 @@ import java.lang.foreign.ValueLayout;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
+
+import static overrungl.opengl.GL20.*;
 
 /**
  * The OpenGL program.
@@ -110,7 +109,7 @@ public final class GLProgram implements GLResource {
         if (vshSrc == null) {
             throw exception(identifier, "failed to load vertex shader");
         }
-        final int vsh = compileShader(gl, GL.VERTEX_SHADER, "vertex", vshSrc);
+        final int vsh = compileShader(gl, GL_VERTEX_SHADER, "vertex", vshSrc);
         if (vsh == -1) {
             throw exception(identifier, "failed to compile vertex shader");
         }
@@ -118,32 +117,32 @@ public final class GLProgram implements GLResource {
         final String fshPath = "assets/" + fshId.withPathPrefix("shader/").toResourcePath();
         final String fshSrc = BuiltinFiles.readText(BuiltinFiles.load(fshPath), fshPath);
         if (fshSrc == null) {
-            gl.deleteShader(vsh);
+            gl.DeleteShader(vsh);
             throw exception(identifier, "failed to load fragment shader");
         }
-        final int fsh = compileShader(gl, GL.FRAGMENT_SHADER, "fragment", fshSrc);
+        final int fsh = compileShader(gl, GL_FRAGMENT_SHADER, "fragment", fshSrc);
         if (fsh == -1) {
-            gl.deleteShader(vsh);
-            gl.deleteShader(fsh);
+            gl.DeleteShader(vsh);
+            gl.DeleteShader(fsh);
             throw exception(identifier, "failed to compile fragment shader");
         }
 
-        this.id = gl.createProgram();
+        this.id = gl.CreateProgram();
         vertexLayout.bindLocations(gl, id);
-        gl.attachShader(id, vsh);
-        gl.attachShader(id, fsh);
-        gl.linkProgram(id);
+        gl.AttachShader(id, vsh);
+        gl.AttachShader(id, fsh);
+        gl.LinkProgram(id);
         try {
-            if (gl.getProgramiv(id, GL20C.LINK_STATUS) == GL10C.FALSE) {
-                String log = gl.getProgramInfoLog(id);
-                gl.deleteProgram(id);
+            if (gl.GetProgramiv(id, GL_LINK_STATUS) == GL_FALSE) {
+                String log = gl.GetProgramInfoLog(id);
+                gl.DeleteProgram(id);
                 throw exception(identifier, "failed to link GLProgram " + identifier + ": " + log);
             }
         } finally {
-            gl.detachShader(id, vsh);
-            gl.detachShader(id, fsh);
-            gl.deleteShader(vsh);
-            gl.deleteShader(fsh);
+            gl.DetachShader(id, vsh);
+            gl.DetachShader(id, fsh);
+            gl.DeleteShader(vsh);
+            gl.DeleteShader(fsh);
         }
 
         this.uniformMap = hasUniform ? HashMap.newHashMap(uniformTypeMap.size()) : Map.of();
@@ -153,7 +152,7 @@ public final class GLProgram implements GLResource {
             try {
                 for (var entry : uniformTypeMap.entrySet()) {
                     final String name = entry.getKey();
-                    final int location = gl.getUniformLocation(id, name);
+                    final int location = gl.GetUniformLocation(id, name);
                     if (location == -1) {
                         logger.warn("Unknown uniform {} in {}; ignoring.", name, this);
                         continue;
@@ -181,7 +180,7 @@ public final class GLProgram implements GLResource {
                     }
                 }
             } catch (Exception e) {
-                gl.deleteProgram(id);
+                gl.DeleteProgram(id);
                 if (uniformArena != null) {
                     uniformArena.close();
                 }
@@ -216,12 +215,12 @@ public final class GLProgram implements GLResource {
     }
 
     private static int compileShader(GLStateMgr gl, int type, String name, String src) {
-        final int shader = gl.createShader(type);
-        gl.shaderSource(shader, src);
-        gl.compileShader(shader);
-        if (gl.getShaderiv(shader, GL20C.COMPILE_STATUS) == GL10C.FALSE) {
-            logger.error("Failed to compile {} shader: {}", name, gl.getShaderInfoLog(shader));
-            gl.deleteShader(shader);
+        final int shader = gl.CreateShader(type);
+        gl.ShaderSource(shader, src);
+        gl.CompileShader(shader);
+        if (gl.GetShaderiv(shader, GL_COMPILE_STATUS) == GL_FALSE) {
+            logger.error("Failed to compile {} shader: {}", name, gl.GetShaderInfoLog(shader));
+            gl.DeleteShader(shader);
             return -1;
         }
         return shader;
@@ -249,7 +248,7 @@ public final class GLProgram implements GLResource {
 
     @Override
     public void close(GLStateMgr gl) {
-        gl.deleteProgram(id);
+        gl.DeleteProgram(id);
         if (uniformArena != null) {
             uniformArena.close();
         }

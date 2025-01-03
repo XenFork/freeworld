@@ -1,6 +1,6 @@
 /*
  * freeworld - 3D sandbox game
- * Copyright (C) 2024  XenFork Union
+ * Copyright (C) 2025  XenFork Union
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -11,7 +11,6 @@
 package freeworld.client.render.vertex;
 
 import freeworld.client.render.gl.GLStateMgr;
-import overrungl.opengl.GL20C;
 
 import java.lang.foreign.MemorySegment;
 
@@ -21,17 +20,17 @@ import java.lang.foreign.MemorySegment;
  */
 public enum VertexFormat {
     POSITION("Position", (gl, index, size, type, stride, pointer) -> {
-        gl.enableVertexAttribArray(index);
-        gl.vertexAttribPointer(index, size, type, false, stride, pointer);
-    }, GL20C::disableVertexAttribArray),
+        gl.EnableVertexAttribArray(index);
+        gl.VertexAttribPointer(index, size, type, false, stride, pointer);
+    }, GLStateMgr::DisableVertexAttribArray),
     COLOR("Color", (gl, index, size, type, stride, pointer) -> {
-        gl.enableVertexAttribArray(index);
-        gl.vertexAttribPointer(index, size, type, true, stride, pointer);
-    }, GL20C::disableVertexAttribArray),
+        gl.EnableVertexAttribArray(index);
+        gl.VertexAttribPointer(index, size, type, true, stride, pointer);
+    }, GLStateMgr::DisableVertexAttribArray),
     UV("UV", (gl, index, size, type, stride, pointer) -> {
-        gl.enableVertexAttribArray(index);
-        gl.vertexAttribPointer(index, size, type, false, stride, pointer);
-    }, GL20C::disableVertexAttribArray),
+        gl.EnableVertexAttribArray(index);
+        gl.VertexAttribPointer(index, size, type, false, stride, pointer);
+    }, GLStateMgr::DisableVertexAttribArray),
     PADDING("Padding", (_, _, _, _, _, _) -> {
     }, (_, _) -> {
     }),
